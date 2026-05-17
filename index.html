@@ -112,6 +112,27 @@
         .unit-name { color: var(--text-bright); font-weight: 600; }
         .unit-meta { color: var(--text-dim); margin-top: 3px; font-size: 12px; }
 
+        .garrison-intel-card { background: rgba(255, 68, 68, 0.03); border: 1px dashed rgba(255, 68, 68, 0.3); padding: 12px; border-radius: 2px; text-align: center; }
+        .garrison-intel-title { font-family: var(--font-display); font-size: 11px; letter-spacing: 1px; color: var(--danger); text-transform: uppercase; margin-bottom: 4px; }
+        .garrison-intel-val { font-size: 16px; font-weight: bold; color: var(--text-bright); }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; width: 500px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,170,255,0.2); }
+        .modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .modal-title { font-family: var(--font-display); font-size: 13px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; }
+        .modal-close { background: none; border: none; color: var(--text-dim); font-size: 22px; cursor: pointer; line-height: 1; }
+        .modal-close:hover { color: var(--text-bright); }
+        .modal-body { overflow-y: auto; padding: 24px; flex: 1; }
+        .modal-tabs { display: flex; gap: 4px; padding: 0 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: #020812; }
+        .modal-tab { font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; padding: 14px 18px; cursor: pointer; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; }
+        .modal-tab:hover { color: var(--text); }
+        .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; }
+        .form-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-bright); padding: 10px 14px; border-radius: 2px; font-family: var(--font-body); font-size: 14px; }
+        
         @keyframes hq-pulse { 0% { r: 12; opacity: 1; } 100% { r: 35; opacity: 0; } }
         .hq-ring-53rd { animation: hq-pulse 2.0s ease-out infinite; stroke: #00aaff; stroke-width: 2.5; }
         .hq-ring-501st { animation: hq-pulse 2.2s ease-out infinite; stroke: #2a6eff; stroke-width: 2; }
@@ -150,11 +171,11 @@
     </div>
 </div>
 
-<div id="setup-banner">
+<div id="setup-banner" style="display:none;">
     ⚠ INITIALIZING SECTORS — Stand by while the core engine deploys the galactic coordinate array index...
 </div>
 
-<div id="login-screen">
+<div id="login-screen" style="display:none;">
     <div class="login-box">
         <div class="login-icon">🔐</div>
         <div class="login-title">Secure Decryption</div>
@@ -720,10 +741,10 @@
     }
 
     function openAdmin() {
-        if(!isAdmin) { document.getElementById('login-screen').classList.add('open'); document.getElementById('admin-password').focus(); }
+        if(!isAdmin) { document.getElementById('login-screen').style.display = 'flex'; document.getElementById('admin-password').focus(); }
         else { document.getElementById('admin-modal').classList.add('open'); switchTab('campaign'); }
     }
-    function closeLogin() { document.getElementById('login-screen').classList.remove('open'); }
+    function closeLogin() { document.getElementById('login-screen').style.display = 'none'; }
     function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
 
     function doLogin() {
@@ -735,7 +756,6 @@
 
     function switchTab(tab) { activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); renderAdminBody(); }
     
-    // INTEGRATED FIXED LOG ENGINE WITH EMBEDDED WEBHOOK LINK
     async function writeLog(eventType, description) {
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1505715142669897849/0E42nI-Cx46wj3dr_HtHu2UbA7TjI99aSFn-LnyvG9xTcjPLcC80goW8xuSUN0pCyZF1";
 
