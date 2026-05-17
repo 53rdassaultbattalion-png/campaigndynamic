@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Republic Command Matrix</title>
+    <title>Grand Republic Command Deck</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -44,8 +44,9 @@
         .btn { font-family: var(--font-display); font-size: 11px; letter-spacing: 1.5px; padding: 7px 16px; border-radius: 2px; border: 1px solid var(--border-bright); background: transparent; color: var(--accent); cursor: pointer; transition: all 0.2s ease-in-out; text-transform: uppercase; }
         .btn:hover { background: rgba(0, 170, 255, 0.15); box-shadow: var(--glow); color: var(--text-bright); }
         .btn.danger { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
+        .btn.danger:hover { background: rgba(255, 68, 68, 0.15); }
         .btn.success { border-color: rgba(0, 255, 136, 0.5); color: var(--success); }
-        .btn.warn { border-color: rgba(255, 170, 0, 0.5); color: var(--warn); }
+        .btn.success:hover { background: rgba(0, 255, 136, 0.15); }
 
         #faction-panel { background: var(--panel); border-right: 1px solid var(--border); overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
         .panel-label { font-family: var(--font-display); font-size: 10px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
@@ -60,7 +61,6 @@
         .terr-count { font-size: 12px; color: var(--text-dim); margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 6px; }
         .terr-count span { color: var(--text-bright); font-weight: 600; }
 
-        /* Logistics Shopping Pad Elements Layout */
         .logistics-terminal { background: rgba(0, 10, 25, 0.4); border: 1px dashed var(--border-bright); padding: 12px; margin-top: 10px; border-radius: 3px; }
         .logistics-title { font-family: var(--font-display); font-size: 9px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; margin-bottom: 8px; }
         .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 10px; border: 1px solid rgba(0,170,255,0.1); margin-bottom: 6px; border-radius: 2px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
@@ -95,7 +95,6 @@
         .hq-container-badges { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
         .hq-marker-badge { display: inline-flex; align-items: center; background: rgba(0, 170, 255, 0.12); border: 1px solid var(--accent); color: var(--accent2); padding: 4px 10px; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; border-radius: 2px; text-shadow: 0 0 5px var(--accent); width: fit-content; }
 
-        /* Helldivers-Style Liberation Gauge Components */
         .liberation-container { margin-top: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,170,255,0.1); padding: 10px; border-radius: 2px; }
         .liberation-meta { display: flex; justify-content: space-between; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; margin-bottom: 4px; }
         .liberation-bar-outer { width: 100%; height: 6px; background: rgba(255, 68, 68, 0.3); border-radius: 1px; overflow: hidden; position: relative; }
@@ -118,12 +117,6 @@
         .unit-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 2px; padding: 10px 12px; font-size: 13px; }
         .unit-name { color: var(--text-bright); font-weight: 600; }
         .unit-meta { color: var(--text-dim); margin-top: 3px; font-size: 12px; }
-        .unit-status { display: inline-block; padding: 2px 8px; border-radius: 2px; font-size: 10px; font-family: var(--font-display); margin-top: 6px; }
-        .status-Active { background: rgba(0,255,136,0.12); color: var(--success); }
-        .status-Engaged { background: rgba(255,68,68,0.12); color: var(--danger); }
-        .status-Reserve { background: rgba(0,170,255,0.12); color: var(--accent); }
-        .status-Retreating { background: rgba(255,170,0,0.12); color: var(--warn); }
-        .status-Destroyed { background: rgba(80,80,80,0.2); color: #666; }
 
         .garrison-intel-card { background: rgba(255, 68, 68, 0.03); border: 1px dashed rgba(255, 68, 68, 0.3); padding: 12px; border-radius: 2px; text-align: center; }
         .garrison-intel-title { font-family: var(--font-display); font-size: 11px; letter-spacing: 1px; color: var(--danger); text-transform: uppercase; margin-bottom: 4px; }
@@ -143,14 +136,9 @@
         .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
         .form-group { margin-bottom: 16px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         .form-label { display: block; font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; }
-        .form-input, .form-select, .form-textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-bright); padding: 10px 14px; border-radius: 2px; font-family: var(--font-body); font-size: 14px; }
-        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--border-bright); box-shadow: 0 0 8px rgba(0,170,255,0.15); }
-        .form-select option { background: #040c17; }
-        .form-textarea { resize: vertical; min-height: 70px; }
-        input[type="color"].form-input { padding: 2px 4px; height: 38px; cursor: pointer; }
-
+        .form-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-bright); padding: 10px 14px; border-radius: 2px; font-family: var(--font-body); font-size: 14px; }
+        
         #login-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         #login-screen.open { display: flex; }
         .login-box { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; padding: 36px; width: 360px; box-shadow: 0 0 50px rgba(0,170,255,0.25); text-align: center; }
@@ -162,7 +150,6 @@
         .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
         .admin-table th { font-family: var(--font-display); font-size: 9px; letter-spacing: 2px; color: var(--text-dim); padding: 10px; text-align: left; border-bottom: 1px solid var(--border); text-transform: uppercase; }
         .admin-table td { padding: 10px; border-bottom: 1px solid rgba(30,120,200,0.1); color: var(--text); vertical-align: middle; }
-        .admin-table tr:hover td { background: rgba(0,170,255,0.02); }
 
         #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: #040c17; border: 1px solid var(--border-bright); color: var(--accent); font-family: var(--font-display); font-size: 11px; letter-spacing: 2px; padding: 12px 24px; border-radius: 3px; z-index: 999; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; box-shadow: var(--glow); }
         #toast.show { transform: translateX(-50%) translateY(0); }
@@ -175,14 +162,13 @@
         .config-step { background: rgba(0,170,255,0.03); border: 1px solid var(--border); border-radius: 3px; padding: 16px; margin-bottom: 16px; font-size: 13px; }
         .config-step-num { font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--accent); margin-bottom: 8px; }
         
-        @keyframes ring-pulse { 0% { r: 11; opacity: 1; } 100% { r: 28; opacity: 0; } }
-        .hq-ring-53rd { animation: ring-pulse 2.0s ease-out infinite; stroke: #00aaff; }
-        .hq-ring-501st { animation: ring-pulse 2.2s ease-out infinite; stroke: #2a6eff; }
-        .hq-ring-212th { animation: ring-pulse 1.8s ease-out infinite; stroke: #ff9f1a; }
-        .hq-ring-104th { animation: ring-pulse 2.4s ease-out infinite; stroke: #a4b0be; }
-
-        @keyframes conflict-pulse { 0% { r: 10; opacity: 0.8; } 100% { r: 22; opacity: 0; } }
-        .conflict-pulse { animation: conflict-pulse 1.6s ease-out infinite; }
+        /* Specialized Color Ring Configurations for all Battalions */
+        @keyframes hq-pulse { 0% { r: 12; opacity: 1; } 100% { r: 35; opacity: 0; } }
+        .hq-ring-53rd { animation: hq-pulse 2.0s ease-out infinite; stroke: #00aaff; stroke-width: 2.5; }
+        .hq-ring-501st { animation: hq-pulse 2.2s ease-out infinite; stroke: #2a6eff; stroke-width: 2; }
+        .hq-ring-212th { animation: hq-pulse 1.8s ease-out infinite; stroke: #ff9f1a; stroke-width: 2; }
+        .hq-ring-104th { animation: hq-pulse 2.4s ease-out infinite; stroke: #a4b0be; stroke-width: 2; }
+        .conflict-pulse { animation: hq-pulse 1.6s ease-out infinite; stroke: var(--danger); stroke-width: 2; }
     </style>
 </head>
 <body>
@@ -191,11 +177,11 @@
 
 <div id="config-screen">
     <div class="config-box">
-        <div class="config-title">🌌 Parent Array Console</div>
-        <div class="config-sub">LOGISTICS CONTROL INITIALIZATION</div>
+        <div class="config-title">🌌 Strategic Command Matrix</div>
+        <div class="config-sub">MACRO THEATER SECTOR CONTROL</div>
         <div class="config-step">
             <div class="config-step-num">STEP 1 — SETUP INITIALIZATION</div>
-            Run the latest structure logic within the Supabase SQL interface pane workspace.
+            Execute the expanded SQL structure logic inside your Supabase project window workspace.
         </div>
         <div class="config-step">
             <div class="config-step-num">STEP 2 — LINK STRATEGIC ENDPOINTS</div>
@@ -216,7 +202,7 @@
 </div>
 
 <div id="setup-banner">
-    ⚠ CONSOLE GRIDS BLANK — Wait a few seconds for the core system initialization to build the sectors.
+    ⚠ INITIALIZING SECTORS — Stand by while the core engine deploys the galactic coordinate array index...
 </div>
 
 <div id="login-screen">
@@ -279,15 +265,11 @@
             <div class="shop-item" onclick="purchaseAsset('BTL-B Y-Wing', 500)"><span>💣 BTL-B Y-Wing</span><span class="shop-cost">500c</span></div>
             <div class="shop-item" onclick="purchaseAsset('Nimbus V-Wing', 300)"><span>🔺 Nimbus V-Wing</span><span class="shop-cost">300c</span></div>
             <div class="shop-item" onclick="purchaseAsset('Z-95 Headhunter', 200)"><span>🚀 Z-95 Headhunter</span><span class="shop-cost">200c</span></div>
-            
-            <div style="font-size:10px; color:var(--text-dim); text-align:center; margin-top:8px; line-height: 1.4; border-top: 1px dashed rgba(0,170,255,0.1); padding-top: 6px;">
-                Deduct costs manually via the Override Terminal upon requisition processing.
-            </div>
         </div>
     </div>
 
     <div id="map-container">
-        <svg id="map-svg" xmlns="http://www.w3.org/2000/svg">
+        <svg id="map-svg" xmlns="http://www.w3.org/2000/svg" style="width: 2500px; height: 2500px;">
             <defs>
                 <filter id="glow-filter">
                     <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
@@ -297,6 +279,7 @@
                     </feMerge>
                 </filter>
             </defs>
+            <g id="grid-backdrop"></g>
             <g id="map-g">
                 <g id="connections-layer"></g>
                 <g id="planets-layer"></g>
@@ -309,7 +292,7 @@
         </div>
         <div id="map-legend">
             <div class="legend-title">Threat Index Matrix</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#344152"></div> Neutral Space</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#344152"></div> Neutral Systems</div>
             <div class="legend-item"><div class="legend-dot" style="background:#00aaff"></div> Galactic Republic</div>
             <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div> Confederacy (CIS)</div>
         </div>
@@ -319,7 +302,7 @@
         <div id="detail-empty">
             <div class="detail-icon">🌌</div>
             <div class="detail-hint">Awaiting Coordinate Target</div>
-            <div style="font-size:12px;color:var(--text-dim);margin-top:4px">Select an active hyperlane system hub node</div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:4px">Select an active hyperlane sector node</div>
         </div>
         <div id="detail-content">
             <div class="detail-header">
@@ -376,9 +359,22 @@
     let isAdmin = false;
     let activeTab = 'campaign';
     let currentDetailTab = 'garrison';
-    let mapState = { x: 0, y: 0, scale: 1, dragging: false, lastX: 0, lastY: 0 };
+    let mapState = { x: 0, y: 0, scale: 0.4, dragging: false, lastX: 0, lastY: 0 }; // Start zoomed out to see large map
 
-    window.addEventListener('DOMContentLoaded', () => { checkConfig(); });
+    window.addEventListener('DOMContentLoaded', () => { 
+        buildGridLines();
+        checkConfig(); 
+    });
+
+    function buildGridLines() {
+        const g = document.getElementById('grid-backdrop');
+        let lines = [];
+        for(let i=0; i<=2500; i+=250) {
+            lines.push(`<line x1="${i}" y1="0" x2="${i}" y2="2500" stroke="rgba(0,170,255,0.03)" stroke-width="1"/>`);
+            lines.push(`<line x1="0" y1="${i}" x2="2500" y2="${i}" stroke="rgba(0,170,255,0.03)" stroke-width="1"/>`);
+        }
+        g.innerHTML = lines.join('');
+    }
 
     function showToast(msg, isError = false) {
         const t = document.getElementById('toast'); t.textContent = msg;
@@ -435,39 +431,70 @@
         } catch (e) { showToast("Data acquisition stream fault", true); }
     }
 
+    // EXTENSIVE 20-PLANET CANON REFERENCE SCALE MATRICES
     async function seedLoreDatabase() {
-        showToast("PRE-POPULATING AUTHENTIC GALAXY MAP...");
+        showToast("PRE-POPULATING AUTHENTIC MACRO SECTOR ATLASED ARRAY...");
         
         const initialFactions = [
-            { name: "Galactic Republic", shortname: "Republic", color: "#00aaff", emoji: "🦅", credits: 5000 },
-            { name: "Confederacy of Independent Systems", shortname: "CIS", color: "#ff4444", emoji: "🐙", credits: 5000 }
+            { name: "Galactic Republic", shortname: "Republic", color: "#00aaff", emoji: "🦅", credits: 6000 },
+            { name: "Confederacy of Independent Systems", shortname: "CIS", color: "#ff4444", emoji: "🐙", credits: 6000 }
         ];
         await supabaseClient.from('factions').insert(initialFactions);
 
+        // Map layout built around standard Lucasfilm Galactic coordinates scaled to a 2500px deck
         const initialPlanets = [
-            { name: "Coruscant", sector: "Corusca", emoji: "🏙️", x: 500, y: 500, controlling_faction: "Galactic Republic", credit_yield: 400, strategic_value: "Critical", liberation_pct: 100, description: "Galactic capital and center of the Grand Army of the Republic's logistics communications core framework." },
-            { name: "Anaxes", sector: "Azure", emoji: "⚓", x: 520, y: 440, controlling_faction: "Galactic Republic", credit_yield: 250, strategic_value: "High", liberation_pct: 100, description: "Critical Core Worlds shipyard hub holding the primary Republic naval defense networks." },
-            { name: "Kamino", sector: "Wild Space", emoji: "🌊", x: 800, y: 820, controlling_faction: "Galactic Republic", credit_yield: 300, strategic_value: "Critical", liberation_pct: 100, description: "Ocean planet. Birthplace and fundamental cloning cloning centers producing the Republic clone troopers." },
-            { name: "Ryloth", sector: "Gaulus", emoji: "🌵", x: 320, y: 780, controlling_faction: "Neutral", credit_yield: 120, strategic_value: "Medium", liberation_pct: 0, description: "Twi'lek homeworld. Constantly targeted by Separatist mining syndicates along Outer Rim trade choke lines." },
-            { name: "Christophsis", sector: "Savareen", emoji: "💎", x: 380, y: 680, controlling_faction: "Neutral", credit_yield: 180, strategic_value: "High", liberation_pct: 0, description: "Crystalline planet rich in resources. Massive battle zone during the initial phases of the conflict." },
-            { name: "Umbara", sector: "Ghost Nebula", emoji: "🏮", x: 620, y: 710, controlling_faction: "Confederacy of Independent Systems", credit_yield: 200, strategic_value: "High", liberation_pct: 0, description: "The Shadow World. Highly advanced technology with a deeply hostile population aligned directly with Count Dooku." },
-            { name: "Geonosis", sector: "Arkanis", emoji: "🏜️", x: 740, y: 750, controlling_faction: "Confederacy of Independent Systems", credit_yield: 350, strategic_value: "Critical", liberation_pct: 0, description: "Major droid manufacturing foundries. Site of the opening hostilities of the Clone Wars." },
-            { name: "Muunilinst", sector: "Algara", emoji: "🏦", x: 610, y: 220, controlling_faction: "Confederacy of Independent Systems", credit_yield: 500, strategic_value: "Critical", liberation_pct: 0, description: "Headquarters of the InterGalactic Banking Clan. Financial heart and bank roll infrastructure for the CIS." },
-            { name: "Felucia", sector: "Tharin", emoji: "🍄", x: 840, y: 480, controlling_faction: "Neutral", credit_yield: 100, strategic_value: "Medium", liberation_pct: 0, description: "Fungal jungle world. Contested layout grid heavily localized by organic toxic spores." },
-            { name: "Saleucami", sector: "Su Mar", emoji: "🌋", x: 880, y: 560, controlling_faction: "Neutral", credit_yield: 150, strategic_value: "Medium", liberation_pct: 0, description: "Caldera oasis topography. Choke point route grid bridging Inner Rim routes out into Outer Rim territories." }
+            -- Deep Core / Core Worlds
+            { name: "Coruscant", sector: "Corusca (L-9)", emoji: "🏙️", x: 1250, y: 1250, controlling_faction: "Galactic Republic", credit_yield: 500, strategic_value: "Critical", liberation_pct: 100, description: "The ecumenopolis capital center of coordinates grid. Heart of the Republic defense arrays." },
+            { name: "Anaxes", sector: "Azure (L-9)", emoji: "⚓", x: 1280, y: 1160, controlling_faction: "Galactic Republic", credit_yield: 300, strategic_value: "High", liberation_pct: 100, description: "The Defender of the Core. Heavily protected fortress sector hosting major fleet shipyards." },
+            { name: "Corellia", sector: "Corellian (M-11)", emoji: "🏭", x: 1190, y: 1320, controlling_faction: "Galactic Republic", credit_yield: 400, strategic_value: "Critical", liberation_pct: 100, description: "Industrial powerhouse world famous for producing the finest capital ships and fast freighters." },
+            { name: "Cato Neimoidia", sector: "Quellor (N-11)", emoji: "🛕", x: 1380, y: 1380, controlling_faction: "Confederacy of Independent Systems", credit_yield: 350, strategic_value: "High", liberation_pct: 0, description: "Wealthy purse world of the Trade Federation. Suspended bridge cities over foggy canyons." },
+            { name: "Kuad", sector: "Kuat (M-10)", emoji: "⭕", x: 1320, y: 1220, controlling_faction: "Galactic Republic", credit_yield: 450, strategic_value: "Critical", liberation_pct: 100, description: "Kuat Drive Yards location zone. Vital industrial anchor producing the Republic fleet's Star Destroyers." },
+
+            -- Inner Rim / Colonies / Expansion Region
+            { name: "Christophsis", sector: "Savareen (M-16)", emoji: "💎", x: 920, y: 1550, controlling_faction: "Neutral", credit_yield: 220, strategic_value: "High", liberation_pct: 0, description: "Crystalline planet rich in raw minerals. A highly contested strategic bridgehead into the Outer Rim." },
+            { name: "Teth", sector: "Brak (U-12)", emoji: "🌿", x: 1020, y: 1850, controlling_faction: "Neutral", credit_yield: 110, strategic_value: "Medium", liberation_pct: 0, description: "Jungle world surrounded by massive cliffs. Holds an ancient monastery used as a pirate smuggling den." },
+
+            -- Mid Rim Nodes
+            { name: "Malastare", sector: "Dustig (K-16)", emoji: "🏁", x: 740, y: 1620, controlling_faction: "Galactic Republic", credit_yield: 280, strategic_value: "High", liberation_pct: 100, description: "Methane-rich world governed by the Gran. Home of fast podracing circuits and critical fuel reserves." },
+            { name: "Bothawui", sector: "Bothan (R-14)", emoji: "🐾", x: 1820, y: 1580, controlling_faction: "Galactic Republic", credit_yield: 200, strategic_value: "Medium", liberation_pct: 100, description: "Homeworld of the Bothans. Holds the primary hub architecture for the Republic's shadow spy networks." },
+            { name: "Nabud", sector: "Chommell (O-17)", emoji: "🏰", x: 1650, y: 1920, controlling_faction: "Galactic Republic", credit_yield: 240, strategic_value: "Medium", liberation_pct: 100, description: "Picturesque planet of lakes and plains. Home to a sophisticated human society and the subterranean Gungans." },
+            { name: "Kashyyyk", sector: "Mytaranor (P-9)", emoji: "🌲", x: 1780, y: 1050, controlling_faction: "Galactic Republic", credit_yield: 210, strategic_value: "High", liberation_pct: 100, description: "Wookiee homeworld wrapped in towering Wroshyr forests. Anchors navigation along the eastern trade routes." },
+            { name: "Ryloth", sector: "Gaulus (R-16)", emoji: "🌵", x: 1950, y: 1820, controlling_faction: "Neutral", credit_yield: 130, strategic_value: "Medium", liberation_pct: 0, description: "Twi'lek homeworld locked in harsh tidal rotations. Under constant pressure by Separatist droid blockades." },
+
+            -- Outer Rim Strongholds
+            { name: "Geonosis", sector: "Arkanis (R-16)", emoji: "🏜️", x: 1920, y: 1720, controlling_faction: "Confederacy of Independent Systems", credit_yield: 380, strategic_value: "Critical", liberation_pct: 0, description: "Site of the first battle of the Clone Wars. Massive underground foundries mass-producing battle droids." },
+            { name: "Tatooine", sector: "Arkanis (R-16)", emoji: "☀️", x: 1980, y: 1680, controlling_faction: "Neutral", credit_yield: 70, strategic_value: "Low", liberation_pct: 0, description: "Harsh desert planet under the iron grip of the Hutt Cartel. A haven for smugglers and outer-rim scumbags." },
+            { name: "Kamino", sector: "Wild Space (S-15)", emoji: "🌊", x: 2150, y: 1950, controlling_faction: "Galactic Republic", credit_yield: 320, strategic_value: "Critical", liberation_pct: 100, description: "Storm-drenched ocean world outside the main map lines. Birthplace and training hub of the clone army." },
+            { name: "Umbara", sector: "Ghost Nebula (P-15)", emoji: "🏮", x: 1520, y: 1640, controlling_faction: "Confederacy of Independent Systems", credit_yield: 250, strategic_value: "High", liberation_pct: 0, description: "The Shadow World. Gloomy perpetual nebula darkness shielding highly advanced, lethal local military technology." },
+            { name: "Muunilinst", sector: "Algara (K-3)", emoji: "🏦", x: 1450, y: 450, controlling_faction: "Confederacy of Independent Systems", credit_yield: 600, strategic_value: "Critical", liberation_pct: 0, description: "The Banking World. Financial capital of the Banking Clan, directly funding the Separatist military complex." },
+            { name: "Felucia", sector: "Tharin (U-6)", emoji: "🍄", x: 2240, y: 920, controlling_faction: "Neutral", credit_yield: 90, strategic_value: "Medium", liberation_pct: 0, description: "Fungal jungle world full of giant plants and dangerous wildlife. The setting of brutal attrition warfare." },
+            { name: "Saleucami", sector: "Su Mar (O-12)", emoji: "🌋", x: 1680, y: 1480, controlling_faction: "Neutral", credit_yield: 140, strategic_value: "Medium", liberation_pct: 0, description: "Geothermal caldera worlds serving as a vital staging post along outer hyperspace lanes." },
+            { name: "Raxus Prime", sector: "Tion (S-6)", emoji: "🏭", x: 2350, y: 720, controlling_faction: "Confederacy of Independent Systems", credit_yield: 300, strategic_value: "High", liberation_pct: 0, description: "A planet covered entirely in toxic trash and industrial waste, serving as the official political capital of the CIS." }
         ];
         const { data: planetsData } = await supabaseClient.from('planets').insert(initialPlanets).select();
 
+        // High accuracy connection array strings mirroring major trade routes (e.g. Perlemian Trade Route)
         const initialConnections = [
             { planet_a: "Coruscant", planet_b: "Anaxes" },
-            { planet_a: "Coruscant", planet_b: "Christophsis" },
-            { planet_a: "Christophsis", planet_b: "Ryloth" },
-            { planet_a: "Ryloth", planet_b: "Geonosis" },
+            { planet_a: "Anaxes", planet_b: "Muunilinst" },
+            { planet_a: "Coruscant", planet_b: "Kuad" },
+            { planet_a: "Kuad", planet_b: "Corellia" },
+            { planet_a: "Corellia", planet_b: "Cato Neimoidia" },
+            { planet_a: "Cato Neimoidia", planet_b: "Saleucami" },
+            { planet_a: "Saleucami", planet_b: "Bothawui" },
+            { planet_a: "Bothawui", planet_b: "Kashyyyk" },
+            { planet_a: "Kashyyyk", planet_b: "Felucia" },
+            { planet_a: "Felucia", planet_b: "Raxus Prime" },
+            { planet_a: "Corellia", planet_b: "Christophsis" },
+            { planet_a: "Christophsis", planet_b: "Malastare" },
+            { planet_a: "Malastare", planet_b: "Teth" },
+            { planet_a: "Teth", planet_b: "Nabud" },
+            { planet_a: "Nabud", planet_b: "Ryloth" },
+            { planet_a: "Ryloth", planet_b: "Tatooine" },
+            { planet_a: "Tatooine", planet_b: "Geonosis" },
             { planet_a: "Geonosis", planet_b: "Kamino" },
             { planet_a: "Coruscant", planet_b: "Umbara" },
-            { planet_a: "Umbara", planet_b: "Saleucami" },
-            { planet_a: "Saleucami", planet_b: "Felucia" },
-            { planet_a: "Anaxes", planet_b: "Muunilinst" }
+            { planet_a: "Umbara", planet_b: "Nabud" }
         ];
         await supabaseClient.from('planet_connections').insert(initialConnections);
 
@@ -483,7 +510,7 @@
             }
         }
 
-        await writeLog("Galaxy Configured", "Autonomous data array injector populated the system with authentic sector star maps.");
+        await writeLog("Galaxy Configured", "Autonomous data array injector populated the system with 20 authentic sector star maps.");
         setTimeout(() => { window.location.reload(); }, 1500);
     }
 
@@ -601,7 +628,7 @@
             return `
             <g class="planet-node" style="cursor:pointer" onclick="onPlanetClick('${p.id}')">
                 ${trackerRingsHtml}
-                ${isUnderConflict ? `<circle cx="${p.x}" cy="${p.y}" r="18" fill="none" stroke="var(--danger)" stroke-width="1.5" class="conflict-pulse" filter="url(#glow-filter)"/>` : ''}
+                ${isUnderConflict ? `<circle cx="${p.x}" cy="${p.y}" r="18" fill="none" class="conflict-pulse" filter="url(#glow-filter)"/>` : ''}
                 ${isSelected ? `<circle cx="${p.x}" cy="${p.y}" r="${r+7}" fill="none" stroke="var(--accent2)" stroke-width="1.5" opacity="0.9"/>` : ''}
                 <circle cx="${p.x}" cy="${p.y}" r="${r+3}" fill="${color}" opacity="0.2"/>
                 <circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${color}" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
@@ -625,8 +652,8 @@
         window.addEventListener('mouseup', () => mapState.dragging = false);
         el.addEventListener('wheel', e => { e.preventDefault(); zoom(e.deltaY < 0 ? 1.15 : 0.85); }, { passive: false });
     }
-    function zoom(factor) { mapState.scale = Math.max(0.2, Math.min(6, mapState.scale * factor)); updateMapTransform(); }
-    function resetView() { mapState = { x: 0, y: 0, scale: 1, dragging: false, lastX: 0, lastY: 0 }; updateMapTransform(); }
+    function zoom(factor) { mapState.scale = Math.max(0.1, Math.min(4, mapState.scale * factor)); updateMapTransform(); }
+    function resetView() { mapState = { x: 0, y: 0, scale: 0.4, dragging: false, lastX: 0, lastY: 0 }; updateMapTransform(); }
     function updateMapTransform() { document.getElementById('map-g').setAttribute('transform', `translate(${mapState.x}, ${mapState.y}) scale(${mapState.scale})`); }
     function onPlanetClick(id) { selectedPlanetId = id; renderMap(); showPlanetDetail(id); }
 
@@ -645,9 +672,9 @@
         const hqZone = document.getElementById('d-hq-zone'); hqZone.innerHTML = '';
         const is53rdHere = DB.settings.loc_53rd === p.id;
         if(is53rdHere) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#0af;color:#0ff">🛡️ 53rd Battalion Base</div>`;
-        if(DB.settings.loc_501st === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#2a6eff;color:#85aeff">⚡ 501st Legion Fleet</div>`;
-        if(DB.settings.loc_212th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#ff9f1a;color:#ffeaa7">🔶 212th Attack Unit</div>`;
-        if(DB.settings.loc_104th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#a4b0be;color:#f1f2f6">🐺 104th Wolfpack HQ</div>`;
+        if(DB.settings.loc_501st === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#2a6eff;color:#85aeff">⚡ 501st Legion</div>`;
+        if(DB.settings.loc_212th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#ff9f1a;color:#ffeaa7">🔶 212th Attack Bn</div>`;
+        if(DB.settings.loc_104th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#a4b0be;color:#f1f2f6">🐺 104th Wolfpack</div>`;
 
         const libPct = p.liberation_pct || 0;
         document.getElementById('d-liberation-txt').textContent = libPct + '%';
@@ -689,7 +716,6 @@
                             <span class="unit-name">${u.name}</span>
                             <span style="color:${getFactionColor(u.faction)};font-size:11px;font-weight:600">${u.faction}</span>
                         </div>
-                        <div class="unit-meta">${u.size || 'Standard'} • ${u.unit_type || 'Asset'}</div>
                     </div>
                 `).join('');
             }
@@ -703,16 +729,13 @@
                 <div class="unit-item" style="border-left: 2px dashed var(--success)">
                     <div style="display:flex;justify-content:space-between">
                         <span class="unit-name" style="color:var(--success)">${u.name}</span>
-                        <span style="font-size:10px; color:var(--text-dim); font-family:var(--font-display)">AVALIABLE</span>
                     </div>
                 </div>
             `).join('');
         }
 
-        // EXCLUSIVE 53rd DEPLOYMENT INTERFACE CONTROLS
         const actionArea = document.getElementById('d-admin-actions');
         if(isAdmin) {
-            // Determine if chosen target system is adjacent along hyperlane layout paths to where 53rd is parked
             let hqPlanetId = DB.settings.loc_53rd;
             let hqPlanet = DB.planets.find(pl => pl.id === hqPlanetId);
             let isAdjacent = false;
@@ -724,20 +747,49 @@
             }
 
             if (p.id === hqPlanetId) {
-                actionArea.innerHTML = `<div style="color:var(--accent); font-family:var(--font-display); font-size:11px; text-align:center; background:rgba(0,170,255,0.05); padding:8px; border:1px solid var(--border)">🛰️ 53rd BATTLION COMM CHANNELS ANCHORED HERE</div>`;
+                actionArea.innerHTML = `
+                    <div style="background:rgba(0,10,25,0.6); border:1px solid var(--border); padding:10px; border-radius:3px;">
+                        <div style="font-family:var(--font-display); font-size:9px; color:var(--warn); margin-bottom:8px; letter-spacing:1px; text-align:center;">// 53rd LIVE ENGAGEMENT TERMINAL</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                            <button class="btn success" style="font-size:9px; padding:8px 4px;" onclick="process53rdBattleResult('${p.id}', true)">🟢 MISSION VICTORY</button>
+                            <button class="btn danger" style="font-size:9px; padding:8px 4px;" onclick="process53rdBattleResult('${p.id}', false)">🔴 MISSION DEFEAT</button>
+                        </div>
+                    </div>`;
             } else if (isAdjacent) {
                 actionArea.innerHTML = `<button class="btn success" style="width:100%" onclick="move53rdBattalion('${p.id}')">🔷 DEPLOY 53rd SECTOR FLEET HERE</button>`;
             } else {
-                actionArea.innerHTML = `<div style="color:var(--text-dim); font-size:11px; text-align:center;">Hyperlane navigation arrays report this planet is too distant for direct navigation. Jump lines require adjacency.</div>`;
+                actionArea.innerHTML = `<div style="color:var(--text-dim); font-size:11px; text-align:center;">Hyperlane arrays report destination is out of jump range. Requires line adjacency.</div>`;
             }
         } else { actionArea.innerHTML = ''; }
+    }
+
+    async function process53rdBattleResult(planetId, isWin) {
+        const p = DB.planets.find(pl => pl.id === planetId); if(!p) return;
+        let currentLib = p.liberation_pct || 0;
+        let libShift = Math.floor(Math.random() * 10) + 20; 
+        let nextLib = isWin ? Math.min(100, currentLib + libShift) : Math.max(0, currentLib - Math.floor(libShift / 1.5));
+        
+        let updateData = { liberation_pct: nextLib };
+        if(nextLib >= 100) updateData.controlling_faction = "Galactic Republic";
+        else if(nextLib <= 0) updateData.controlling_faction = "Confederacy of Independent Systems";
+
+        await supabaseClient.from('planets').update(updateData).eq('id', planetId);
+        
+        if(isWin) {
+            await writeLog('53rd Victory', `The 53rd Assault Battalion won a massive operations breakthrough on ${p.name}! Sector security rose +${libShift}%.`);
+            showToast("VICTORY FILED IN CENTRAL COMMAND MATRICES");
+        } else {
+            await writeLog('53rd Fallback', `The 53rd Battalion met overwhelming droid resistance on ${p.name} and established defensive positions.`);
+            showToast("TACTICAL FALLBACK FILED", true);
+        }
+        loadAll();
     }
 
     async function move53rdBattalion(planetId) {
         const p = DB.planets.find(pl=>pl.id===planetId);
         await supabaseClient.from('settings').upsert({ key: 'loc_53rd', value: String(planetId) });
-        await writeLog('53rd Fleet Movement', `The 53rd Assault Battalion re-routed sector flight lines and dropped anchors into the ${p ? p.name : 'Target'} system.`);
-        showToast('53rd BATTALION FLEET COORDINATES REDEPLOYED');
+        await writeLog('53rd Movement', `The 53rd Assault Battalion re-routed flight paths and dropped anchors at ${p ? p.name : 'Target'}.`);
+        showToast('53rd COORDINATES REDEPLOYED');
         loadAll();
     }
 
@@ -752,7 +804,7 @@
         const pass = document.getElementById('admin-password').value;
         if(pass === (DB.settings.admin_password || 'changeme')) {
             isAdmin = true; document.getElementById('login-error').textContent = ''; document.getElementById('admin-password').value = ''; closeLogin(); openAdmin();
-        } else { document.getElementById('login-error').textContent = 'DECRYPTION PASSKEY MATCH REJECTED'; }
+        } else { document.getElementById('login-error').textContent = 'DECRYPTION KEY INCORRECT'; }
     }
 
     function switchTab(tab) { activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); renderAdminBody(); }
@@ -763,44 +815,32 @@
         if(activeTab === 'campaign') {
             body.innerHTML = `
             <div class="config-step">
-                <div class="config-step-num">AUTONOMOUS TIME SIMULATION INTERFACE</div>
+                <div class="config-step-num">AUTONOMOUS SANDBOX CHRONOMETER</div>
                 <div class="form-group">
-                    <label class="form-label">Active Simulation Phase Clock</label>
+                    <label class="form-label">Simulate Global Warzone Timeline</label>
                     <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
                         <h2 style="font-family:var(--font-display);color:var(--warn);font-size:28px" id="turn-display">${DB.settings.campaign_turn || 1}</h2>
-                        <button class="btn success" style="flex:1;padding:12px" onclick="modifyTurn(1)">⏩ CYCLE TIME DECK (Simulate Galaxy Turn)</button>
+                        <button class="btn success" style="flex:1;padding:12px" onclick="modifyTurn(1)">⏩ ADVANCE SANDBOX PHASE CYCLE</button>
                     </div>
                 </div>
-            </div>
-            <form onsubmit="saveCampaignMeta(event)" class="config-step">
-                <div class="config-step-num">WAR ROOM OVERRIDES</div>
-                <div class="form-group"><label class="form-label">Campaign Identity Label</label><input class="form-input" id="cam-name" value="${DB.settings.campaign_name || ''}"></div>
-                <div class="form-group"><label class="form-label">Terminal Override Passcode</label><input class="form-input" type="password" id="cam-pass" value="${DB.settings.admin_password || ''}"></div>
-                <button class="btn success" type="submit" style="width:100%">UPDATE CORE PARAMS</button>
-            </form>`;
+            </div>`;
         }
         if(activeTab === 'log') {
             body.innerHTML = `
-            <div class="panel-label">Telemetry Logistics Record Loop</div>
+            <div class="panel-label">Logistics Simulation Feed</div>
             <div style="display:flex;flex-direction:column;gap:8px;max-height:350px;overflow-y:auto">
                 ${DB.logs.map(l => `<div class="unit-item" style="font-size:12px"><span style="color:var(--warn)">[${l.event_type.toUpperCase()}]</span> ${l.description}</div>`).join('')}
             </div>`;
         }
     }
 
-    async function saveCampaignMeta(e) { e.preventDefault(); const n = document.getElementById('cam-name').value.trim(); const p = document.getElementById('cam-pass').value.trim(); await Promise.all([ supabaseClient.from('settings').upsert({ key: 'campaign_name', value: n }), supabaseClient.from('settings').upsert({ key: 'admin_password', value: p }) ]); showToast('METADATA LINK REALIGNED'); loadAll(); }
-
-    // THE FULLY AUTONOMOUS GALACTIC SANDBOX WARFARESIM ENTRANCE CYCLE
     async function modifyTurn(dir) {
         if (dir !== 1) return;
-        let currentTurn = parseInt(DB.settings.campaign_turn || 1);
-        let nextTurn = currentTurn + 1;
-        
-        let rep = DB.factions.find(f => f.name === "Galactic Republic");
-        let cis = DB.factions.find(f => f.name === "Confederacy of Independent Systems");
+        let currentTurn = parseInt(DB.settings.campaign_turn || 1); let nextTurn = currentTurn + 1;
+        let rep = DB.factions.find(f => f.name === "Galactic Republic"); let cis = DB.factions.find(f => f.name === "Confederacy of Independent Systems");
         if (!rep || !cis) return;
 
-        showToast("RUNNING STRATEGIC COMBAT SIMULATION ENGINE...");
+        showToast("COMPUTING EXPANDED SECTOR FRONT ENCOUNTERS...");
         let simulationLogs = [];
 
         let repGain = 0; let cisGain = 0;
@@ -814,45 +854,41 @@
             }
         });
 
-        let nextRepCredits = (rep.credits || 0) + repGain;
-        let nextCisCredits = (cis.credits || 0) + cisGain;
+        let nextRepCredits = (rep.credits || 0) + repGain; let nextCisCredits = (cis.credits || 0) + cisGain;
 
         if (nextCisCredits >= 600) {
             let eligiblePlanets = DB.planets.filter(p => p.controlling_faction.includes("Confederacy") && p.id !== DB.settings.loc_53rd);
             if (eligiblePlanets.length) {
                 let targetP = eligiblePlanets[Math.floor(Math.random() * eligiblePlanets.length)];
                 nextCisCredits -= 400;
-                await supabaseClient.from('units').insert([{ name: "CIS Armored B1 Battalion", faction: "Confederacy of Independent Systems", planet_id: targetP.id, unit_type: "Combat Garrison", size: "Heavy Division" }]);
-                simulationLogs.push(`CIS purchased heavy tactical droids and garrisoned them on ${targetP.name}.`);
+                await supabaseClient.from('units').insert([{ name: "CIS Droid Garrison Fleet", faction: "Confederacy of Independent Systems", planet_id: targetP.id, unit_type: "Combat Garrison", size: "Heavy Flotilla" }]);
+                simulationLogs.push(`CIS reinforced production shield parameters at the ${targetP.name} front.`);
             }
         }
 
         let legions = ["501st", "212th", "104th"];
+        let legionNamesMap = { "501st": "501st Legion", "212th": "212th Attack Battalion", "104th": "104th Wolfpack Battalion" };
         let updatedPlanetMap = new Map();
         DB.planets.forEach(p => updatedPlanetMap.set(p.id, { ...p }));
 
         for (let leg of legions) {
-            let currentPlanetId = DB.settings['loc_' + leg];
-            let p = updatedPlanetMap.get(currentPlanetId);
-            if (!p) continue;
-
-            if (currentPlanetId === DB.settings.loc_53rd) continue;
+            let currentPlanetId = DB.settings['loc_' + leg]; let p = updatedPlanetMap.get(currentPlanetId);
+            if (!p || currentPlanetId === DB.settings.loc_53rd) continue;
 
             if (p.liberation_pct < 100) {
                 let winChance = 0.50;
                 if (p.strategic_value === "Low") winChance = 0.75;
                 else if (p.strategic_value === "High") winChance = 0.40;
-                else if (p.strategic_value === "Critical") winChance = 0.30;
+                else if (p.strategic_value === "Critical") winChance = 0.25;
 
-                let isWin = Math.random() < winChance;
-                let libShift = Math.floor(Math.random() * 15) + 10; 
+                let isWin = Math.random() < winChance; let libShift = Math.floor(Math.random() * 12) + 8; 
 
                 if (isWin) {
                     p.liberation_pct = Math.min(100, (p.liberation_pct || 0) + libShift);
-                    simulationLogs.push(`The ${leg} Legion won a major tactical breakthrough on ${p.name} (+${libShift}% Liberation).`);
+                    simulationLogs.push(`The ${legionNamesMap[leg]} broke droid perimeter walls on ${p.name} (+${libShift}%).`);
                 } else {
                     p.liberation_pct = Math.max(0, (p.liberation_pct || 0) - Math.floor(libShift / 2));
-                    simulationLogs.push(`The ${leg} Legion met heavy Separatist armor resistance on ${p.name} and took structural casualties.`);
+                    simulationLogs.push(`The ${legionNamesMap[leg]} reported structural attrition maneuvers against heavy shielding at ${p.name}.`);
                 }
 
                 if (p.liberation_pct >= 100) { p.controlling_faction = "Galactic Republic"; }
@@ -864,7 +900,7 @@
             if (p.id === DB.settings.loc_53rd || p.id === DB.settings.loc_501st || p.id === DB.settings.loc_212th || p.id === DB.settings.loc_104th) return;
             let currentPlan = updatedPlanetMap.get(p.id);
             if (currentPlan && currentPlan.liberation_pct > 0 && currentPlan.liberation_pct < 100) {
-                currentPlan.liberation_pct = Math.max(0, currentPlan.liberation_pct - (Math.floor(Math.random() * 6) + 2));
+                currentPlan.liberation_pct = Math.max(0, currentPlan.liberation_pct - (Math.floor(Math.random() * 5) + 2));
                 if(currentPlan.liberation_pct <= 0) currentPlan.controlling_faction = "Confederacy of Independent Systems";
             }
         });
@@ -874,8 +910,7 @@
         }
 
         for (let leg of legions) {
-            let currentPlanetId = DB.settings['loc_' + leg];
-            let currentPlan = updatedPlanetMap.get(currentPlanetId);
+            let currentPlanetId = DB.settings['loc_' + leg]; let currentPlan = updatedPlanetMap.get(currentPlanetId);
             if (!currentPlan) continue;
 
             if (currentPlan.liberation_pct >= 100) {
@@ -887,7 +922,7 @@
                     options.sort((x, y) => getSVSize(y.strategic_value) - getSVSize(x.strategic_value));
                     let nextDest = options[0];
                     await supabaseClient.from('settings').upsert({ key: 'loc_' + leg, value: String(nextDest.id) });
-                    simulationLogs.push(`The ${leg} Legion completed orbital security sweeps and moved out to attack ${nextDest.name}.`);
+                    simulationLogs.push(`The ${legionNamesMap[leg]} completed orbital tracking sweeps and jumped vectors toward ${nextDest.name}.`);
                 }
             }
         }
@@ -897,7 +932,6 @@
         await supabaseClient.from('settings').upsert({ key: 'campaign_turn', value: String(nextTurn) });
 
         for (let simLog of simulationLogs) { await writeLog("Campaign Sim", simLog); }
-        showToast(`PHASE CONVERTED: Advanced onto Turn Phase ${nextTurn}.`);
         loadAll();
     }
 </script>
