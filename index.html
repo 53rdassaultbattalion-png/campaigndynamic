@@ -217,7 +217,7 @@
         </div>
         <div class="turn-badge" id="header-turn">PHASE 1</div>
         <div class="header-right">
-            <button class="btn" id="admin-toggle-btn" onclick="openAdmin()">⚙ OVERRIDE TERMINAL</button>
+            <button class="btn" id="admin-toggle-btn" onclick="openAdmin()">⚙ TERMINAL OVERRIDE</button>
         </div>
     </header>
 
@@ -758,18 +758,30 @@
         loadAll();
     }
 
+    // MODULAR ROUTING SWITCH OVERFLOW OPENER
     function openAdmin() {
-        if(!isAdmin) { document.getElementById('login-screen').classList.add('open'); document.getElementById('admin-password').focus(); }
-        else { document.getElementById('admin-modal').classList.add('open'); switchTab('campaign'); }
+        if(!isAdmin) { 
+            document.getElementById('login-screen').classList.add('open'); 
+            document.getElementById('admin-password').focus(); 
+        } else { 
+            document.getElementById('admin-modal').classList.add('open'); 
+            switchTab('campaign'); 
+        }
     }
-    function closeLogin() { document.getElementById('login-screen').classList.remove('open'); }
+    function closeLogin() { document.getElementById('login-screen').classList.remove('remove'); document.getElementById('login-screen').classList.remove('open'); }
     function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
 
     function doLogin() {
         const pass = document.getElementById('admin-password').value;
         if(pass === (DB.settings.admin_password || 'changeme')) {
-            isAdmin = true; document.getElementById('login-error').textContent = ''; document.getElementById('admin-password').value = ''; closeLogin(); openAdmin();
-        } else { document.getElementById('login-error').textContent = 'DECRYPTION KEY INCORRECT'; }
+            isAdmin = true; 
+            document.getElementById('login-error').textContent = ''; 
+            document.getElementById('admin-password').value = ''; 
+            closeLogin(); 
+            openAdmin();
+        } else { 
+            document.getElementById('login-error').textContent = 'DECRYPTION KEY INCORRECT'; 
+        }
     }
 
     function switchTab(tab) { activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); renderAdminBody(); }
@@ -827,7 +839,7 @@
                 let targetP = eligiblePlanets[Math.floor(Math.random() * eligiblePlanets.length)];
                 nextCisCredits -= 400;
                 await supabaseClient.from('units').insert([{ name: "CIS Droid Garrison Fleet", faction: "Confederacy of Independent Systems", planet_id: targetP.id, unit_type: "Combat Garrison", size: "Heavy Flotilla" }]);
-                simulationLogs.push(`CIS reinforced production shield parameters at the ${targetP.name} front.`);
+                simulationLogs.push::(`CIS reinforced production shield parameters at the ${targetP.name} front.`);
             }
         }
 
