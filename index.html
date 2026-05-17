@@ -139,30 +139,6 @@
         .form-label { display: block; font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; }
         .form-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-bright); padding: 10px 14px; border-radius: 2px; font-family: var(--font-body); font-size: 14px; }
         
-        #login-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        #login-screen.open { display: flex; }
-        .login-box { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; padding: 36px; width: 360px; box-shadow: 0 0 50px rgba(0,170,255,0.25); text-align: center; }
-        .login-icon { font-size: 40px; margin-bottom: 16px; }
-        .login-title { font-family: var(--font-display); font-size: 14px; letter-spacing: 3px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; }
-        .login-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 24px; }
-        .login-error { color: var(--danger); font-size: 12px; margin-top: 12px; min-height: 18px; font-family: var(--font-display); }
-
-        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
-        .admin-table th { font-family: var(--font-display); font-size: 9px; letter-spacing: 2px; color: var(--text-dim); padding: 10px; text-align: left; border-bottom: 1px solid var(--border); text-transform: uppercase; }
-        .admin-table td { padding: 10px; border-bottom: 1px solid rgba(30,120,200,0.1); color: var(--text); vertical-align: middle; }
-
-        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: #040c17; border: 1px solid var(--border-bright); color: var(--accent); font-family: var(--font-display); font-size: 11px; letter-spacing: 2px; padding: 12px 24px; border-radius: 3px; z-index: 999; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; box-shadow: var(--glow); }
-        #toast.show { transform: translateX(-50%) translateY(0); }
-        #toast.error { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
-        #setup-banner { position: fixed; top: 60px; left: 0; right: 0; background: rgba(255, 170, 0, 0.1); border-bottom: 1px solid rgba(255, 170, 0, 0.3); padding: 12px; text-align: center; font-size: 13px; color: var(--warn); z-index: 50; display: none; letter-spacing: 1px; }
-        #config-screen { position: fixed; inset: 0; background: var(--bg); z-index: 300; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 40px 0; }
-        .config-box { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; padding: 40px; width: 580px; box-shadow: 0 0 60px rgba(0,170,255,0.2); }
-        .config-title { font-family: var(--font-display); font-size: 20px; letter-spacing: 4px; color: var(--accent2); text-align: center; margin-bottom: 6px; text-transform: uppercase; }
-        .config-sub { text-align: center; font-size: 11px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 30px; }
-        .config-step { background: rgba(0,170,255,0.03); border: 1px solid var(--border); border-radius: 3px; padding: 16px; margin-bottom: 16px; font-size: 13px; }
-        .config-step-num { font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--accent); margin-bottom: 8px; }
-        
-        /* Specialized Color Ring Configurations for all Battalions */
         @keyframes hq-pulse { 0% { r: 12; opacity: 1; } 100% { r: 35; opacity: 0; } }
         .hq-ring-53rd { animation: hq-pulse 2.0s ease-out infinite; stroke: #00aaff; stroke-width: 2.5; }
         .hq-ring-501st { animation: hq-pulse 2.2s ease-out infinite; stroke: #2a6eff; stroke-width: 2; }
@@ -191,7 +167,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Supabase Anon Key</label>
-                <input class="form-input" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                <input class="form-input" id="cfg-key" placeholder="sb_publishable_...">
             </div>
             <div id="cfg-error" style="color:var(--danger);font-size:12px;min-height:18px;margin-top:6px"></div>
         </div>
@@ -359,7 +335,7 @@
     let isAdmin = false;
     let activeTab = 'campaign';
     let currentDetailTab = 'garrison';
-    let mapState = { x: 0, y: 0, scale: 0.4, dragging: false, lastX: 0, lastY: 0 }; // Start zoomed out to see large map
+    let mapState = { x: 0, y: 0, scale: 0.4, dragging: false, lastX: 0, lastY: 0 };
 
     window.addEventListener('DOMContentLoaded', () => { 
         buildGridLines();
@@ -431,7 +407,6 @@
         } catch (e) { showToast("Data acquisition stream fault", true); }
     }
 
-    // EXTENSIVE 20-PLANET CANON REFERENCE SCALE MATRICES
     async function seedLoreDatabase() {
         showToast("PRE-POPULATING AUTHENTIC MACRO SECTOR ATLASED ARRAY...");
         
@@ -441,27 +416,19 @@
         ];
         await supabaseClient.from('factions').insert(initialFactions);
 
-        // Map layout built around standard Lucasfilm Galactic coordinates scaled to a 2500px deck
         const initialPlanets = [
-            -- Deep Core / Core Worlds
             { name: "Coruscant", sector: "Corusca (L-9)", emoji: "🏙️", x: 1250, y: 1250, controlling_faction: "Galactic Republic", credit_yield: 500, strategic_value: "Critical", liberation_pct: 100, description: "The ecumenopolis capital center of coordinates grid. Heart of the Republic defense arrays." },
             { name: "Anaxes", sector: "Azure (L-9)", emoji: "⚓", x: 1280, y: 1160, controlling_faction: "Galactic Republic", credit_yield: 300, strategic_value: "High", liberation_pct: 100, description: "The Defender of the Core. Heavily protected fortress sector hosting major fleet shipyards." },
             { name: "Corellia", sector: "Corellian (M-11)", emoji: "🏭", x: 1190, y: 1320, controlling_faction: "Galactic Republic", credit_yield: 400, strategic_value: "Critical", liberation_pct: 100, description: "Industrial powerhouse world famous for producing the finest capital ships and fast freighters." },
             { name: "Cato Neimoidia", sector: "Quellor (N-11)", emoji: "🛕", x: 1380, y: 1380, controlling_faction: "Confederacy of Independent Systems", credit_yield: 350, strategic_value: "High", liberation_pct: 0, description: "Wealthy purse world of the Trade Federation. Suspended bridge cities over foggy canyons." },
             { name: "Kuad", sector: "Kuat (M-10)", emoji: "⭕", x: 1320, y: 1220, controlling_faction: "Galactic Republic", credit_yield: 450, strategic_value: "Critical", liberation_pct: 100, description: "Kuat Drive Yards location zone. Vital industrial anchor producing the Republic fleet's Star Destroyers." },
-
-            -- Inner Rim / Colonies / Expansion Region
             { name: "Christophsis", sector: "Savareen (M-16)", emoji: "💎", x: 920, y: 1550, controlling_faction: "Neutral", credit_yield: 220, strategic_value: "High", liberation_pct: 0, description: "Crystalline planet rich in raw minerals. A highly contested strategic bridgehead into the Outer Rim." },
             { name: "Teth", sector: "Brak (U-12)", emoji: "🌿", x: 1020, y: 1850, controlling_faction: "Neutral", credit_yield: 110, strategic_value: "Medium", liberation_pct: 0, description: "Jungle world surrounded by massive cliffs. Holds an ancient monastery used as a pirate smuggling den." },
-
-            -- Mid Rim Nodes
             { name: "Malastare", sector: "Dustig (K-16)", emoji: "🏁", x: 740, y: 1620, controlling_faction: "Galactic Republic", credit_yield: 280, strategic_value: "High", liberation_pct: 100, description: "Methane-rich world governed by the Gran. Home of fast podracing circuits and critical fuel reserves." },
             { name: "Bothawui", sector: "Bothan (R-14)", emoji: "🐾", x: 1820, y: 1580, controlling_faction: "Galactic Republic", credit_yield: 200, strategic_value: "Medium", liberation_pct: 100, description: "Homeworld of the Bothans. Holds the primary hub architecture for the Republic's shadow spy networks." },
-            { name: "Nabud", sector: "Chommell (O-17)", emoji: "🏰", x: 1650, y: 1920, controlling_faction: "Galactic Republic", credit_yield: 240, strategic_value: "Medium", liberation_pct: 100, description: "Picturesque planet of lakes and plains. Home to a sophisticated human society and the subterranean Gungans." },
+            { name: "Naboo", sector: "Chommell (O-17)", emoji: "🏰", x: 1650, y: 1920, controlling_faction: "Galactic Republic", credit_yield: 240, strategic_value: "Medium", liberation_pct: 100, description: "Picturesque planet of lakes and plains. Home to a sophisticated human society and the subterranean Gungans." },
             { name: "Kashyyyk", sector: "Mytaranor (P-9)", emoji: "🌲", x: 1780, y: 1050, controlling_faction: "Galactic Republic", credit_yield: 210, strategic_value: "High", liberation_pct: 100, description: "Wookiee homeworld wrapped in towering Wroshyr forests. Anchors navigation along the eastern trade routes." },
             { name: "Ryloth", sector: "Gaulus (R-16)", emoji: "🌵", x: 1950, y: 1820, controlling_faction: "Neutral", credit_yield: 130, strategic_value: "Medium", liberation_pct: 0, description: "Twi'lek homeworld locked in harsh tidal rotations. Under constant pressure by Separatist droid blockades." },
-
-            -- Outer Rim Strongholds
             { name: "Geonosis", sector: "Arkanis (R-16)", emoji: "🏜️", x: 1920, y: 1720, controlling_faction: "Confederacy of Independent Systems", credit_yield: 380, strategic_value: "Critical", liberation_pct: 0, description: "Site of the first battle of the Clone Wars. Massive underground foundries mass-producing battle droids." },
             { name: "Tatooine", sector: "Arkanis (R-16)", emoji: "☀️", x: 1980, y: 1680, controlling_faction: "Neutral", credit_yield: 70, strategic_value: "Low", liberation_pct: 0, description: "Harsh desert planet under the iron grip of the Hutt Cartel. A haven for smugglers and outer-rim scumbags." },
             { name: "Kamino", sector: "Wild Space (S-15)", emoji: "🌊", x: 2150, y: 1950, controlling_faction: "Galactic Republic", credit_yield: 320, strategic_value: "Critical", liberation_pct: 100, description: "Storm-drenched ocean world outside the main map lines. Birthplace and training hub of the clone army." },
@@ -473,7 +440,6 @@
         ];
         const { data: planetsData } = await supabaseClient.from('planets').insert(initialPlanets).select();
 
-        // High accuracy connection array strings mirroring major trade routes (e.g. Perlemian Trade Route)
         const initialConnections = [
             { planet_a: "Coruscant", planet_b: "Anaxes" },
             { planet_a: "Anaxes", planet_b: "Muunilinst" },
@@ -488,13 +454,13 @@
             { planet_a: "Corellia", planet_b: "Christophsis" },
             { planet_a: "Christophsis", planet_b: "Malastare" },
             { planet_a: "Malastare", planet_b: "Teth" },
-            { planet_a: "Teth", planet_b: "Nabud" },
-            { planet_a: "Nabud", planet_b: "Ryloth" },
+            { planet_a: "Teth", planet_b: "Naboo" },
+            { planet_a: "Naboo", planet_b: "Ryloth" },
             { planet_a: "Ryloth", planet_b: "Tatooine" },
             { planet_a: "Tatooine", planet_b: "Geonosis" },
             { planet_a: "Geonosis", planet_b: "Kamino" },
             { planet_a: "Coruscant", planet_b: "Umbara" },
-            { planet_a: "Umbara", planet_b: "Nabud" }
+            { planet_a: "Umbara", planet_b: "Naboo" }
         ];
         await supabaseClient.from('planet_connections').insert(initialConnections);
 
@@ -714,7 +680,6 @@
                     <div class="unit-item">
                         <div style="display:flex;justify-content:space-between">
                             <span class="unit-name">${u.name}</span>
-                            <span style="color:${getFactionColor(u.faction)};font-size:11px;font-weight:600">${u.faction}</span>
                         </div>
                     </div>
                 `).join('');
