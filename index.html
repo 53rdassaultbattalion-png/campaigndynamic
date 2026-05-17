@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Galactic Campaign — Star Wars Starsim</title>
-    <link href="https://fonts.googleapis.com/css2family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -454,7 +454,7 @@
         .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
         .form-group { margin-bottom: 14px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-row { display grid-template-columns: 1fr 1fr; display: grid; gap: 12px; }
         .form-label {
             display: block;
             font-family: var(--font-display);
@@ -641,7 +641,6 @@
 
 <canvas id="starfield"></canvas>
 
-<!-- INITIAL SUPABASE DATABASE SETTING COMPONENT -->
 <div id="config-screen">
     <div class="config-box">
         <div class="config-title">🌌 Galaxy Campaign</div>
@@ -703,7 +702,6 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     </div>
 </div>
 
-<!-- ADMINISTRATIVE CONSOLE MAIN MODAL CONTAINER -->
 <div class="modal-overlay" id="admin-modal">
     <div class="modal">
         <div class="modal-header">
@@ -722,7 +720,6 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     </div>
 </div>
 
-<!-- MAIN CLIENT APPLICATION ENGINE UI -->
 <div id="app" style="display:none">
     <header>
         <div>
@@ -735,13 +732,11 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
         </div>
     </header>
 
-    <!-- LEFT SIDEBAR: ACTIVE FACTIONS STATUS PANELS -->
     <div id="faction-panel">
         <div class="panel-label">Faction Status</div>
         <div id="faction-list"></div>
     </div>
 
-    <!-- CENTRAl DISPlAY: INTERACTIVE SVG TACTICAL MAP CONTAINER -->
     <div id="map-container">
         <svg id="map-svg" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -772,7 +767,6 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
         </div>
     </div>
 
-    <!-- RIGHT SIDEBAR: INTELLIGENCE METRICS DISPlAY PANEL -->
     <div id="detail-panel">
         <div id="detail-empty">
             <div class="detail-icon">🌌</div>
@@ -895,7 +889,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
             document.getElementById('config-screen').style.display = 'none';
             initApp(url, key);
         }
-    </div>
+    }
 
     async function initApp(url, key) {
         supabase = window.supabase.createClient(url, key);
@@ -1018,7 +1012,6 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
             const isSelected = selectedPlanetId === p.id;
             const standingUnits = DB.units.filter(u=>u.planet_id===p.id && u.status !== 'Destroyed');
             
-            // Check if multiple factions reside on this planet (Conflict Mode)
             const uniqueFactions = [...new Set(standingUnits.map(u => u.faction))].filter(f => f !== p.controlling_faction);
             const isUnderConflict = uniqueFactions.length > 0 && p.controlling_faction !== 'Neutral';
 
@@ -1081,7 +1074,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     }
 
     // ==========================================
-    // PLANET INTEl DISPlAY SIDEBAR ARCHITECTURE
+    // PLANET INTEL DISPLAY SIDEBAR ARCHITECTURE
     // ==========================================
     function showPlanetDetail(id) {
         const p = DB.planets.find(pl=>pl.id===id);
@@ -1518,7 +1511,6 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
         let current = parseInt(DB.settings.campaign_turn || 1);
         let nextTurn = Math.max(1, current + dir);
         
-        // Execute dynamic industrial income updates on Turn Advance
         if (dir === 1) {
             for (let f of DB.factions) {
                 let items = DB.planets.filter(p => p.controlling_faction === f.name);
