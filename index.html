@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grand Republic Command Deck</title>
+    <title>Republic Command Matrix</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -44,9 +44,8 @@
         .btn { font-family: var(--font-display); font-size: 11px; letter-spacing: 1.5px; padding: 7px 16px; border-radius: 2px; border: 1px solid var(--border-bright); background: transparent; color: var(--accent); cursor: pointer; transition: all 0.2s ease-in-out; text-transform: uppercase; }
         .btn:hover { background: rgba(0, 170, 255, 0.15); box-shadow: var(--glow); color: var(--text-bright); }
         .btn.danger { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
-        .btn.danger:hover { background: rgba(255, 68, 68, 0.15); }
         .btn.success { border-color: rgba(0, 255, 136, 0.5); color: var(--success); }
-        .btn.success:hover { background: rgba(0, 255, 136, 0.15); }
+        .btn.warn { border-color: rgba(255, 170, 0, 0.5); color: var(--warn); }
 
         #faction-panel { background: var(--panel); border-right: 1px solid var(--border); overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
         .panel-label { font-family: var(--font-display); font-size: 10px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
@@ -61,6 +60,7 @@
         .terr-count { font-size: 12px; color: var(--text-dim); margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 6px; }
         .terr-count span { color: var(--text-bright); font-weight: 600; }
 
+        /* Logistics Shopping Pad Elements Layout */
         .logistics-terminal { background: rgba(0, 10, 25, 0.4); border: 1px dashed var(--border-bright); padding: 12px; margin-top: 10px; border-radius: 3px; }
         .logistics-title { font-family: var(--font-display); font-size: 9px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; margin-bottom: 8px; }
         .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 10px; border: 1px solid rgba(0,170,255,0.1); margin-bottom: 6px; border-radius: 2px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
@@ -95,6 +95,7 @@
         .hq-container-badges { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
         .hq-marker-badge { display: inline-flex; align-items: center; background: rgba(0, 170, 255, 0.12); border: 1px solid var(--accent); color: var(--accent2); padding: 4px 10px; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; border-radius: 2px; text-shadow: 0 0 5px var(--accent); width: fit-content; }
 
+        /* Helldivers-Style Liberation Gauge Components */
         .liberation-container { margin-top: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,170,255,0.1); padding: 10px; border-radius: 2px; }
         .liberation-meta { display: flex; justify-content: space-between; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; margin-bottom: 4px; }
         .liberation-bar-outer { width: 100%; height: 6px; background: rgba(255, 68, 68, 0.3); border-radius: 1px; overflow: hidden; position: relative; }
@@ -139,6 +140,30 @@
         .form-label { display: block; font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; }
         .form-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-bright); padding: 10px 14px; border-radius: 2px; font-family: var(--font-body); font-size: 14px; }
         
+        #login-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        #login-screen.open { display: flex; }
+        .login-box { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; padding: 36px; width: 360px; box-shadow: 0 0 50px rgba(0,170,255,0.25); text-align: center; }
+        .login-icon { font-size: 40px; margin-bottom: 16px; }
+        .login-title { font-family: var(--font-display); font-size: 14px; letter-spacing: 3px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; }
+        .login-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 24px; }
+        .login-error { color: var(--danger); font-size: 12px; margin-top: 12px; min-height: 18px; font-family: var(--font-display); }
+
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+        .admin-table th { font-family: var(--font-display); font-size: 9px; letter-spacing: 2px; color: var(--text-dim); padding: 10px; text-align: left; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+        .admin-table td { padding: 10px; border-bottom: 1px solid rgba(30,120,200,0.1); color: var(--text); vertical-align: middle; }
+
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: #040c17; border: 1px solid var(--border-bright); color: var(--accent); font-family: var(--font-display); font-size: 11px; letter-spacing: 2px; padding: 12px 24px; border-radius: 3px; z-index: 999; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; box-shadow: var(--glow); }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+        #toast.error { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
+        #setup-banner { position: fixed; top: 60px; left: 0; right: 0; background: rgba(255, 170, 0, 0.1); border-bottom: 1px solid rgba(255, 170, 0, 0.3); padding: 12px; text-align: center; font-size: 13px; color: var(--warn); z-index: 50; display: none; letter-spacing: 1px; }
+        #config-screen { position: fixed; inset: 0; background: var(--bg); z-index: 300; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 40px 0; }
+        .config-box { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; padding: 40px; width: 580px; box-shadow: 0 0 60px rgba(0,170,255,0.2); }
+        .config-title { font-family: var(--font-display); font-size: 20px; letter-spacing: 4px; color: var(--accent2); text-align: center; margin-bottom: 6px; text-transform: uppercase; }
+        .config-sub { text-align: center; font-size: 11px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 30px; }
+        .config-step { background: rgba(0,170,255,0.03); border: 1px solid var(--border); border-radius: 3px; padding: 16px; margin-bottom: 16px; font-size: 13px; }
+        .config-step-num { font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--accent); margin-bottom: 8px; }
+        
+        /* Specialized Color Ring Configurations for all Battalions */
         @keyframes hq-pulse { 0% { r: 12; opacity: 1; } 100% { r: 35; opacity: 0; } }
         .hq-ring-53rd { animation: hq-pulse 2.0s ease-out infinite; stroke: #00aaff; stroke-width: 2.5; }
         .hq-ring-501st { animation: hq-pulse 2.2s ease-out infinite; stroke: #2a6eff; stroke-width: 2; }
@@ -699,6 +724,7 @@
             `).join('');
         }
 
+        // DYNAMIC CONSOLE ACTION ARRAY INTERFACE CONTROLS
         const actionArea = document.getElementById('d-admin-actions');
         if(isAdmin) {
             let hqPlanetId = DB.settings.loc_53rd;
@@ -758,30 +784,18 @@
         loadAll();
     }
 
-    // MODULAR ROUTING SWITCH OVERFLOW OPENER
     function openAdmin() {
-        if(!isAdmin) { 
-            document.getElementById('login-screen').classList.add('open'); 
-            document.getElementById('admin-password').focus(); 
-        } else { 
-            document.getElementById('admin-modal').classList.add('open'); 
-            switchTab('campaign'); 
-        }
+        if(!isAdmin) { document.getElementById('login-screen').classList.add('open'); document.getElementById('admin-password').focus(); }
+        else { document.getElementById('admin-modal').classList.add('open'); switchTab('campaign'); }
     }
-    function closeLogin() { document.getElementById('login-screen').classList.remove('remove'); document.getElementById('login-screen').classList.remove('open'); }
+    function closeLogin() { document.getElementById('login-screen').classList.remove('open'); }
     function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
 
     function doLogin() {
         const pass = document.getElementById('admin-password').value;
         if(pass === (DB.settings.admin_password || 'changeme')) {
-            isAdmin = true; 
-            document.getElementById('login-error').textContent = ''; 
-            document.getElementById('admin-password').value = ''; 
-            closeLogin(); 
-            openAdmin();
-        } else { 
-            document.getElementById('login-error').textContent = 'DECRYPTION KEY INCORRECT'; 
-        }
+            isAdmin = true; document.getElementById('login-error').textContent = ''; document.getElementById('admin-password').value = ''; closeLogin(); openAdmin();
+        } else { document.getElementById('login-error').textContent = 'DECRYPTION KEY INCORRECT'; }
     }
 
     function switchTab(tab) { activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); renderAdminBody(); }
@@ -839,7 +853,7 @@
                 let targetP = eligiblePlanets[Math.floor(Math.random() * eligiblePlanets.length)];
                 nextCisCredits -= 400;
                 await supabaseClient.from('units').insert([{ name: "CIS Droid Garrison Fleet", faction: "Confederacy of Independent Systems", planet_id: targetP.id, unit_type: "Combat Garrison", size: "Heavy Flotilla" }]);
-                simulationLogs.push::(`CIS reinforced production shield parameters at the ${targetP.name} front.`);
+                simulationLogs.push(`CIS reinforced production shield parameters at the ${targetP.name} front.`);
             }
         }
 
