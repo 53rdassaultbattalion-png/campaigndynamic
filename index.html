@@ -838,7 +838,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     // ==========================================
     // DATA MODEL STATE ARCHITECTURE
     // ==========================================
-    let supabase = null;
+    let supabaseClient = null; // Changed variable name to fix name clash
     let DB = { factions: [], planets: [], connections: [], units: [], settings: {}, logs: [] };
     let selectedPlanetId = null;
     let isAdmin = false;
@@ -892,7 +892,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     }
 
     async function initApp(url, key) {
-        supabase = window.supabase.createClient(url, key);
+        supabaseClient = window.supabase.createClient(url, key);
         document.getElementById('app').style.display = 'grid';
         await loadAll();
         setupMapInteraction();
@@ -905,12 +905,12 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     async function loadAll() {
         try {
             const [f, p, c, u, s, l] = await Promise.all([
-                supabase.from('factions').select('*').order('name'),
-                supabase.from('planets').select('*').order('name'),
-                supabase.from('planet_connections').select('*'),
-                supabase.from('units').select('*').order('name'),
-                supabase.from('settings').select('*'),
-                supabase.from('campaign_log').select('*').order('created_at', {ascending: false}).limit(40)
+                supabaseClient.from('factions').select('*').order('name'),
+                supabaseClient.from('planets').select('*').order('name'),
+                supabaseClient.from('planet_connections').select('*'),
+                supabaseClient.from('units').select('*').order('name'),
+                supabaseClient.from('settings').select('*'),
+                supabaseClient.from('campaign_log').select('*').order('created_at', {ascending: false}).limit(40)
             ]);
             DB.factions = f.data || [];
             DB.planets = p.data || [];
@@ -940,7 +940,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     }
 
     function setupRealtime() {
-        supabase.channel('campaign-changes')
+        supabaseClient.channel('campaign-changes')
             .on('postgres_changes', { event: '*', schema: 'public' }, () => {
                 loadAll();
             })
@@ -1162,7 +1162,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     }
 
     async function writeLog(type, desc) {
-        await supabase.from('campaign_log').insert([{ event_type: type, description: desc, issued_by: 'Admin' }]);
+        await supabaseClient.from('campaign_log').insert([{ event_type: type, description: desc, issued_by: 'Admin' }]);
     }
 
     // ==========================================
@@ -1393,7 +1393,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
         const color = document.getElementById('fac-color').value;
         const emoji = document.getElementById('fac-emoji').value.trim();
         
-        const { error } = await supabase.from('factions').insert([{ name, shortname, color, emoji }]);
+        const { error } = await supabaseClient.from('factions').insert([{ name, shortname, color, emoji }]);
         if(error) showToast(error.message, true);
         else {
             await writeLog('Faction Created', `The faction alignment of "${name}" has been mapped.`);
@@ -1404,13 +1404,13 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
 
     async function updateFactionRes(id, field, value) {
         const updates = {}; updates[field] = parseInt(value) || 0;
-        await supabase.from('factions').update(updates).eq('id', id);
+        await supabaseClient.from('factions').update(updates).eq('id', id);
         showToast('ECONOMY MODIFIED');
     }
 
     async function deleteFaction(id, name) {
         if(!confirm(`Purge ${name} from data arrays?`)) return;
-        await supabase.from('factions').delete().eq('id', id);
+        await supabaseClient.from('factions').delete().eq('id', id);
         showToast('FACTION ARCHIVED');
         loadAll();
     }
@@ -1429,7 +1429,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
         const emoji = document.getElementById('pl-emoji').value.trim();
         const description = document.getElementById('pl-desc').value.trim();
 
-        const { error } = await supabase.from('planets').insert([{
+        const { error } = await supabaseClient.from('planets').insert([{
             name, sector, x, y, strategic_value, controlling_faction, credit_yield, supply_yield, fuel_yield, emoji, description
         }]);
         if(error) showToast(error.message, true);
@@ -1442,7 +1442,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
 
     async function deletePlanet(id, name) {
         if(!confirm(`Annihilate records of system ${name}?`)) return;
-        await supabase.from('planets').delete().eq('id', id);
+        await supabaseClient.from('planets').delete().eq('id', id);
         if (selectedPlanetId === id) selectedPlanetId = null;
         showToast('SYSTEM SCRUBBED');
         loadAll();
@@ -1454,7 +1454,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
         const planet_b = document.getElementById('cn-b').value;
         if(planet_a === planet_b) { showToast('Vector mismatch loop', true); return; }
 
-        const { error } = await supabase.from('planet_connections').insert([{ planet_a, planet_b }]);
+        const { error } = await supabaseClient.from('planet_connections').insert([{ planet_a, planet_b }]);
         if(error) showToast('Hyperlane bridge route exists or is invalid.', true);
         else {
             showToast('HYPERLANE LINKED');
@@ -1463,7 +1463,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     }
 
     async function deleteConnection(id) {
-        await supabase.from('planet_connections').delete().eq('id', id);
+        await supabaseClient.from('planet_connections').delete().eq('id', id);
         showToast('ROUTE COLLAPSED');
         loadAll();
     }
@@ -1477,7 +1477,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
         const planet_id = document.getElementById('un-pid').value;
         const status = document.getElementById('un-status').value;
 
-        const { error } = await supabase.from('units').insert([{ name, faction, unit_type, size, planet_id, status, strength:100 }]);
+        const { error } = await supabaseClient.from('units').insert([{ name, faction, unit_type, size, planet_id, status, strength:100 }]);
         if(error) showToast(error.message, true);
         else {
             const p = DB.planets.find(pl=>pl.id===planet_id);
@@ -1488,18 +1488,18 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
     }
 
     async function updateUnitStrength(id, val) {
-        await supabase.from('units').update({ strength: Math.max(0, Math.min(100, parseInt(val)||0)) }).eq('id', id);
+        await supabaseClient.from('units').update({ strength: Math.max(0, Math.min(100, parseInt(val)||0)) }).eq('id', id);
         showToast('COMBAT EFFECTIVENESS RECORDED');
     }
 
     async function updateUnitStatus(id, status) {
-        await supabase.from('units').update({ status }).eq('id', id);
+        await supabaseClient.from('units').update({ status }).eq('id', id);
         showToast('TACTICAL ASSESSMENT UPDATED');
         loadAll();
     }
 
     async function deleteUnit(id) {
-        await supabase.from('units').delete().eq('id', id);
+        await supabaseClient.from('units').delete().eq('id', id);
         showToast('ASSET STRUCK FROM MANIFEST');
         loadAll();
     }
@@ -1518,7 +1518,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
                 let s_gain = items.reduce((sum, p) => sum + (p.supply_yield || 0), 0);
                 let f_gain = items.reduce((sum, p) => sum + (p.fuel_yield || 0), 0);
                 
-                await supabase.from('factions').update({
+                await supabaseClient.from('factions').update({
                     credits: (f.credits || 0) + c_gain,
                     supplies: (f.supplies || 0) + s_gain,
                     fuel: (f.fuel || 0) + f_gain
@@ -1527,7 +1527,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
             await writeLog('Turn Processed', `Galactic production cycles have updated for standard turn cycle ${nextTurn}.`);
         }
 
-        await supabase.from('settings').upsert({ key: 'campaign_turn', value: String(nextTurn) });
+        await supabaseClient.from('settings').upsert({ key: 'campaign_turn', value: String(nextTurn) });
         showToast(`CHRONOMETER MODIFIED: TURN ${nextTurn}`);
         loadAll();
     }
@@ -1539,9 +1539,9 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
         const p = document.getElementById('cam-pass').value.trim();
 
         await Promise.all([
-            supabase.from('settings').upsert({ key: 'campaign_name', value: n }),
-            supabase.from('settings').upsert({ key: 'campaign_era', value: er }),
-            supabase.from('settings').upsert({ key: 'admin_password', value: p })
+            supabaseClient.from('settings').upsert({ key: 'campaign_name', value: n }),
+            supabaseClient.from('settings').upsert({ key: 'campaign_era', value: er }),
+            supabaseClient.from('settings').upsert({ key: 'admin_password', value: p })
         ]);
         showToast('MATRIX CRITERIA MODIFIED');
         loadAll();
@@ -1549,7 +1549,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
 
     async function clearLogs() {
         if(!confirm("Wipe simulation logs?")) return;
-        await supabase.from('campaign_log').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabaseClient.from('campaign_log').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         showToast('LOG STREAM PURGED');
         loadAll();
     }
@@ -1587,7 +1587,7 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
 
     async function executeSystemCapture(id, name, oldFac) {
         const nextFac = document.getElementById('cap-fac-sel').value;
-        const { error } = await supabase.from('planets').update({ controlling_faction: nextFac }).eq('id', id);
+        const { error } = await supabaseClient.from('planets').update({ controlling_faction: nextFac }).eq('id', id);
         
         if(error) showToast(error.message, true);
         else {
