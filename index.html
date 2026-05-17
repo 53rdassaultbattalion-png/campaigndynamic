@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic Campaign — Star Wars Starsim</title>
+    <title>53rd Assault Battalion — Galactic Campaign Matrix</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,9 +11,9 @@
             --bg: #020408;
             --bg2: #060d14;
             --bg3: #0a1520;
-            --panel: rgba(6, 18, 32, 0.95);
-            --border: rgba(30, 120, 200, 0.25);
-            --border-bright: rgba(30, 180, 255, 0.5);
+            --panel: rgba(5, 14, 26, 0.96);
+            --border: rgba(0, 170, 255, 0.2);
+            --border-bright: rgba(0, 170, 255, 0.6);
             --text: #c8dff0;
             --text-dim: #5a7a99;
             --text-bright: #e8f4ff;
@@ -22,9 +22,10 @@
             --warn: #fa0;
             --danger: #f44;
             --success: #0f8;
-            --glow: 0 0 20px rgba(0, 170, 255, 0.3);
+            --glow: 0 0 20px rgba(0, 170, 255, 0.4);
             --font-display: 'Orbitron', monospace;
             --font-body: 'Rajdhani', sans-serif;
+            --unit-53rd: #ffbc00; /* Distinct styling color for player unit */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,13 +40,11 @@
             user-select: none;
         }
 
-        #starfield {
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-        }
+        #starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
         #app {
             display: grid;
-            grid-template-columns: 280px 1fr 320px;
+            grid-template-columns: 310px 1fr 350px;
             grid-template-rows: 56px 1fr;
             height: 100vh;
             position: relative;
@@ -54,55 +53,40 @@
 
         header {
             grid-column: 1 / -1;
-            background: linear-gradient(90deg, #020c18 0%, #041220 50%, #020c18 100%);
-            border-bottom: 1px solid var(--border-bright);
+            background: linear-gradient(90deg, #020c18 0%, #051830 50%, #020c18 100%);
+            border-bottom: 2px solid var(--border-bright);
             display: flex;
             align-items: center;
             padding: 0 20px;
             gap: 20px;
-            position: relative;
-        }
-        header::after {
-            content: '';
-            position: absolute;
-            bottom: -2px; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--accent), transparent);
         }
         .header-title {
             font-family: var(--font-display);
-            font-size: 14px;
+            font-size: 15px;
             letter-spacing: 3px;
             color: var(--accent2);
-            text-shadow: 0 0 20px var(--accent);
+            text-shadow: 0 0 15px var(--accent);
             text-transform: uppercase;
         }
-        .header-sub {
-            font-size: 11px;
-            color: var(--text-dim);
-            letter-spacing: 2px;
-            margin-left: 4px;
-        }
-        .header-right {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .header-sub { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; }
+        .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+        
         .turn-badge {
             font-family: var(--font-display);
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: 2px;
             color: var(--warn);
-            border: 1px solid rgba(255, 170, 0, 0.4);
-            padding: 4px 12px;
+            border: 1px solid var(--warn);
+            padding: 4px 14px;
+            background: rgba(255, 170, 0, 0.05);
             border-radius: 2px;
         }
+        
         .btn {
             font-family: var(--font-display);
             font-size: 10px;
             letter-spacing: 1.5px;
-            padding: 6px 14px;
+            padding: 7px 16px;
             border-radius: 2px;
             border: 1px solid var(--border-bright);
             background: transparent;
@@ -111,13 +95,11 @@
             transition: all 0.2s;
             text-transform: uppercase;
         }
-        .btn:hover { background: rgba(0, 170, 255, 0.1); box-shadow: var(--glow); }
-        .btn.danger { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
-        .btn.danger:hover { background: rgba(255, 68, 68, 0.1); }
-        .btn.success { border-color: rgba(0, 255, 136, 0.5); color: var(--success); }
-        .btn.success:hover { background: rgba(0, 255, 136, 0.1); }
-        .btn.warn { border-color: rgba(255, 170, 0, 0.5); color: var(--warn); }
-        .btn.warn:hover { background: rgba(255, 170, 0, 0.1); }
+        .btn:hover { background: rgba(0, 170, 255, 0.15); box-shadow: var(--glow); }
+        .btn.danger { border-color: var(--danger); color: var(--danger); }
+        .btn.danger:hover { background: rgba(255, 68, 68, 0.15); }
+        .btn.success { border-color: var(--success); color: var(--success); }
+        .btn.success:hover { background: rgba(0, 255, 136, 0.15); }
 
         #faction-panel {
             background: var(--panel);
@@ -126,595 +108,153 @@
             padding: 16px 12px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
         }
         .panel-label {
             font-family: var(--font-display);
-            font-size: 9px;
-            letter-spacing: 3px;
+            font-size: 10px;
+            letter-spacing: 2px;
             color: var(--text-dim);
             text-transform: uppercase;
-            margin-bottom: 4px;
             padding-bottom: 6px;
             border-bottom: 1px solid var(--border);
         }
+        
         .faction-card {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border);
             border-radius: 3px;
-            padding: 10px 12px;
-            transition: all 0.2s;
-            cursor: default;
+            padding: 12px;
+            position: relative;
         }
-        .faction-card:hover { border-color: var(--border-bright); background: rgba(0, 170, 255, 0.04); }
-        .faction-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
+        .faction-card.highlight-53rd {
+            border: 1px solid var(--unit-53rd);
+            background: rgba(255, 188, 0, 0.03);
         }
-        .faction-dot {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            box-shadow: 0 0 8px currentColor;
+        .faction-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .faction-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+        .faction-name { font-family: var(--font-display); font-size: 11px; color: var(--text-bright); text-transform: uppercase; }
+        
+        .asset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 8px;
+            font-size: 12px;
+            background: rgba(0,0,0,0.2);
+            padding: 6px;
+            border-radius: 2px;
         }
-        .faction-name {
-            font-family: var(--font-display);
-            font-size: 10px;
-            letter-spacing: 1px;
-            color: var(--text-bright);
-            text-transform: uppercase;
-            flex: 1;
-        }
-        .resource-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 3px;
-            font-size: 11px;
-        }
-        .resource-label { color: var(--text-dim); }
-        .resource-val { color: var(--text-bright); font-weight: 600; letter-spacing: 1px; }
-        .resource-bar-wrap {
-            width: 100%;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.07);
-            border-radius: 1px;
-            margin-top: 2px;
-            margin-bottom: 6px;
-            overflow: hidden;
-        }
-        .resource-bar {
-            height: 100%;
-            border-radius: 1px;
-            transition: width 0.4s ease;
-        }
-        .terr-count {
-            font-size: 10px;
-            color: var(--text-dim);
-            margin-top: 4px;
-        }
-        .terr-count span { color: var(--accent); }
+        .asset-item { display: flex; justify-content: space-between; color: var(--text-dim); }
+        .asset-item span { color: var(--text-bright); font-weight: bold; }
 
         #map-container {
             position: relative;
             overflow: hidden;
-            background: radial-gradient(ellipse at center, #030d1a 0%, #010508 70%);
+            background: radial-gradient(ellipse at center, #051324 0%, #01050a 80%);
             cursor: grab;
         }
-        #map-container:active { cursor: grabbing; }
-        #map-svg {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            inset: 0;
+        #map-svg { width: 100%; height: 100%; position: absolute; inset: 0; }
+
+        .planet-53rd-ring { animation: pulse-ring 2s ease-out infinite; }
+        @keyframes pulse-ring {
+            0% { r: 12; opacity: 1; }
+            100% { r: 28; opacity: 0; }
         }
 
-        #map-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            display: flex;
-            gap: 6px;
-            z-index: 10;
-        }
-        .map-btn {
-            width: 32px; height: 32px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            color: var(--accent);
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        .map-btn:hover { border-color: var(--border-bright); box-shadow: var(--glow); }
-
-        #map-legend {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            padding: 10px 14px;
-            border-radius: 3px;
-            font-size: 10px;
-            z-index: 10;
-        }
-        .legend-title {
-            font-family: var(--font-display);
-            font-size: 8px;
-            letter-spacing: 2px;
-            color: var(--text-dim);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-            color: var(--text);
-        }
-        .legend-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-        }
-
-        #detail-panel {
-            background: var(--panel);
-            border-left: 1px solid var(--border);
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-        #detail-empty {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            color: var(--text-dim);
-            padding: 20px;
-            text-align: center;
-        }
-        .detail-icon { font-size: 40px; opacity: 0.3; }
-        .detail-hint {
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            font-family: var(--font-display);
-        }
+        #detail-panel { background: var(--panel); border-left: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+        #detail-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-dim); padding: 20px; }
         #detail-content { display: none; flex-direction: column; flex: 1; }
         #detail-content.visible { display: flex; }
 
-        .detail-header {
-            padding: 20px 16px 14px;
-            border-bottom: 1px solid var(--border);
-            position: relative;
-        }
-        .detail-planet-emoji { font-size: 32px; margin-bottom: 6px; }
-        .detail-planet-name {
-            font-family: var(--font-display);
-            font-size: 14px;
-            letter-spacing: 2px;
-            color: var(--text-bright);
-            text-transform: uppercase;
-        }
-        .detail-sector {
-            font-size: 11px;
-            color: var(--text-dim);
-            letter-spacing: 1px;
-            margin-top: 2px;
-        }
-        .detail-faction-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 10px;
-            padding: 4px 10px;
-            border-radius: 2px;
-            border: 1px solid currentColor;
-            font-family: var(--font-display);
-            font-size: 9px;
-            letter-spacing: 1.5px;
-        }
-
-        .detail-section {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        .detail-section-title {
-            font-family: var(--font-display);
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: var(--text-dim);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 12px;
-        }
-        .detail-key { color: var(--text-dim); }
-        .detail-val { color: var(--text-bright); font-weight: 600; }
-
-        .sv-badge {
-            padding: 2px 8px;
-            border-radius: 2px;
-            font-size: 10px;
-            font-family: var(--font-display);
-            letter-spacing: 1px;
-        }
-        .sv-Low { background: rgba(100,100,100,0.2); color: #aaa; border: 1px solid #555; }
-        .sv-Medium { background: rgba(255,200,0,0.1); color: var(--warn); border: 1px solid rgba(255,200,0,0.3); }
-        .sv-High { background: rgba(255,120,0,0.1); color: #f80; border: 1px solid rgba(255,120,0,0.3); }
-        .sv-Critical { background: rgba(255,50,50,0.1); color: var(--danger); border: 1px solid rgba(255,50,50,0.4); }
-
-        .units-list { display: flex; flex-direction: column; gap: 6px; }
-        .unit-item {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 2px;
-            padding: 7px 10px;
-            font-size: 11px;
-        }
-        .unit-name { color: var(--text-bright); font-weight: 600; }
-        .unit-meta { color: var(--text-dim); margin-top: 2px; }
-        .unit-status {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 2px;
-            font-size: 9px;
-            margin-top: 4px;
-        }
-        .status-Active { background: rgba(0,255,136,0.15); color: var(--success); }
-        .status-Engaged { background: rgba(255,68,68,0.15); color: var(--danger); }
-        .status-Reserve { background: rgba(0,170,255,0.15); color: var(--accent); }
-        .status-Retreating { background: rgba(255,170,0,0.15); color: var(--warn); }
-        .status-Destroyed { background: rgba(80,80,80,0.3); color: #777; }
-
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 100;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(4px);
-        }
-        .modal-overlay.open { display: flex; }
-        .modal {
-            background: #071422;
-            border: 1px solid var(--border-bright);
-            border-radius: 4px;
-            width: 720px;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 0 60px rgba(0,170,255,0.15);
-        }
-        .modal-header {
-            padding: 18px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-        }
-        .modal-title {
-            font-family: var(--font-display);
-            font-size: 12px;
-            letter-spacing: 2px;
-            color: var(--accent2);
-            text-transform: uppercase;
-        }
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            font-size: 20px;
-            cursor: pointer;
-            line-height: 1;
-        }
-        .modal-close:hover { color: var(--text-bright); }
-        .modal-body {
-            overflow-y: auto;
-            padding: 20px;
-            flex: 1;
-        }
-        .modal-tabs {
-            display: flex;
-            gap: 4px;
-            padding: 0 20px;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-            background: #040d17;
-        }
-        .modal-tab {
-            font-family: var(--font-display);
-            font-size: 9px;
-            letter-spacing: 2px;
-            padding: 12px 14px;
-            cursor: pointer;
-            color: var(--text-dim);
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-            text-transform: uppercase;
-        }
-        .modal-tab:hover { color: var(--text); }
-        .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-        .form-group { margin-bottom: 14px; }
-        .form-row { display grid-template-columns: 1fr 1fr; display: grid; gap: 12px; }
-        .form-label {
-            display: block;
-            font-family: var(--font-display);
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: var(--text-dim);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-        }
-        .form-input, .form-select, .form-textarea {
-            width: 100%;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid var(--border);
-            color: var(--text-bright);
-            padding: 8px 12px;
-            border-radius: 2px;
-            font-family: var(--font-body);
-            font-size: 13px;
-            transition: border-color 0.2s;
-        }
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            outline: none;
-            border-color: var(--border-bright);
-            box-shadow: 0 0 0 1px rgba(0,170,255,0.1);
-        }
-        .form-select option { background: #071422; }
-        .form-textarea { resize: vertical; min-height: 60px; }
-        input[type="color"].form-input { padding: 2px 4px; height: 36px; cursor: pointer; }
-
-        #login-screen {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.85);
-            z-index: 200;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(8px);
-        }
-        #login-screen.open { display: flex; }
-        .login-box {
-            background: #071422;
-            border: 1px solid var(--border-bright);
-            border-radius: 4px;
-            padding: 32px 36px;
-            width: 340px;
-            box-shadow: 0 0 60px rgba(0,170,255,0.2);
-            text-align: center;
-        }
-        .login-icon { font-size: 36px; margin-bottom: 16px; }
-        .login-title {
-            font-family: var(--font-display);
-            font-size: 12px;
-            letter-spacing: 3px;
-            color: var(--accent);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-        }
-        .login-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 24px; }
-        .login-error { color: var(--danger); font-size: 11px; margin-top: 10px; min-height: 16px; }
-
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        .admin-table th {
-            font-family: var(--font-display);
-            font-size: 8px;
-            letter-spacing: 2px;
-            color: var(--text-dim);
-            padding: 8px 10px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-            text-transform: uppercase;
-        }
-        .admin-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid rgba(30,120,200,0.1);
-            color: var(--text);
-            vertical-align: middle;
-        }
-        .admin-table tr:hover td { background: rgba(0,170,255,0.03); }
-
-        #toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(80px);
-            background: #071422;
-            border: 1px solid var(--border-bright);
-            color: var(--accent);
-            font-family: var(--font-display);
-            font-size: 10px;
-            letter-spacing: 2px;
-            padding: 10px 20px;
-            border-radius: 3px;
-            z-index: 999;
-            transition: transform 0.3s ease;
-            white-space: nowrap;
-            box-shadow: var(--glow);
-        }
-        #toast.show { transform: translateX(-50%) translateY(0); }
-        #toast.error { border-color: rgba(255,68,68,0.5); color: var(--danger); }
-
-        #setup-banner {
-            position: fixed;
-            top: 56px;
-            left: 0; right: 0;
-            background: rgba(255, 170, 0, 0.12);
-            border-bottom: 1px solid rgba(255, 170, 0, 0.4);
-            padding: 10px 20px;
-            text-align: center;
-            font-size: 12px;
-            color: var(--warn);
-            z-index: 50;
-            display: none;
-        }
-
-        #config-screen {
-            position: fixed; inset: 0;
-            background: var(--bg);
-            z-index: 300;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow-y: auto;
-            padding: 40px 0;
-        }
-        .config-box {
-            background: #071422;
-            border: 1px solid var(--border-bright);
-            border-radius: 4px;
-            padding: 40px;
-            width: 550px;
-            box-shadow: 0 0 80px rgba(0,170,255,0.15);
-        }
-        .config-title {
-            font-family: var(--font-display);
-            font-size: 18px;
-            letter-spacing: 4px;
-            color: var(--accent2);
-            text-align: center;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-        }
-        .config-sub {
-            text-align: center;
-            font-size: 11px;
-            color: var(--text-dim);
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-        }
-        .config-step {
-            background: rgba(0,170,255,0.05);
-            border: 1px solid var(--border);
-            border-radius: 3px;
-            padding: 16px;
-            margin-bottom: 14px;
-            font-size: 12px;
-        }
-        .config-step-num {
-            font-family: var(--font-display);
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: var(--accent);
-            margin-bottom: 8px;
-        }
-        .config-note { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
-        .config-actions { display: flex; gap: 10px; margin-top: 20px; }
-
-        @keyframes pulse-ring {
-            0% { r: 10; opacity: 0.8; }
-            100% { r: 22; opacity: 0; }
-        }
-        .conflict-pulse { animation: pulse-ring 1.5s ease-out infinite; }
+        .detail-header { padding: 20px 16px; border-bottom: 1px solid var(--border); }
+        .detail-planet-name { font-family: var(--font-display); font-size: 16px; color: var(--text-bright); text-transform: uppercase; }
         
-        .text-success { color: var(--success); }
-        .text-danger { color: var(--danger); }
-        .text-warn { color: var(--warn); }
+        .opord-box {
+            background: rgba(255, 170, 0, 0.03);
+            border: 1px solid rgba(255, 170, 0, 0.2);
+            padding: 12px;
+            border-radius: 3px;
+            margin-top: 10px;
+            font-family: var(--font-body);
+            line-height: 1.5;
+        }
+        .opord-title {
+            font-family: var(--font-display);
+            font-size: 10px;
+            color: var(--warn);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #040f1c; border: 1px solid var(--border-bright); border-radius: 4px; width: 780px; max-height: 85vh; display: flex; flex-direction: column; }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .modal-body { overflow-y: auto; padding: 20px; flex: 1; }
+        .modal-tabs { display: flex; background: #020a14; }
+        .modal-tab { padding: 12px 16px; cursor: pointer; color: var(--text-dim); font-family: var(--font-display); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .modal-tab.active { color: var(--accent2); border-bottom: 2px solid var(--accent2); background: rgba(255,255,255,0.02); }
+
+        .form-group { margin-bottom: 12px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-label { display: block; font-family: var(--font-display); font-size: 9px; color: var(--text-dim); margin-bottom: 4px; letter-spacing: 1px; }
+        .form-input, .form-select, .form-textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-bright); padding: 8px; border-radius: 2px; font-family: var(--font-body); }
+        .form-textarea { min-height: 80px; resize: vertical; }
+
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #040f1c; border: 1px solid var(--border-bright); color: var(--accent); font-family: var(--font-display); font-size: 11px; padding: 10px 20px; border-radius: 2px; z-index: 999; transition: transform 0.3s; }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        .admin-table th { font-family: var(--font-display); font-size: 9px; color: var(--text-dim); padding: 8px; text-align: left; border-bottom: 1px solid var(--border); }
+        .admin-table td { padding: 8px; border-bottom: 1px solid rgba(0,170,255,0.05); }
     </style>
 </head>
 <body>
 
 <canvas id="starfield"></canvas>
 
-<div id="config-screen">
-    <div class="config-box">
-        <div class="config-title">🌌 Galaxy Campaign</div>
-        <div class="config-sub">FIRST-TIME SETUP — SUPABASE CONFIGURATION</div>
-
-        <div class="config-step">
-            <div class="config-step-num">STEP 1 — CREATE SUPABASE PROJECT</div>
-            Go to <strong>supabase.com</strong> → New Project → copy your <strong>Project URL</strong> and <strong>anon public key</strong> from Project Settings → API.
-        </div>
-
-        <div class="config-step">
-            <div class="config-step-num">STEP 2 — RUN THIS SQL IN SUPABASE (SQL Editor)</div>
-            <pre id="sql-snippet" style="font-size:9px;color:#0af;overflow-x:auto;white-space:pre-wrap;margin-top:6px;line-height:1.6;max-height:150px;background:rgba(0,0,0,0.3);padding:8px;">CREATE TABLE factions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text UNIQUE, shortname text, color text, emoji text, credits int DEFAULT 1000, supplies int DEFAULT 100, fuel int DEFAULT 100, manpower int DEFAULT 500, description text, created_at timestamptz DEFAULT now());
-CREATE TABLE planets (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text UNIQUE, sector text, emoji text, x float, y float, controlling_faction text DEFAULT 'Neutral', credit_yield int DEFAULT 50, supply_yield int DEFAULT 10, fuel_yield int DEFAULT 10, strategic_value text DEFAULT 'Low', description text);
-CREATE TABLE planet_connections (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), planet_a text, planet_b text, UNIQUE(planet_a, planet_b));
-CREATE TABLE units (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text, faction text, unit_type text, size text, status text DEFAULT 'Active', planet_id uuid REFERENCES planets(id) ON DELETE CASCADE, strength int DEFAULT 100, notes text);
-CREATE TABLE campaign_log (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), event_type text, description text, issued_by text DEFAULT 'Admin', created_at timestamptz DEFAULT now());
-CREATE TABLE settings (key text PRIMARY KEY, value text);
-INSERT INTO settings VALUES ('campaign_name','Star Wars Galaxy Campaign'),('campaign_era','Galactic Civil War'),('campaign_turn','1'),('admin_password','changeme') ON CONFLICT DO NOTHING;
-ALTER TABLE factions ENABLE ROW LEVEL SECURITY; ALTER TABLE planets ENABLE ROW LEVEL SECURITY; ALTER TABLE planet_connections ENABLE ROW LEVEL SECURITY; ALTER TABLE units ENABLE ROW LEVEL SECURITY; ALTER TABLE campaign_log ENABLE ROW LEVEL SECURITY; ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLICY p2 ON planets FOR ALL USING (true) WITH CHECK (true); CREATE POLICY p3 ON planet_connections FOR ALL USING (true) WITH CHECK (true); CREATE POLICY p4 ON units FOR ALL USING (true) WITH CHECK (true); CREATE POLICY p5 ON campaign_log FOR ALL USING (true) WITH CHECK (true); CREATE POLICY p6 ON settings FOR ALL USING (true) WITH CHECK (true);</pre>
-            <button class="btn" onclick="copySQL()" style="margin-top:8px;font-size:9px;">📋 COPY SQL</button>
-        </div>
-
-        <div class="config-step">
-            <div class="config-step-num">STEP 3 — ENTER YOUR CREDENTIALS</div>
-            <div class="form-group" style="margin-top:10px">
-                <label class="form-label">Supabase Project URL</label>
+<div id="config-screen" style="position:fixed; inset:0; background:var(--bg); z-index:300; display:flex; align-items:center; justify-content:center;">
+    <div style="background:#040f1c; border:1px solid var(--border-bright); padding:4px; width:550px; box-shadow:var(--glow);">
+        <div style="padding:24px; border:1px solid var(--border);">
+            <div class="header-title" style="font-size:18px; text-align:center; margin-bottom:4px;">⚡ 53rd Starsim Matrix</div>
+            <div style="text-align:center; font-size:10px; color:var(--text-dim); letter-spacing:2px; margin-bottom:20px;">CAMPAIGN SYSTEM INITIALIZATION</div>
+            
+            <div class="form-group">
+                <label class="form-label">Supabase URL</label>
                 <input class="form-input" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
             </div>
             <div class="form-group">
-                <label class="form-label">Supabase Anon Key</label>
-                <input class="form-input" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                <label class="form-label">Supabase Anon Public Key</label>
+                <input class="form-input" id="cfg-key" type="password">
             </div>
-            <div id="cfg-error" style="color:var(--danger);font-size:11px;min-height:16px;margin-top:6px"></div>
-        </div>
-
-        <div class="config-actions">
-            <button class="btn success" style="width:100%" onclick="saveConfig()">✓ CONNECT & LAUNCH</button>
+            <div id="cfg-error" style="color:var(--danger); font-size:12px; margin-bottom:10px;"></div>
+            <button class="btn success" style="width:100%" onclick="saveConfig()">ESTABLISH COMLINK & LAUNCH</button>
         </div>
     </div>
 </div>
 
-<div id="setup-banner">
-    ⚠ NO PLANETS ON MAP YET — Open Admin Panel → Planets → Add planets to populate the galaxy map
-</div>
-
-<div id="login-screen">
-    <div class="login-box">
-        <div class="login-icon">🔐</div>
-        <div class="login-title">Admin Access</div>
-        <div class="login-sub">Enter the campaign admin password</div>
-        <div class="form-group">
-            <input class="form-input" id="admin-password" type="password" placeholder="Password" style="text-align:center" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-        <button class="btn" style="width:100%" onclick="doLogin()">ACCESS COMMAND</button>
-        <div class="login-error" id="login-error"></div>
-        <button class="btn" style="width:100%;margin-top:8px;border-color:transparent" onclick="closeLogin()">Cancel</button>
+<div id="login-screen" class="modal-overlay" onclick="if(event.target===this)closeLogin()">
+    <div style="background:#040f1c; border:1px solid var(--border-bright); padding:24px; width:320px; text-align:center;">
+        <div class="header-title" style="margin-bottom:14px;">🔒 Command Clearance</div>
+        <input class="form-input" id="admin-password" type="password" placeholder="Passcode" style="text-align:center; margin-bottom:12px;" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="btn success" style="width:100%" onclick="doLogin()">AUTHENTICATE</button>
+        <div id="login-error" style="color:var(--danger); font-size:11px; margin-top:8px;"></div>
     </div>
 </div>
 
 <div class="modal-overlay" id="admin-modal">
     <div class="modal">
         <div class="modal-header">
-            <span class="modal-title">⚙ COMMAND ADMINISTRATION</span>
-            <button class="modal-close" onclick="closeAdmin()">✕</button>
+            <span class="header-title" style="font-size:12px;">🛰️ BATTLEREEF HQ CONTROL DESK</span>
+            <button class="btn danger" style="padding:2px 8px;" onclick="closeAdmin()">✕</button>
         </div>
         <div class="modal-tabs">
-            <div class="modal-tab active" id="tab-factions" onclick="switchTab('factions')">Factions</div>
-            <div class="modal-tab" id="tab-planets" onclick="switchTab('planets')">Planets</div>
+            <div class="modal-tab active" id="tab-factions" onclick="switchTab('factions')">Battalions / Factions</div>
+            <div class="modal-tab" id="tab-planets" onclick="switchTab('planets')">Theater Map Worlds</div>
             <div class="modal-tab" id="tab-connections" onclick="switchTab('connections')">Hyperlanes</div>
-            <div class="modal-tab" id="tab-units" onclick="switchTab('units')">Units</div>
-            <div class="modal-tab" id="tab-campaign" onclick="switchTab('campaign')">Campaign</div>
-            <div class="modal-tab" id="tab-log" onclick="switchTab('log')">Event Log</div>
+            <div class="modal-tab" id="tab-units" onclick="switchTab('units')">ORBAT Deployments</div>
+            <div class="modal-tab" id="tab-campaign" onclick="switchTab('campaign')">Post-Op Operations</div>
         </div>
         <div class="modal-body" id="admin-body"></div>
     </div>
@@ -723,76 +263,57 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
 <div id="app" style="display:none">
     <header>
         <div>
-            <div class="header-title" id="header-campaign-name">Galaxy Campaign</div>
-            <div class="header-sub" id="header-era">Galactic Civil War</div>
+            <div class="header-title" id="header-campaign-name">53rd Assault Battalion Matrix</div>
+            <div class="header-sub" id="header-era">Dynamic Campaign Sector</div>
         </div>
-        <div class="turn-badge" id="header-turn">TURN 1</div>
+        <div class="turn-badge" id="header-turn">STRATEGIC PHASE 1</div>
         <div class="header-right">
-            <button class="btn" onclick="openAdmin()">⚙ ADMIN</button>
+            <button class="btn" id="admin-btn-node" onclick="openAdmin()">⚙️ HQ ACCESS</button>
         </div>
     </header>
 
     <div id="faction-panel">
-        <div class="panel-label">Faction Status</div>
+        <div class="panel-label">Order of Battle Pool</div>
         <div id="faction-list"></div>
     </div>
 
     <div id="map-container">
-        <svg id="map-svg" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <filter id="glow-filter">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                    <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                </filter>
-            </defs>
+        <svg id="map-svg">
             <g id="map-g">
                 <g id="connections-layer"></g>
                 <g id="planets-layer"></g>
             </g>
         </svg>
-        <div id="map-controls">
-            <button class="map-btn" onclick="zoom(1.2)">+</button>
-            <button class="map-btn" onclick="zoom(0.8)">−</button>
-            <button class="map-btn" onclick="resetView()" title="Reset view">⊙</button>
-        </div>
-        <div id="map-legend">
-            <div class="legend-title">Strategic Value</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#777"></div> Low</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#fa0"></div> Medium</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#f80"></div> High</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#f44"></div> Critical</div>
-        </div>
     </div>
 
     <div id="detail-panel">
         <div id="detail-empty">
-            <div class="detail-icon">🌌</div>
-            <div class="detail-hint">Select a planet</div>
-            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">Click any node on the map</div>
+            <div style="font-size:24px;">🌌</div>
+            <div style="font-family:var(--font-display); font-size:11px; letter-spacing:1px;">AWAITING SECTOR COORDINATES</div>
+            <div style="font-size:12px; color:var(--text-dim);">Select a coordinate point on the tactical grid</div>
         </div>
         <div id="detail-content">
             <div class="detail-header">
-                <div class="detail-planet-emoji" id="d-emoji">🪐</div>
-                <div class="detail-planet-name" id="d-name">Planet</div>
-                <div class="detail-sector" id="d-sector">Sector</div>
-                <div class="detail-faction-badge" id="d-faction-badge">Neutral</div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div class="detail-planet-name" id="d-name">Anaxes</div>
+                    <span id="d-sv" style="font-family:var(--font-display); font-size:10px; padding:2px 6px; border-radius:2px;">-</span>
+                </div>
+                <div style="font-size:13px; color:var(--text-dim); margin-top:2px;" id="d-sector">Axum Sector</div>
+                <div style="margin-top:8px; font-weight:600;" id="d-owner">Sovereignty: Neutral</div>
+                
+                <div class="opord-box">
+                    <div class="opord-title">📝 Current Arma OPORD / Objective</div>
+                    <div id="d-opord" style="font-size:13px; color:var(--text-bright);">No operational deployment ordered for this cycle.</div>
+                    <div style="margin-top:6px; font-size:11px; color:var(--text-dim);">Estimated Strength: <span id="d-intel" style="color:var(--danger)">-</span></div>
+                </div>
             </div>
-            <div class="detail-section">
-                <div class="detail-section-title">System Intel</div>
-                <div class="detail-row"><span class="detail-key">Strategic Value</span><span class="detail-val" id="d-sv">-</span></div>
-                <div class="detail-row"><span class="detail-key">Credit Yield</span><span class="detail-val" id="d-credits">—</span></div>
-                <div class="detail-row"><span class="detail-key">Supply Yield</span><span class="detail-val" id="d-supplies">—</span></div>
-                <div class="detail-row"><span class="detail-key">Fuel Yield</span><span class="detail-val" id="d-fuel">—</span></div>
-                <div style="margin-top:10px;font-size:12px;color:var(--text-dim);line-height:1.5" id="d-desc"></div>
+            
+            <div style="padding:16px; flex:1; overflow-y:auto;">
+                <div class="panel-label" style="margin-bottom:8px;">Stationed Task Forces / Garrisons</div>
+                <div id="d-units" style="display:flex; flex-direction:column; gap:6px;"></div>
             </div>
-            <div class="detail-section">
-                <div class="detail-section-title">Stationed Units</div>
-                <div id="d-units" class="units-list"></div>
-            </div>
-            <div style="padding:14px 16px; margin-top: auto;" id="d-admin-actions"></div>
+            
+            <div style="padding:16px; border-top:1px solid var(--border);" id="d-admin-actions"></div>
         </div>
     </div>
 </div>
@@ -800,402 +321,218 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
 <div id="toast"></div>
 
 <script>
-    // ==========================================
-    // STARFIELD BACKGROUND AMBIENT RENDERING
-    // ==========================================
+    // Starfield Ambient Matrix background logic
     (function(){
-        const canvas = document.getElementById('starfield');
-        const ctx = canvas.getContext('2d');
-        let stars = [];
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            stars = Array.from({length: 120}, () => ({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                r: Math.random() * 1.1,
-                o: Math.random() * 0.7 + 0.1,
-                speed: Math.random() * 0.01 + 0.005
-            }));
-        }
-        function draw() {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            stars.forEach(s => {
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(180,210,255,${s.o})`;
-                ctx.fill();
-                s.o += s.speed;
-                if(s.o > 0.9 || s.o < 0.1) s.speed = -s.speed;
-            });
-            requestAnimationFrame(draw);
-        }
-        resize();
-        window.addEventListener('resize', resize);
-        draw();
+        const canvas = document.getElementById('starfield'); const ctx = canvas.getContext('2d'); let stars = [];
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; stars = Array.from({length: 80}, () => ({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, r: Math.random() * 1.2, o: Math.random() * 0.8, speed: Math.random() * 0.008 + 0.002 })); }
+        function draw() { ctx.clearRect(0,0,canvas.width,canvas.height); stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle = `rgba(150,200,255,${s.o})`; ctx.fill(); s.o += s.speed; if(s.o > 0.9 || s.o < 0.1) s.speed = -s.speed; }); requestAnimationFrame(draw); }
+        resize(); window.addEventListener('resize', resize); draw();
     })();
 
-    // ==========================================
-    // DATA MODEL STATE ARCHITECTURE
-    // ==========================================
-    let supabaseClient = null; // Changed variable name to fix name clash
-    let DB = { factions: [], planets: [], connections: [], units: [], settings: {}, logs: [] };
+    let supabaseClient = null;
+    let DB = { factions: [], planets: [], connections: [], units: [], settings: {} };
     let selectedPlanetId = null;
     let isAdmin = false;
     let activeTab = 'factions';
-
     let mapState = { x: 0, y: 0, scale: 1, dragging: false, lastX: 0, lastY: 0 };
 
-    window.addEventListener('DOMContentLoaded', () => {
-        checkConfig();
-    });
+    window.addEventListener('DOMContentLoaded', () => { checkConfig(); });
 
-    function showToast(msg, isError = false) {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.className = isError ? 'show error' : 'show';
-        setTimeout(() => t.classList.remove('show'), 3000);
-    }
+    function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show'; setTimeout(() => t.className = 'toast', 2500); }
 
-    function copySQL() {
-        const sql = document.getElementById('sql-snippet').textContent;
-        navigator.clipboard.writeText(sql).then(() => showToast('SQL COPIED'));
-    }
-
-    async function saveConfig() {
+    function saveConfig() {
         const url = document.getElementById('cfg-url').value.trim();
         const key = document.getElementById('cfg-key').value.trim();
-        const err = document.getElementById('cfg-error');
-        if(!url || !key) { err.textContent = 'Both fields are required.'; return; }
-        err.textContent = 'Establishing network link...';
+        if(!url || !key) return;
         try {
-            const client = window.supabase.createClient(url, key);
-            const { data, error } = await client.from('settings').select('*');
-            if(error) throw error;
-            localStorage.setItem('sw_supabase_url', url);
-            localStorage.setItem('sw_supabase_key', key);
-            err.textContent = '';
-            document.getElementById('config-screen').style.display = 'none';
-            initApp(url, key);
-        } catch(e) {
-            err.textContent = 'Connection failed: ' + (e.message || 'Check credentials');
-        }
+            const c = window.supabase.createClient(url, key);
+            c.from('settings').select('*').limit(1).then(({error}) => {
+                if(error) { document.getElementById('cfg-error').textContent = "Link Rejected: Check Credentials."; return; }
+                localStorage.setItem('arma_sp_url', url); localStorage.setItem('arma_sp_key', key);
+                document.getElementById('config-screen').style.display = 'none';
+                initApp(url, key);
+            });
+        } catch(e) { }
     }
 
     function checkConfig() {
-        const url = localStorage.getItem('sw_supabase_url');
-        const key = localStorage.getItem('sw_supabase_key');
-        if(url && key) {
-            document.getElementById('config-screen').style.display = 'none';
-            initApp(url, key);
-        }
+        const url = localStorage.getItem('arma_sp_url'); const key = localStorage.getItem('arma_sp_key');
+        if(url && key) { document.getElementById('config-screen').style.display = 'none'; initApp(url, key); }
     }
 
     async function initApp(url, key) {
         supabaseClient = window.supabase.createClient(url, key);
         document.getElementById('app').style.display = 'grid';
-        await loadAll();
-        setupMapInteraction();
-        setupRealtime();
+        await loadMatrixData();
+        setupMapControls();
+        supabaseClient.channel('matrix-updates').on('postgres_changes', {event:'*', schema:'public'}, () => loadMatrixData()).subscribe();
     }
 
-    // ==========================================
-    // DATABASE QUERY ENGINE & DATA RETRIEVAL
-    // ==========================================
-    async function loadAll() {
-        try {
-            const [f, p, c, u, s, l] = await Promise.all([
-                supabaseClient.from('factions').select('*').order('name'),
-                supabaseClient.from('planets').select('*').order('name'),
-                supabaseClient.from('planet_connections').select('*'),
-                supabaseClient.from('units').select('*').order('name'),
-                supabaseClient.from('settings').select('*'),
-                supabaseClient.from('campaign_log').select('*').order('created_at', {ascending: false}).limit(40)
-            ]);
-            DB.factions = f.data || [];
-            DB.planets = p.data || [];
-            DB.connections = c.data || [];
-            DB.units = u.data || [];
-            DB.settings = {};
-            if(s.data) s.data.forEach(r => DB.settings[r.key] = r.value);
-            DB.logs = l.data || [];
-
-            renderAll();
-        } catch (e) {
-            showToast("Data retrieval error", true);
-        }
+    async function loadMatrixData() {
+        const [f, p, c, u, s] = await Promise.all([
+            supabaseClient.from('factions').select('*').order('name'),
+            supabaseClient.from('planets').select('*').order('name'),
+            supabaseClient.from('planet_connections').select('*'),
+            supabaseClient.from('units').select('*').order('name'),
+            supabaseClient.from('settings').select('*')
+        ]);
+        DB.factions = f.data || []; DB.planets = p.data || []; DB.connections = c.data || []; DB.units = u.data || [];
+        DB.settings = {}; if(s.data) s.data.forEach(r => DB.settings[r.key] = r.value);
+        renderMatrixUI();
     }
 
-    function renderAll() {
-        updateHeader();
-        renderFactionPanel();
-        renderMap();
-        if (selectedPlanetId) {
-            showPlanetDetail(selectedPlanetId);
-        }
-        document.getElementById('setup-banner').style.display = DB.planets.length === 0 ? 'block' : 'none';
-        if (document.getElementById('admin-modal').classList.contains('open')) {
-            renderAdminBody();
-        }
-    }
-
-    function setupRealtime() {
-        supabaseClient.channel('campaign-changes')
-            .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-                loadAll();
-            })
-            .subscribe();
-    }
-
-    function updateHeader() {
-        document.getElementById('header-campaign-name').textContent = DB.settings.campaign_name || 'Galaxy Campaign';
-        document.getElementById('header-era').textContent = DB.settings.campaign_era || 'Galactic Civil War';
-        document.getElementById('header-turn').textContent = 'TURN ' + (DB.settings.campaign_turn || '1');
-    }
-
-    // ==========================================
-    // ECONOMIC DASHBOARD UI COMPONENT
-    // ==========================================
-    function renderFactionPanel() {
-        const container = document.getElementById('faction-list');
-        if(!DB.factions.length) {
-            container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;text-align:center;padding:20px">No factions yet.<br>Open Admin → Factions</div>';
-            return;
-        }
-        const maxCredits = Math.max(...DB.factions.map(f=>f.credits), 1);
-        container.innerHTML = DB.factions.map(f => {
-            const territories = DB.planets.filter(p=>p.controlling_faction===f.name).length;
-            const unitsCount = DB.units.filter(u=>u.faction===f.name).length;
+    function renderMatrixUI() {
+        document.getElementById('header-campaign-name').textContent = DB.settings.campaign_name || '53rd Assault Battalion Matrix';
+        document.getElementById('header-era').textContent = DB.settings.campaign_era || 'The Clone Wars';
+        document.getElementById('header-turn').textContent = 'OP CYCLE ' + (DB.settings.campaign_turn || '1');
+        
+        // Faction Deck Rendering
+        const fList = document.getElementById('faction-list');
+        fList.innerHTML = DB.factions.map(f => {
+            const is53rd = f.name.includes('53rd');
             return `
-            <div class="faction-card">
+            <div class="faction-card ${is53rd ? 'highlight-53rd' : ''}">
                 <div class="faction-header">
-                    <div class="faction-dot" style="background:${f.color};color:${f.color}"></div>
-                    <div class="faction-name">${f.emoji || ''} ${f.shortname || f.name}</div>
+                    <div class="faction-dot" style="background:${f.color}"></div>
+                    <div class="faction-name">${f.emoji || '🦅'} ${f.name}</div>
                 </div>
-                <div class="resource-row"><span class="resource-label">🪙 Credits</span><span class="resource-val">${(f.credits || 0).toLocaleString()}</span></div>
-                <div class="resource-bar-wrap"><div class="resource-bar" style="width:${Math.min(100, ((f.credits || 0)/maxCredits)*100)}%;background:${f.color}"></div></div>
-                <div class="resource-row"><span class="resource-label">📦 Supplies</span><span class="resource-val">${f.supplies || 0}</span></div>
-                <div class="resource-row"><span class="resource-label">⛽ Fuel</span><span class="resource-val">${f.fuel || 0}</span></div>
-                <div class="resource-row"><span class="resource-label">👥 Manpower</span><span class="resource-val">${f.manpower || 0}</span></div>
-                <div class="terr-count">🗺️ <span>${territories}</span> systems &nbsp;&nbsp; 🪖 <span>${unitsCount}</span> units</div>
+                <div style="font-size:12px;">HQ Budget: <span style="color:var(--success); font-weight:bold;">${f.credits} CR</span></div>
+                <div class="asset-grid">
+                    <div class="asset-item">🦿 INF: <span>${f.infantry_pool}</span></div>
+                    <div class="asset-item">⚔️ ARM: <span>${f.armor_pool}</span></div>
+                    <div class="asset-item">🛸 AIR: <span>${f.air_pool}</span></div>
+                </div>
             </div>`;
         }).join('');
+
+        renderMatrixMap();
+        if(selectedPlanetId) showPlanetOverview(selectedPlanetId);
+        if(document.getElementById('admin-modal').classList.contains('open')) renderHQPanelBody();
     }
 
-    // ==========================================
-    // INTERACTIVE GALAXY ENGINE (SVG & PAN/ZOOM)
-    // ==========================================
-    function getFactionColor(factionName) {
-        if(!factionName || factionName === 'Neutral') return '#444466';
-        const f = DB.factions.find(fac=>fac.name===factionName);
-        return f ? f.color : '#444466';
-    }
-
-    function getSVSize(sv) {
-        return { 'Low': 7, 'Medium': 10, 'High': 13, 'Critical': 16 }[sv] || 8;
-    }
-
-    function renderMap() {
-        const connectionsLayer = document.getElementById('connections-layer');
-        const planetsLayer = document.getElementById('planets-layer');
+    function renderMatrixMap() {
+        const connLayer = document.getElementById('connections-layer');
+        const planLayer = document.getElementById('planets-layer');
         
-        connectionsLayer.innerHTML = DB.connections.map(c => {
-            const a = DB.planets.find(p=>p.name===c.planet_a);
-            const b = DB.planets.find(p=>p.name===c.planet_b);
+        connLayer.innerHTML = DB.connections.map(c => {
+            const a = DB.planets.find(p=>p.name===c.planet_a); const b = DB.planets.find(p=>p.name===c.planet_b);
             if(!a || !b) return '';
-            return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="rgba(0,170,255,0.2)" stroke-width="1.5" stroke-dasharray="4,4"/>`;
+            return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="rgba(0,180,255,0.15)" stroke-width="1.5"/>`;
         }).join('');
 
-        planetsLayer.innerHTML = DB.planets.map(p => {
-            const color = getFactionColor(p.controlling_faction);
-            const r = getSVSize(p.strategic_value);
-            const isSelected = selectedPlanetId === p.id;
-            const standingUnits = DB.units.filter(u=>u.planet_id===p.id && u.status !== 'Destroyed');
-            
-            const uniqueFactions = [...new Set(standingUnits.map(u => u.faction))].filter(f => f !== p.controlling_faction);
-            const isUnderConflict = uniqueFactions.length > 0 && p.controlling_faction !== 'Neutral';
+        planLayer.innerHTML = DB.planets.map(p => {
+            const activeGarrisons = DB.units.filter(u=>u.planet_id===p.id && u.status !== 'Destroyed');
+            const contains53rd = activeGarrisons.some(u => u.name.includes('53rd') || u.faction.includes('53rd'));
+            const fColor = getFactionColorMatrix(p.controlling_faction);
+            const size = p.strategic_value === 'Critical' ? 14 : p.strategic_value === 'High' ? 11 : 8;
 
             return `
-            <g class="planet-node" style="cursor:pointer" onclick="onPlanetClick('${p.id}')">
-                ${isUnderConflict ? `<circle cx="${p.x}" cy="${p.y}" r="20" fill="none" stroke="var(--danger)" stroke-width="1.5" class="conflict-pulse" filter="url(#glow-filter)"/>` : ''}
-                ${isSelected ? `<circle cx="${p.x}" cy="${p.y}" r="${r+7}" fill="none" stroke="var(--accent2)" stroke-width="1.5" opacity="0.8"/>` : ''}
-                <circle cx="${p.x}" cy="${p.y}" r="${r+3}" fill="${color}" opacity="0.25"/>
-                <circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${color}" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                <text x="${p.x}" y="${p.y + r + 14}" text-anchor="middle" fill="${isSelected ? 'var(--text-bright)' : 'var(--text)'}" font-family="var(--font-display)" font-size="10px" letter-spacing="1px" style="text-shadow: 0 1px 4px rgba(0,0,0,0.9)">${p.emoji || ''} ${p.name}</text>
-                ${standingUnits.length ? `<rect x="${p.x - 12}" y="${p.y - r - 15}" width="24" height="10" rx="2" fill="#040d17" stroke="${color}" stroke-width="1"/><text x="${p.x}" y="${p.y - r - 7}" text-anchor="middle" fill="#fff" font-size="8px" font-weight="bold">${standingUnits.length}</text>` : ''}
+            <g style="cursor:pointer;" onclick="onPlanetSelectMatrix('${p.id}')">
+                ${contains53rd ? `<circle cx="${p.x}" cy="${p.y}" r="20" fill="none" stroke="var(--unit-53rd)" stroke-width="2" class="planet-53rd-ring"/>` : ''}
+                <circle cx="${p.x}" cy="${p.y}" r="${size + 4}" fill="${fColor}" opacity="0.15"/>
+                <circle cx="${p.x}" cy="${p.y}" r="${size}" fill="${fColor}" stroke="rgba(255,255,255,0.2)"/>
+                <text x="${p.x}" y="${p.y + size + 14}" text-anchor="middle" fill="#e8f4ff" font-family="var(--font-display)" font-size="10px">${p.emoji || '🪐'} ${p.name}</text>
             </g>`;
         }).join('');
-        
-        updateMapTransform();
     }
 
-    function setupMapInteraction() {
-        const el = document.getElementById('map-container');
-        el.addEventListener('mousedown', e => {
-            if(e.target.closest('.map-btn') || e.target.closest('#map-legend')) return;
-            mapState.dragging = true;
-            mapState.lastX = e.clientX;
-            mapState.lastY = e.clientY;
-        });
+    function getFactionColorMatrix(name) {
+        if(name === 'Neutral') return '#445566';
+        const f = DB.factions.find(fac=>fac.name===name); return f ? f.color : '#445566';
+    }
+
+    function setupMapControls() {
+        const m = document.getElementById('map-container');
+        m.addEventListener('mousedown', e => { mapState.dragging = true; mapState.lastX = e.clientX; mapState.lastY = e.clientY; });
         window.addEventListener('mousemove', e => {
             if(!mapState.dragging) return;
-            mapState.x += e.clientX - mapState.lastX;
-            mapState.y += e.clientY - mapState.lastY;
-            mapState.lastX = e.clientX;
-            mapState.lastY = e.clientY;
-            updateMapTransform();
+            mapState.x += e.clientX - mapState.lastX; mapState.y += e.clientY - mapState.lastY;
+            mapState.lastX = e.clientX; mapState.lastY = e.clientY;
+            document.getElementById('map-g').setAttribute('transform', `translate(${mapState.x},${mapState.y}) scale(${mapState.scale})`);
         });
         window.addEventListener('mouseup', () => mapState.dragging = false);
-        el.addEventListener('wheel', e => {
-            e.preventDefault();
-            const factor = e.deltaY < 0 ? 1.1 : 0.9;
-            zoom(factor);
-        }, { passive: false });
     }
 
-    function zoom(factor) {
-        mapState.scale = Math.max(0.3, Math.min(5, mapState.scale * factor));
-        updateMapTransform();
-    }
+    function onPlanetSelectMatrix(id) { selectedPlanetId = id; showPlanetOverview(id); }
 
-    function resetView() {
-        mapState = { x: 0, y: 0, scale: 1, dragging: false, lastX: 0, lastY: 0 };
-        updateMapTransform();
-    }
-
-    function updateMapTransform() {
-        document.getElementById('map-g').setAttribute('transform', `translate(${mapState.x}, ${mapState.y}) scale(${mapState.scale})`);
-    }
-
-    function onPlanetClick(id) {
-        selectedPlanetId = id;
-        renderMap();
-        showPlanetDetail(id);
-    }
-
-    // ==========================================
-    // PLANET INTEL DISPLAY SIDEBAR ARCHITECTURE
-    // ==========================================
-    function showPlanetDetail(id) {
-        const p = DB.planets.find(pl=>pl.id===id);
-        if(!p) return;
+    function showPlanetOverview(id) {
+        const p = DB.planets.find(pl=>pl.id===id); if(!p) return;
         document.getElementById('detail-empty').style.display = 'none';
-        const content = document.getElementById('detail-content');
-        content.classList.add('visible');
+        document.getElementById('detail-content').classList.add('visible');
 
-        document.getElementById('d-emoji').textContent = p.emoji || '🪐';
         document.getElementById('d-name').textContent = p.name;
-        document.getElementById('d-sector').textContent = (p.sector || 'Unknown') + ' Sector';
+        document.getElementById('d-sector').textContent = p.sector + ' Sector';
+        document.getElementById('d-owner').textContent = 'Sovereignty: ' + p.controlling_faction;
+        document.getElementById('d-owner').style.color = getFactionColorMatrix(p.controlling_faction);
         
-        const badge = document.getElementById('d-faction-badge');
-        badge.textContent = p.controlling_faction;
-        badge.style.color = getFactionColor(p.controlling_faction);
+        const badge = document.getElementById('d-sv'); badge.textContent = p.strategic_value;
+        badge.style.border = `1px solid ${getFactionColorMatrix(p.controlling_faction)}`;
 
-        const sv = document.getElementById('d-sv');
-        sv.textContent = p.strategic_value;
-        sv.className = 'detail-val sv-' + p.strategic_value;
+        document.getElementById('d-opord').textContent = p.opord_briefing || 'No active combat operations detailed for this vector.';
+        document.getElementById('d-intel').textContent = p.enemy_intel_estimate || 'Unknown Force Pool';
 
-        document.getElementById('d-credits').textContent = '+' + (p.credit_yield || 0);
-        document.getElementById('d-supplies').textContent = '+' + (p.supply_yield || 0);
-        document.getElementById('d-fuel').textContent = '+' + (p.fuel_yield || 0);
-        document.getElementById('d-desc').textContent = p.description || 'No database logs found for this sector.';
-
-        const stationed = DB.units.filter(u => u.planet_id === p.id);
-        const list = document.getElementById('d-units');
+        const stationed = DB.units.filter(u=>u.planet_id===p.id);
+        const uContainer = document.getElementById('d-units');
         if(!stationed.length) {
-            list.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No ground or orbital garrisons tracked.</div>';
+            uContainer.innerHTML = '<div style="color:var(--text-dim); font-size:12px;">No active detachments in this orbit or theatre.</div>';
         } else {
-            list.innerHTML = stationed.map(u => `
-                <div class="unit-item">
-                    <div style="display:flex;justify-content:space-between">
-                        <span class="unit-name">${u.name}</span>
-                        <span style="color:${getFactionColor(u.faction)};font-size:10px;font-weight:600">${u.faction}</span>
+            uContainer.innerHTML = stationed.map(u => `
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:8px; border-radius:2px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px;">
+                        <span style="font-weight:bold; color:${u.name.includes('53rd')?'var(--unit-53rd)':'#fff'}">${u.name}</span>
+                        <span style="color:${getFactionColorMatrix(u.faction)}">${u.faction}</span>
                     </div>
-                    <div class="unit-meta">${u.size || 'Standard'} • Strength: ${u.strength}%</div>
-                    <span class="unit-status status-${u.status}">${u.status}</span>
+                    <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">Type: ${u.unit_type} • Integrity: ${u.strength}%</div>
+                    ${u.attached_assets ? `<div style="font-size:11px; color:var(--warn); margin-top:2px;">Assets: ${u.attached_assets}</div>` : ''}
                 </div>
             `).join('');
         }
 
         const actionArea = document.getElementById('d-admin-actions');
         if(isAdmin) {
-            actionArea.innerHTML = `<button class="btn warn" style="width:100%" onclick="openCaptureModal('${p.id}')">⚔️ SEIZE SYSTEM</button>`;
-        } else {
-            actionArea.innerHTML = '';
-        }
+            actionArea.innerHTML = `<button class="btn success" style="width:100%" onclick="openSeizureDesk('${p.id}')">⚔️ RECLASSIFY SYSTEM SOVEREIGNTY</button>`;
+        } else { actionArea.innerHTML = ''; }
     }
 
-    // ==========================================
-    // CAMPAIGN SYSTEM MANAGEMENT & CONTROL CONSOLE
-    // ==========================================
-    function openAdmin() {
-        if(!isAdmin) {
-            document.getElementById('login-screen').classList.add('open');
-            document.getElementById('admin-password').focus();
-        } else {
-            document.getElementById('admin-modal').classList.add('open');
-            switchTab('factions');
-        }
-    }
+    // Passcode HQ Core Security
+    function openAdmin() { if(!isAdmin) { document.getElementById('login-screen').classList.add('open'); } else { document.getElementById('admin-modal').classList.add('open'); switchTab('factions'); } }
     function closeLogin() { document.getElementById('login-screen').classList.remove('open'); }
     function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
-
+    
     function doLogin() {
         const pass = document.getElementById('admin-password').value;
-        const err = document.getElementById('login-error');
         if(pass === (DB.settings.admin_password || 'changeme')) {
-            isAdmin = true;
-            err.textContent = '';
-            document.getElementById('admin-password').value = '';
-            closeLogin();
-            openAdmin();
-        } else {
-            err.textContent = 'SECURITY PASSCODE REJECTED';
-        }
+            isAdmin = true; document.getElementById('login-error').textContent = '';
+            closeLogin(); openAdmin();
+        } else { document.getElementById('login-error').textContent = 'CLEARANCE PASSCODE REJECTED'; }
     }
 
     function switchTab(tab) {
-        activeTab = tab;
-        document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('tab-' + tab).classList.add('active');
-        renderAdminBody();
+        activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+        document.getElementById('tab-'+tab).classList.add('active'); renderHQPanelBody();
     }
 
-    async function writeLog(type, desc) {
-        await supabaseClient.from('campaign_log').insert([{ event_type: type, description: desc, issued_by: 'Admin' }]);
-    }
-
-    // ==========================================
-    // MODAL INTERFACE ELEMENT GENERATORS
-    // ==========================================
-    function renderAdminBody() {
+    // HQ CONFIGURATION SHEET GENERATORS
+    function renderHQPanelBody() {
         const body = document.getElementById('admin-body');
         
         if(activeTab === 'factions') {
             body.innerHTML = `
-            <form onsubmit="createFaction(event)" class="config-step">
-                <div class="config-step-num">REGISTER NEW FACTION</div>
-                <div class="form-row">
-                    <div class="form-group"><label class="form-label">Faction Name</label><input class="form-input" id="fac-name" required placeholder="Galactic Empire"></div>
-                    <div class="form-group"><label class="form-label">Short Tag</label><input class="form-input" id="fac-short" required placeholder="Empire"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label class="form-label">Color Hex</label><input class="form-input" type="color" id="fac-color" value="#ff4444"></div>
-                    <div class="form-group"><label class="form-label">Emoji Icon</label><input class="form-input" id="fac-emoji" placeholder="🦅"></div>
-                </div>
-                <button class="btn success" type="submit">ADD FACTION</button>
+            <form onsubmit="addMatrixFaction(event)" class="form-row" style="background:rgba(255,255,255,0.01); padding:12px; border:1px solid var(--border); margin-bottom:12px;">
+                <div class="form-group"><label class="form-label">Force Name</label><input class="form-input" id="f-name" required placeholder="53rd Assault Battalion"></div>
+                <div class="form-group"><label class="form-label">Faction Color</label><input class="form-input" type="color" id="f-color" value="#ffbc00"></div>
+                <button class="btn success" style="grid-column:1/-1" type="submit">COMMISSION BATTALION FILE</button>
             </form>
             <table class="admin-table">
-                <thead><tr><th>Faction</th><th>Credits</th><th>Supplies</th><th>Fuel</th><th>Manpower</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Battalion Pool Designation</th><th>HQ Budget (CR)</th><th>INF reinforcements</th><th>Armor Inventory</th><th>Airframes</th></tr></thead>
                 <tbody>
                     ${DB.factions.map(f => `
                         <tr>
-                            <td style="color:${f.color};font-weight:bold">${f.emoji||''} ${f.name}</td>
-                            <td><input type="number" class="form-input" style="width:80px;padding:2px 4px" value="${f.credits}" onchange="updateFactionRes('${f.id}','credits',this.value)"></td>
-                            <td><input type="number" class="form-input" style="width:60px;padding:2px 4px" value="${f.supplies}" onchange="updateFactionRes('${f.id}','supplies',this.value)"></td>
-                            <td><input type="number" class="form-input" style="width:60px;padding:2px 4px" value="${f.fuel}" onchange="updateFactionRes('${f.id}','fuel',this.value)"></td>
-                            <td><input type="number" class="form-input" style="width:75px;padding:2px 4px" value="${f.manpower}" onchange="updateFactionRes('${f.id}','manpower',this.value)"></td>
-                            <td><button class="btn danger" style="padding:2px 6px;font-size:8px" onclick="deleteFaction('${f.id}','${f.name}')">❌</button></td>
+                            <td style="color:${f.color}; font-weight:bold;">${f.name}</td>
+                            <td><input type="number" class="form-input" style="width:90px" value="${f.credits}" onchange="updateFMatrixField('${f.id}','credits',this.value)"></td>
+                            <td><input type="number" class="form-input" style="width:70px" value="${f.infantry_pool}" onchange="updateFMatrixField('${f.id}','infantry_pool',this.value)"></td>
+                            <td><input type="number" class="form-input" style="width:70px" value="${f.armor_pool}" onchange="updateFMatrixField('${f.id}','armor_pool',this.value)"></td>
+                            <td><input type="number" class="form-input" style="width:70px" value="${f.air_pool}" onchange="updateFMatrixField('${f.id}','air_pool',this.value)"></td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -1204,48 +541,30 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
 
         if(activeTab === 'planets') {
             body.innerHTML = `
-            <form onsubmit="createPlanet(event)" class="config-step">
-                <div class="config-step-num">MAP SYSTEM DEPLOYMENT</div>
+            <form onsubmit="addMatrixPlanet(event)" style="background:rgba(255,255,255,0.01); padding:12px; border:1px solid var(--border); margin-bottom:12px;">
                 <div class="form-row">
-                    <div class="form-group"><label class="form-label">Planet Name</label><input class="form-input" id="pl-name" required placeholder="Tatooine"></div>
-                    <div class="form-group"><label class="form-label">Sector</label><input class="form-input" id="pl-sector" placeholder="Arkanis"></div>
+                    <div class="form-group"><label class="form-label">Planet Name</label><input class="form-input" id="p-name" required placeholder="Anaxes"></div>
+                    <div class="form-group"><label class="form-label">Sector</label><input class="form-input" id="p-sec" required placeholder="Axum"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label class="form-label">Map Position X (0 - 1000)</label><input class="form-input" type="number" step="any" id="pl-x" required placeholder="450"></div>
-                    <div class="form-group"><label class="form-label">Map Position Y (0 - 1000)</label><input class="form-input" type="number" step="any" id="pl-y" required placeholder="320"></div>
+                    <div class="form-group"><label class="form-label">Grid X (0-1200)</label><input class="form-input" type="number" id="p-x" required placeholder="300"></div>
+                    <div class="form-group"><label class="form-label">Grid Y (0-1000)</label><input class="form-input" type="number" id="p-y" required placeholder="400"></div>
                 </div>
+                <div class="form-group"><label class="form-label">Arma OPORD Briefing Directive</label><textarea class="form-textarea" id="p-opord" placeholder="Insert deployment brief coordinates, tasks, and asset restrictions..."></textarea></div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Strategic Value</label>
-                        <select class="form-select" id="pl-sv">
-                            <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label class="form-label">Faction Owner</label>
-                        <select class="form-select" id="pl-fac">
-                            <option>Neutral</option>${DB.factions.map(f=>`<option>${f.name}</option>`).join('')}
-                        </select>
-                    </div>
+                    <div class="form-group"><label class="form-label">Enemy Intel Estimate</label><input class="form-input" id="p-intel" placeholder="1x CIS Mechanized Battalion"></div>
+                    <div class="form-group"><label class="form-label">Cycle Credit Yield</label><input class="form-input" type="number" id="p-yield" value="400"></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group"><label class="form-label">Credit Yield</label><input class="form-input" type="number" id="pl-y-c" value="50"></div>
-                    <div class="form-group"><label class="form-label">Supply Yield</label><input class="form-input" type="number" id="pl-y-s" value="10"></div>
-                    <div class="form-group"><label class="form-label">Fuel Yield</label><input class="form-input" type="number" id="pl-y-f" value="10"></div>
-                    <div class="form-group"><label class="form-label">Emoji</label><input class="form-input" id="pl-emoji" value="🪐"></div>
-                </div>
-                <div class="form-group"><label class="form-label">Description / System Notes</label><textarea class="form-textarea" id="pl-desc"></textarea></div>
-                <button class="btn success" type="submit">ANCHOR PLANET</button>
+                <button class="btn success" type="submit">ANCHOR PLANET POINT</button>
             </form>
             <table class="admin-table">
-                <thead><tr><th>Planet</th><th>Sector</th><th>Faction Control</th><th>Strategic Value</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Planet Matrix Point</th><th>Sovereignty Map Status</th><th>Action</th></tr></thead>
                 <tbody>
                     ${DB.planets.map(p => `
                         <tr>
-                            <td><strong>${p.emoji||'🪐'} ${p.name}</strong> (X:${Math.round(p.x)}, Y:${Math.round(p.y)})</td>
-                            <td>${p.sector || 'Core'}</td>
-                            <td style="color:${getFactionColor(p.controlling_faction)}">${p.controlling_faction}</td>
-                            <td><span class="sv-badge sv-${p.strategic_value}">${p.strategic_value}</span></td>
-                            <td><button class="btn danger" style="padding:2px 6px;font-size:8px" onclick="deletePlanet('${p.id}','${p.name}')">❌</button></td>
+                            <td><strong>${p.name}</strong> (${p.sector} Sector)</td>
+                            <td><textarea class="form-textarea" style="min-height:40px; font-size:12px;" onchange="updatePMatrixField('${p.id}','opord_briefing',this.value)">${p.opord_briefing||''}</textarea></td>
+                            <td><button class="btn danger" style="padding:2px 6px;" onclick="deleteMatrixPlanet('${p.id}')">❌</button></td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -1254,348 +573,106 @@ CREATE POLICY p1 ON factions FOR ALL USING (true) WITH CHECK (true); CREATE POLI
 
         if(activeTab === 'connections') {
             body.innerHTML = `
-            <form onsubmit="createConnection(event)" class="config-step">
-                <div class="config-step-num">STRIKE NEW HYPERLANE ROUTE</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">System Node Alpha</label>
-                        <select class="form-select" id="cn-a">${DB.planets.map(p=>`<option>${p.name}</option>`).join('')}</select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">System Node Beta</label>
-                        <select class="form-select" id="cn-b">${DB.planets.map(p=>`<option>${p.name}</option>`).join('')}</select>
-                    </div>
-                </div>
-                <button class="btn success" type="submit">STABILIZE ROUTE</button>
+            <form onsubmit="addMatrixLane(event)" class="form-row">
+                <select class="form-select" id="l-a">${DB.planets.map(p=>`<option>${p.name}</option>`).join('')}</select>
+                <select class="form-select" id="l-b">${DB.planets.map(p=>`<option>${p.name}</option>`).join('')}</select>
+                <button class="btn success" type="submit">LINK MATRIX HYPERLANE</button>
             </form>
             <table class="admin-table">
-                <thead><tr><th>Hyperlane ID</th><th>Vector Junction Connection</th><th>Action</th></tr></thead>
                 <tbody>
-                    ${DB.connections.map(c => `
-                        <tr>
-                            <td style="font-family:monospace;font-size:10px">${c.id}</td>
-                            <td><strong>${c.planet_a}</strong> <-> <strong>${c.planet_b}</strong></td>
-                            <td><button class="btn danger" style="padding:2px 6px;font-size:8px" onclick="deleteConnection('${c.id}')">❌</button></td>
-                        </tr>
-                    `).join('')}
+                    ${DB.connections.map(c=>`<tr><td>${c.planet_a} ↔ ${c.planet_b}</td><td><button class="btn danger" style="padding:2px 6px" onclick="deleteMatrixLane('${c.id}')">❌</button></td></tr>`).join('')}
                 </tbody>
             </table>`;
         }
 
         if(activeTab === 'units') {
             body.innerHTML = `
-            <form onsubmit="createUnit(event)" class="config-step">
-                <div class="config-step-num">DEPLOY MILITARY COMBAT DIVISION</div>
+            <form onsubmit="addMatrixUnit(event)" style="background:rgba(255,255,255,0.01); padding:12px; border:1px solid var(--border); margin-bottom:12px;">
                 <div class="form-row">
-                    <div class="form-group"><label class="form-label">Division / Asset Name</label><input class="form-input" id="un-name" required placeholder="501st Legion"></div>
-                    <div class="form-group">
-                        <label class="form-label">Faction Allegiance</label>
-                        <select class="form-select" id="un-fac">${DB.factions.map(f=>`<option>${f.name}</option>`).join('')}</select>
+                    <div class="form-group"><label class="form-label">Task Force/Element Name</label><input class="form-input" id="u-name" required placeholder="53rd Assault Bn (Player Element)"></div>
+                    <div class="form-group"><label class="form-label">Allegiance</label>
+                        <select class="form-select" id="u-fac">${DB.factions.map(f=>`<option>${f.name}</option>`).join('')}</select>
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label class="form-label">Unit Classification</label><input class="form-input" id="un-type" placeholder="Infantry Corps / Star Destroyer"></div>
-                    <div class="form-group"><label class="form-label">Detachment Size</label><input class="form-input" id="un-size" placeholder="Legion / Fleet"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Location Base System</label>
-                        <select class="form-select" id="un-pid">${DB.planets.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select>
+                    <div class="form-group"><label class="form-label">Deployment Vector Location</label>
+                        <select class="form-select" id="u-pid">${DB.planets.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Operational Status</label>
-                        <select class="form-select" id="un-status">
-                            <option>Active</option><option>Engaged</option><option>Reserve</option><option>Retreating</option><option>Destroyed</option>
-                        </select>
-                    </div>
+                    <div class="form-group"><label class="form-label">Attached Heavy Assets (AT-TE, LAAT, etc)</label><input class="form-input" id="u-assets" placeholder="2x AT-TE, 4x LAAT-I"></div>
                 </div>
-                <button class="btn success" type="submit">COMMISSION UNIT</button>
+                <button class="btn success" type="submit">COMMISSION FIELD ORBAT</button>
             </form>
             <table class="admin-table">
-                <thead><tr><th>Combat Force</th><th>Allegiance</th><th>Stationed Location</th><th>Status</th><th>Strength</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Detachment</th><th>Attached Equipment Assets</th><th>Action</th></tr></thead>
                 <tbody>
-                    ${DB.units.map(u => {
-                        const p = DB.planets.find(pl=>pl.id===u.planet_id);
-                        return `
+                    ${DB.units.map(u => `
                         <tr>
-                            <td><strong>${u.name}</strong><br><span style="font-size:10px;color:var(--text-dim)">${u.unit_type || 'Military Division'}</span></td>
-                            <td style="color:${getFactionColor(u.faction)}">${u.faction}</td>
-                            <td>📍 ${p ? p.name : 'Deep Space'}</td>
-                            <td><span class="unit-status status-${u.status}">${u.status}</span></td>
-                            <td><input type="number" class="form-input" style="width:65px;padding:2px" value="${u.strength}" onchange="updateUnitStrength('${u.id}',this.value)">%</td>
-                            <td>
-                                <select class="form-select" style="width:90px;font-size:10px;padding:2px" onchange="updateUnitStatus('${u.id}',this.value)">
-                                    <option ${u.status==='Active'?'selected':''}>Active</option>
-                                    <option ${u.status==='Engaged'?'selected':''}>Engaged</option>
-                                    <option ${u.status==='Reserve'?'selected':''}>Reserve</option>
-                                    <option ${u.status==='Retreating'?'selected':''}>Retreating</option>
-                                    <option ${u.status==='Destroyed'?'selected':''}>Destroyed</option>
-                                </select>
-                                <button class="btn danger" style="padding:2px 6px;font-size:8px;margin-left:4px" onclick="deleteUnit('${u.id}')">❌</button>
-                            </td>
+                            <td><strong>${u.name}</strong> (${u.faction})</td>
+                            <td><input class="form-input" value="${u.attached_assets||''}" onchange="updateUMatrixField('${u.id}','attached_assets',this.value)"></td>
+                            <td><button class="btn danger" style="padding:2px 6px" onclick="deleteMatrixUnit('${u.id}')">❌</button></td>
                         </tr>
-                        `;
-                    }).join('')}
+                    `).join('')}
                 </tbody>
             </table>`;
         }
 
         if(activeTab === 'campaign') {
             body.innerHTML = `
-            <div class="config-step">
-                <div class="config-step-num">GLOBAL WARZONE CONTROLS</div>
-                <div class="form-group">
-                    <label class="form-label">Active Turn Tracker Counter</label>
-                    <div style="display:flex;gap:10px;align-items:center">
-                        <h2 style="font-family:var(--font-display);color:var(--warn)" id="turn-display">${DB.settings.campaign_turn || 1}</h2>
-                        <button class="btn" onclick="modifyTurn(1)">⏩ NEXT TURN (Process Production)</button>
-                        <button class="btn danger" onclick="modifyTurn(-1)">⏪ ROLLBACK TURN</button>
-                    </div>
-                </div>
-            </div>
-            <form onsubmit="saveCampaignMeta(event)" class="config-step">
-                <div class="config-step-num">OPERATIONAL PARAMETERS</div>
-                <div class="form-group"><label class="form-label">Campaign Matrix Name</label><input class="form-input" id="cam-name" value="${DB.settings.campaign_name || ''}"></div>
-                <div class="form-group"><label class="form-label">Galactic Era Context</label><input class="form-input" id="cam-era" value="${DB.settings.campaign_era || ''}"></div>
-                <div class="form-group"><label class="form-label">Master Override Password</label><input class="form-input" type="password" id="cam-pass" value="${DB.settings.admin_password || ''}"></div>
-                <button class="btn success" type="submit">COMMIT SYSTEM PARAMETERS</button>
-            </form>
-            `;
-        }
-
-        if(activeTab === 'log') {
-            body.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                <div class="panel-label" style="border:none;margin:0">Tactical Event Stream</div>
-                <button class="btn danger" onclick="clearLogs()">PURGE SIMULATION LOGS</button>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-                ${DB.logs.map(l => `
-                    <div class="unit-item" style="border-left: 3px solid var(--accent)">
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim)">
-                            <span>[${l.event_type.toUpperCase()}]</span>
-                            <span>${new Date(l.created_at).toLocaleTimeString()}</span>
-                        </div>
-                        <div style="margin-top:4px;color:var(--text-bright)">${l.description}</div>
-                    </div>
-                `).join('')}
+            <div style="background:rgba(255,170,0,0.05); border:1px solid var(--warn); padding:16px; border-radius:2px;">
+                <h3 style="font-family:var(--font-display); color:var(--warn); margin-bottom:8px;">⏩ END WEEKLY OPERATIONS CYCLE</h3>
+                <p style="font-size:13px; margin-bottom:12px; color:var(--text-dim);">Clicking below concludes the weekly deployment cycle. All controlled worlds will compile yields and issue operational budget credits to their controlling faction configurations automatically.</p>
+                <button class="btn success" onclick="processWeeklyCycleChange()">PROCEED AND DISBURSE WAR BUDGETS</button>
             </div>`;
         }
     }
 
-    // ==========================================
-    // BACKEND SUPABASE OPERATION HANDLERS
-    // ==========================================
-    async function createFaction(e) {
-        e.preventDefault();
-        const name = document.getElementById('fac-name').value.trim();
-        const shortname = document.getElementById('fac-short').value.trim();
-        const color = document.getElementById('fac-color').value;
-        const emoji = document.getElementById('fac-emoji').value.trim();
-        
-        const { error } = await supabaseClient.from('factions').insert([{ name, shortname, color, emoji }]);
-        if(error) showToast(error.message, true);
-        else {
-            await writeLog('Faction Created', `The faction alignment of "${name}" has been mapped.`);
-            showToast('FACTION REGISTERED');
-            loadAll();
+    // ENGINE POST OPERATIONS BACKEND COMMAND HANDLERS
+    async function addMatrixFaction(e) { e.preventDefault(); const name=document.getElementById('f-name').value.trim(); const color=document.getElementById('f-color').value; await supabaseClient.from('factions').insert([{name,color,credits:3000}]); loadMatrixData(); }
+    async function updateFMatrixField(id, field, val) { const u = {}; u[field] = parseInt(val)||0; await supabaseClient.from('factions').update(u).eq('id',id); }
+    async function addMatrixPlanet(e) { e.preventDefault(); const name=document.getElementById('p-name').value.trim(); const sector=document.getElementById('p-sec').value.trim(); const x=parseFloat(document.getElementById('p-x').value); const y=parseFloat(document.getElementById('p-y').value); const opord_briefing=document.getElementById('p-opord').value.trim(); const enemy_intel_estimate=document.getElementById('p-intel').value.trim(); const credit_yield=parseInt(document.getElementById('p-yield').value)||0; await supabaseClient.from('planets').insert([{name,sector,x,y,opord_briefing,enemy_intel_estimate,credit_yield}]); loadMatrixData(); }
+    async function updatePMatrixField(id, field, val) { const u={}; u[field]=val; await supabaseClient.from('planets').update(u).eq('id',id); }
+    async function deleteMatrixPlanet(id) { if(confirm('Purge mapping point?')) { await supabaseClient.from('planets').delete().eq('id',id); if(selectedPlanetId===id)selectedPlanetId=null; loadMatrixData(); } }
+    async function addMatrixLane(e) { e.preventDefault(); const planet_a=document.getElementById('l-a').value; const planet_b=document.getElementById('l-b').value; if(planet_a===planet_b)return; await supabaseClient.from('planet_connections').insert([{planet_a,planet_b}]); loadMatrixData(); }
+    async function deleteMatrixLane(id) { await supabaseClient.from('planet_connections').delete().eq('id',id); loadMatrixData(); }
+    async function addMatrixUnit(e) { e.preventDefault(); const name=document.getElementById('u-name').value.trim(); const faction=document.getElementById('u-fac').value; const planet_id=document.getElementById('u-pid').value; const attached_assets=document.getElementById('u-assets').value.trim(); await supabaseClient.from('units').insert([{name,faction,planet_id,attached_assets,unit_type:'Troop Element'}]); loadMatrixData(); }
+    async function updateUMatrixField(id, field, val) { const u={}; u[field]=val; await supabaseClient.from('units').update(u).eq('id',id); }
+    async function deleteMatrixUnit(id) { await supabaseClient.from('units').delete().eq('id',id); loadMatrixData(); }
+
+    async function processWeeklyCycleChange() {
+        let current = parseInt(DB.settings.campaign_turn || 1); let next = current + 1;
+        for(let f of DB.factions) {
+            let owned = DB.planets.filter(p=>p.controlling_faction===f.name);
+            let gain = owned.reduce((sum,p)=>sum+(p.credit_yield||0),0);
+            await supabaseClient.from('factions').update({ credits: (f.credits||0)+gain }).eq('id', f.id);
         }
+        await supabaseClient.from('settings').upsert({key:'campaign_turn', value: String(next)});
+        showToast(`WAR BUDGETS TRANSFERRED — WELCOME TO CYCLE ${next}`);
+        loadMatrixData();
     }
 
-    async function updateFactionRes(id, field, value) {
-        const updates = {}; updates[field] = parseInt(value) || 0;
-        await supabaseClient.from('factions').update(updates).eq('id', id);
-        showToast('ECONOMY MODIFIED');
-    }
-
-    async function deleteFaction(id, name) {
-        if(!confirm(`Purge ${name} from data arrays?`)) return;
-        await supabaseClient.from('factions').delete().eq('id', id);
-        showToast('FACTION ARCHIVED');
-        loadAll();
-    }
-
-    async function createPlanet(e) {
-        e.preventDefault();
-        const name = document.getElementById('pl-name').value.trim();
-        const sector = document.getElementById('pl-sector').value.trim();
-        const x = parseFloat(document.getElementById('pl-x').value);
-        const y = parseFloat(document.getElementById('pl-y').value);
-        const strategic_value = document.getElementById('pl-sv').value;
-        const controlling_faction = document.getElementById('pl-fac').value;
-        const credit_yield = parseInt(document.getElementById('pl-y-c').value) || 0;
-        const supply_yield = parseInt(document.getElementById('pl-y-s').value) || 0;
-        const fuel_yield = parseInt(document.getElementById('pl-y-f').value) || 0;
-        const emoji = document.getElementById('pl-emoji').value.trim();
-        const description = document.getElementById('pl-desc').value.trim();
-
-        const { error } = await supabaseClient.from('planets').insert([{
-            name, sector, x, y, strategic_value, controlling_faction, credit_yield, supply_yield, fuel_yield, emoji, description
-        }]);
-        if(error) showToast(error.message, true);
-        else {
-            await writeLog('System Added', `Vector coordinates mapped for astronomical entity: ${name}.`);
-            showToast('PLANET ANCHORED');
-            loadAll();
-        }
-    }
-
-    async function deletePlanet(id, name) {
-        if(!confirm(`Annihilate records of system ${name}?`)) return;
-        await supabaseClient.from('planets').delete().eq('id', id);
-        if (selectedPlanetId === id) selectedPlanetId = null;
-        showToast('SYSTEM SCRUBBED');
-        loadAll();
-    }
-
-    async function createConnection(e) {
-        e.preventDefault();
-        const planet_a = document.getElementById('cn-a').value;
-        const planet_b = document.getElementById('cn-b').value;
-        if(planet_a === planet_b) { showToast('Vector mismatch loop', true); return; }
-
-        const { error } = await supabaseClient.from('planet_connections').insert([{ planet_a, planet_b }]);
-        if(error) showToast('Hyperlane bridge route exists or is invalid.', true);
-        else {
-            showToast('HYPERLANE LINKED');
-            loadAll();
-        }
-    }
-
-    async function deleteConnection(id) {
-        await supabaseClient.from('planet_connections').delete().eq('id', id);
-        showToast('ROUTE COLLAPSED');
-        loadAll();
-    }
-
-    async function createUnit(e) {
-        e.preventDefault();
-        const name = document.getElementById('un-name').value.trim();
-        const faction = document.getElementById('un-fac').value;
-        const unit_type = document.getElementById('un-type').value.trim();
-        const size = document.getElementById('un-size').value.trim();
-        const planet_id = document.getElementById('un-pid').value;
-        const status = document.getElementById('un-status').value;
-
-        const { error } = await supabaseClient.from('units').insert([{ name, faction, unit_type, size, planet_id, status, strength:100 }]);
-        if(error) showToast(error.message, true);
-        else {
-            const p = DB.planets.find(pl=>pl.id===planet_id);
-            await writeLog('Force Deployment', `${name} deployed to the ${p?p.name:'Deep Space'} theatre.`);
-            showToast('COMBAT ASSET COMMISSIONED');
-            loadAll();
-        }
-    }
-
-    async function updateUnitStrength(id, val) {
-        await supabaseClient.from('units').update({ strength: Math.max(0, Math.min(100, parseInt(val)||0)) }).eq('id', id);
-        showToast('COMBAT EFFECTIVENESS RECORDED');
-    }
-
-    async function updateUnitStatus(id, status) {
-        await supabaseClient.from('units').update({ status }).eq('id', id);
-        showToast('TACTICAL ASSESSMENT UPDATED');
-        loadAll();
-    }
-
-    async function deleteUnit(id) {
-        await supabaseClient.from('units').delete().eq('id', id);
-        showToast('ASSET STRUCK FROM MANIFEST');
-        loadAll();
-    }
-
-    // ==========================================
-    // CAMPAIGN STATE SYSTEMS ENGINE LOGIC
-    // ==========================================
-    async function modifyTurn(dir) {
-        let current = parseInt(DB.settings.campaign_turn || 1);
-        let nextTurn = Math.max(1, current + dir);
-        
-        if (dir === 1) {
-            for (let f of DB.factions) {
-                let items = DB.planets.filter(p => p.controlling_faction === f.name);
-                let c_gain = items.reduce((sum, p) => sum + (p.credit_yield || 0), 0);
-                let s_gain = items.reduce((sum, p) => sum + (p.supply_yield || 0), 0);
-                let f_gain = items.reduce((sum, p) => sum + (p.fuel_yield || 0), 0);
-                
-                await supabaseClient.from('factions').update({
-                    credits: (f.credits || 0) + c_gain,
-                    supplies: (f.supplies || 0) + s_gain,
-                    fuel: (f.fuel || 0) + f_gain
-                }).eq('id', f.id);
-            }
-            await writeLog('Turn Processed', `Galactic production cycles have updated for standard turn cycle ${nextTurn}.`);
-        }
-
-        await supabaseClient.from('settings').upsert({ key: 'campaign_turn', value: String(nextTurn) });
-        showToast(`CHRONOMETER MODIFIED: TURN ${nextTurn}`);
-        loadAll();
-    }
-
-    async function saveCampaignMeta(e) {
-        e.preventDefault();
-        const n = document.getElementById('cam-name').value.trim();
-        const er = document.getElementById('cam-era').value.trim();
-        const p = document.getElementById('cam-pass').value.trim();
-
-        await Promise.all([
-            supabaseClient.from('settings').upsert({ key: 'campaign_name', value: n }),
-            supabaseClient.from('settings').upsert({ key: 'campaign_era', value: er }),
-            supabaseClient.from('settings').upsert({ key: 'admin_password', value: p })
-        ]);
-        showToast('MATRIX CRITERIA MODIFIED');
-        loadAll();
-    }
-
-    async function clearLogs() {
-        if(!confirm("Wipe simulation logs?")) return;
-        await supabaseClient.from('campaign_log').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        showToast('LOG STREAM PURGED');
-        loadAll();
-    }
-
-    // ==========================================
-    // SEIZURE & SYSTEM CAPTURE CONSOLE ENGINE
-    // ==========================================
-    function openCaptureModal(planetId) {
-        const p = DB.planets.find(pl=>pl.id===planetId);
-        if(!p) return;
-        
-        const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay open';
-        overlay.id = 'capture-modal-instance';
-        
-        overlay.innerHTML = `
-        <div class="modal" style="width:380px">
-            <div class="modal-header">
-                <span class="modal-title">⚔️ SEIZE SYSTEM: ${p.name}</span>
-                <button class="modal-close" onclick="document.getElementById('capture-modal-instance').remove()">✕</button>
-            </div>
+    function openSeizureDesk(planetId) {
+        const p = DB.planets.find(pl=>pl.id===planetId); if(!p) return;
+        const d = document.createElement('div'); d.className='modal-overlay open'; d.id='seizure-desk-instance';
+        d.innerHTML = `
+        <div class="modal" style="width:340px">
+            <div class="modal-header"><span class="header-title" style="font-size:11px">ASSIGN PLANETARY SOVEREIGNTY</span></div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Assign New Controlling Faction</label>
-                    <select class="form-select" id="cap-fac-sel">
-                        <option value="Neutral" ${p.controlling_faction === 'Neutral' ? 'selected' : ''}>Neutral Sovereignty</option>
-                        ${DB.factions.map(f => `<option value="${f.name}" ${p.controlling_faction === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
-                    </select>
-                </div>
-                <button class="btn success" style="width:100%;margin-top:10px" onclick="executeSystemCapture('${p.id}', '${p.name}', '${p.controlling_faction}')">TRANSMIT ORDER</button>
+                <select class="form-select" id="sz-sel-fac">
+                    <option value="Neutral">Neutral Sovereignty</option>
+                    ${DB.factions.map(f=>`<option value="${f.name}" ${p.controlling_faction===f.name?'selected':''}>${f.name}</option>`).join('')}
+                </select>
+                <button class="btn success" style="width:100%; margin-top:12px;" onclick="executeMatrixSovereigntyShift('${p.id}')">UPDATED SECTOR DATA</button>
             </div>
         </div>`;
-        document.body.appendChild(overlay);
+        document.body.appendChild(d);
     }
 
-    async function executeSystemCapture(id, name, oldFac) {
-        const nextFac = document.getElementById('cap-fac-sel').value;
-        const { error } = await supabaseClient.from('planets').update({ controlling_faction: nextFac }).eq('id', id);
-        
-        if(error) showToast(error.message, true);
-        else {
-            await writeLog('System Capture', `Strategic control of the ${name} system has moved from ${oldFac} to ${nextFac}.`);
-            showToast('SYSTEM SOVEREIGNTY CHANGED');
-            document.getElementById('capture-modal-instance').remove();
-            loadAll();
-        }
+    async function executeMatrixSovereigntyShift(id) {
+        const nextFac = document.getElementById('sz-sel-fac').value;
+        await supabaseClient.from('planets').update({ controlling_faction: nextFac }).eq('id', id);
+        document.getElementById('seizure-desk-instance').remove();
+        showToast('MAP STRATEGIC SOVEREIGNTY OVERRIDDEN');
+        loadMatrixData();
     }
 </script>
 </body>
