@@ -44,8 +44,9 @@
         .btn { font-family: var(--font-display); font-size: 11px; letter-spacing: 1.5px; padding: 7px 16px; border-radius: 2px; border: 1px solid var(--border-bright); background: transparent; color: var(--accent); cursor: pointer; transition: all 0.2s ease-in-out; text-transform: uppercase; }
         .btn:hover { background: rgba(0, 170, 255, 0.15); box-shadow: var(--glow); color: var(--text-bright); }
         .btn.danger { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
+        .btn.danger:hover { background: rgba(255, 68, 68, 0.15); }
         .btn.success { border-color: rgba(0, 255, 136, 0.5); color: var(--success); }
-        .btn.warn { border-color: rgba(255, 170, 0, 0.5); color: var(--warn); }
+        .btn.success:hover { background: rgba(0, 255, 136, 0.15); }
 
         #faction-panel { background: var(--panel); border-right: 1px solid var(--border); overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
         .panel-label { font-family: var(--font-display); font-size: 10px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
@@ -60,7 +61,6 @@
         .terr-count { font-size: 12px; color: var(--text-dim); margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 6px; }
         .terr-count span { color: var(--text-bright); font-weight: 600; }
 
-        /* Logistics Shopping Pad Elements Layout */
         .logistics-terminal { background: rgba(0, 10, 25, 0.4); border: 1px dashed var(--border-bright); padding: 12px; margin-top: 10px; border-radius: 3px; }
         .logistics-title { font-family: var(--font-display); font-size: 9px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; margin-bottom: 8px; }
         .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 10px; border: 1px solid rgba(0,170,255,0.1); margin-bottom: 6px; border-radius: 2px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
@@ -95,7 +95,6 @@
         .hq-container-badges { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
         .hq-marker-badge { display: inline-flex; align-items: center; background: rgba(0, 170, 255, 0.12); border: 1px solid var(--accent); color: var(--accent2); padding: 4px 10px; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; border-radius: 2px; text-shadow: 0 0 5px var(--accent); width: fit-content; }
 
-        /* Helldivers-Style Liberation Gauge Components */
         .liberation-container { margin-top: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,170,255,0.1); padding: 10px; border-radius: 2px; }
         .liberation-meta { display: flex; justify-content: space-between; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; margin-bottom: 4px; }
         .liberation-bar-outer { width: 100%; height: 6px; background: rgba(255, 68, 68, 0.3); border-radius: 1px; overflow: hidden; position: relative; }
@@ -661,8 +660,8 @@
         badge.textContent = p.controlling_faction; badge.style.color = getFactionColor(p.controlling_faction);
 
         const hqZone = document.getElementById('d-hq-zone'); hqZone.innerHTML = '';
-        const is53rdHere = DB.settings.loc_53rd === p.id;
-        if(is53rdHere) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#0af;color:#0ff">🛡️ 53rd Battalion Base</div>`;
+        const hqPlanetId = DB.settings.loc_53rd;
+        if(hqPlanetId === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#0af;color:#0ff">🛡️ 53rd Battalion Base</div>`;
         if(DB.settings.loc_501st === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#2a6eff;color:#85aeff">⚡ 501st Legion</div>`;
         if(DB.settings.loc_212th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#ff9f1a;color:#ffeaa7">🔶 212th Attack Bn</div>`;
         if(DB.settings.loc_104th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#a4b0be;color:#f1f2f6">🐺 104th Wolfpack</div>`;
@@ -724,19 +723,9 @@
             `).join('');
         }
 
-        // DYNAMIC CONSOLE ACTION ARRAY INTERFACE CONTROLS
+        // UNRESTRICTED GALACTIC TELEPORTATION INTERFACE ARRANGEMENT
         const actionArea = document.getElementById('d-admin-actions');
         if(isAdmin) {
-            let hqPlanetId = DB.settings.loc_53rd;
-            let hqPlanet = DB.planets.find(pl => pl.id === hqPlanetId);
-            let isAdjacent = false;
-
-            if (hqPlanet) {
-                let connections = DB.connections.filter(c => c.planet_a === hqPlanet.name || c.planet_b === hqPlanet.name);
-                let validNeighbors = connections.map(c => c.planet_a === hqPlanet.name ? c.planet_b : c.planet_a);
-                if (validNeighbors.includes(p.name)) isAdjacent = true;
-            }
-
             if (p.id === hqPlanetId) {
                 actionArea.innerHTML = `
                     <div style="background:rgba(0,10,25,0.6); border:1px solid var(--border); padding:10px; border-radius:3px;">
@@ -746,10 +735,9 @@
                             <button class="btn danger" style="font-size:9px; padding:8px 4px;" onclick="process53rdBattleResult('${p.id}', false)">🔴 MISSION DEFEAT</button>
                         </div>
                     </div>`;
-            } else if (isAdjacent) {
-                actionArea.innerHTML = `<button class="btn success" style="width:100%" onclick="move53rdBattalion('${p.id}')">🔷 DEPLOY 53rd SECTOR FLEET HERE</button>`;
             } else {
-                actionArea.innerHTML = `<div style="color:var(--text-dim); font-size:11px; text-align:center;">Hyperlane arrays report destination is out of jump range. Requires line adjacency.</div>`;
+                // Adjacency checking code fully stripped out here - allow deployment globally
+                actionArea.innerHTML = `<button class="btn success" style="width:100%" onclick="move53rdBattalion('${p.id}')">🔷 DEPLOY 53rd SECTOR FLEET HERE</button>`;
             }
         } else { actionArea.innerHTML = ''; }
     }
