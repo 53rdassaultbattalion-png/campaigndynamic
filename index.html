@@ -192,8 +192,8 @@
 <div id="app" style="display:none">
     <header>
         <div>
-            <div class="header-title" id="header-campaign-name">Tactical Matrix</div>
-            <div class="header-sub" id="header-era">Syncing Array...</div>
+            <div class="header-title" id="header-campaign-name">Grand GAR Command Deck</div>
+            <div class="header-sub" id="header-era">Clone Wars Theater</div>
         </div>
         <div class="turn-badge" id="header-turn">PHASE 1</div>
         <div class="header-right">
@@ -308,7 +308,6 @@
     let currentDetailTab = 'garrison';
     let mapState = { x: 0, y: 0, scale: 0.4, dragging: false, lastX: 0, lastY: 0 };
 
-    // Synchronized pipeline loader anchors configuration check into an absolute runtime load hook
     window.onload = function() {
         buildGridLines();
         checkConfig();
@@ -402,8 +401,8 @@
         const initialConnections = [
             { planet_a: "Coruscant", planet_b: "Anaxes" },
             { planet_a: "Anaxes", planet_b: "Muunilinst" },
-            { planet_a: "Coruscant", planet_b: "Kuad" },
-            { planet_a: "Kuad", planet_b: "Corellia" },
+            { planet_a: "Coruscant", planet_b: "Kuat" },
+            { planet_a: "Kuat", planet_b: "Corellia" },
             { planet_a: "Corellia", planet_b: "Cato Neimoidia" },
             { planet_a: "Cato Neimoidia", planet_b: "Saleucami" },
             { planet_a: "Saleucami", planet_b: "Bothawui" },
@@ -483,9 +482,13 @@
         supabaseClient.channel('matrix-changes').on('postgres_changes', { event: '*', schema: 'public' }, () => { loadAll(); }).subscribe();
     }
 
+    document.addEventListener("DOMContentLoaded", () => {
+        updateHeader();
+    });
+
     function updateHeader() {
-        document.getElementById('header-campaign-name').textContent = DB.settings.campaign_name || 'Republic Command Matrix';
-        document.getElementById('header-era').textContent = DB.settings.campaign_era || 'Clone Wars Starsim';
+        document.getElementById('header-campaign-name').textContent = DB.settings.campaign_name || 'Grand GAR Command Deck';
+        document.getElementById('header-era').textContent = DB.settings.campaign_era || 'Clone Wars Theater';
         document.getElementById('header-turn').textContent = 'PHASE ' + (DB.settings.campaign_turn || '1');
     }
 
@@ -704,41 +707,22 @@
         loadAll();
     }
 
-    async function writeLog(eventType, description) {
-        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1505715142669897849/0E42nI-Cx46wj3dr_HtHu2UbA7TjI99aSFn-LnyvG9xTcjPLcC80goW8xuSUN0pCyZF1";
+    function openAdmin() {
+        if(!isAdmin) { document.getElementById('login-screen').style.display = 'flex'; document.getElementById('admin-password').focus(); }
+        else { document.getElementById('admin-modal').classList.add('open'); switchTab('campaign'); }
+    }
+    function closeLogin() { document.getElementById('login-screen').style.display = 'none'; }
+    function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
 
-        await supabaseClient.from('campaign_log').insert([{ event_type: eventType, description: description }]);
-
-        if (DISCORD_WEBHOOK_URL && DISCORD_WEBHOOK_URL.startsWith("https://discord.com")) {
-            let embedColor = 5814783; 
-            if (eventType.includes("Victory")) embedColor = 3066993;     
-            if (eventType.includes("Defeat") || eventType.includes("Fallback")) embedColor = 15158332; 
-            if (eventType.includes("Movement")) embedColor = 10181046;   
-
-            const discordPayload = {
-                embeds: [{
-                    title: `📡 GAR TELEMETRY TRANSMISSION: ${eventType.toUpperCase()}`,
-                    description: description,
-                    color: embedColor,
-                    timestamp: new Date().toISOString(),
-                    footer: { text: "Strategic Command Deck Framework — 53rd Battalion Node" }
-                }]
-            };
-
-            try {
-                await fetch(DISCORD_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(discordPayload)
-                });
-            } catch (e) {
-                console.error("Discord link fault bypassed smoothly.");
-            }
-        }
+    function doLogin() {
+        const pass = document.getElementById('admin-password').value;
+        if(pass === (DB.settings.admin_password || 'changeme')) {
+            isAdmin = true; document.getElementById('login-error').textContent = ''; document.getElementById('admin-password').value = ''; closeLogin(); openAdmin();
+        } else { document.getElementById('login-error').textContent = 'DECRYPTION KEY INCORRECT'; }
     }
 
     function switchTab(tab) { activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); renderAdminBody(); }
-
+    
     function renderAdminBody() {
         const body = document.getElementById('admin-body');
         if(activeTab === 'campaign') {
