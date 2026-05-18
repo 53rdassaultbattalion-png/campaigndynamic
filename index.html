@@ -33,7 +33,7 @@
 
         header {
             grid-column: 1 / -1; background: linear-gradient(90deg, #020a14 0%, #051429 50%, #020a14 100%);
-            border-bottom: 1px solid var(--border-bright); display: flex; align-items: center; padding: 0 24px; gap: 20px; relative; box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+            border-bottom: 1px solid var(--border-bright); display: flex; align-items: center; padding: 0 24px; gap: 20px; position: relative; box-shadow: 0 2px 20px rgba(0,0,0,0.5);
         }
         header::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent2), transparent); }
         .header-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; letter-spacing: 3px; color: var(--accent2); text-shadow: 0 0 10px rgba(0, 255, 255, 0.4); text-transform: uppercase; }
@@ -112,6 +112,36 @@
         .unit-name { color: var(--text-bright); font-weight: 600; }
         .unit-meta { color: var(--text-dim); margin-top: 3px; font-size: 12px; }
 
+        /* Secure Modular Popups Setup */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; width: 500px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,170,255,0.2); }
+        .modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .modal-title { font-family: var(--font-display); font-size: 13px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; }
+        .modal-close { background: none; border: none; color: var(--text-dim); font-size: 22px; cursor: pointer; line-height: 1; }
+        .modal-close:hover { color: var(--text-bright); }
+        .modal-body { overflow-y: auto; padding: 24px; flex: 1; }
+        .modal-tabs { display: flex; gap: 4px; padding: 0 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: #020812; }
+        .modal-tab { font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; padding: 14px 18px; cursor: pointer; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; }
+        .modal-tab:hover { color: var(--text); }
+        .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        #login-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        #login-screen.open { display: flex; }
+        .login-box { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; padding: 36px; width: 360px; box-shadow: 0 0 50px rgba(0,170,255,0.25); text-align: center; }
+        .login-icon { font-size: 40px; margin-bottom: 16px; }
+        .login-title { font-family: var(--font-display); font-size: 14px; letter-spacing: 3px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; }
+        .login-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 24px; }
+        .login-error { color: var(--danger); font-size: 12px; margin-top: 12px; min-height: 18px; font-family: var(--font-display); }
+
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; }
+        .form-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-bright); padding: 10px 14px; border-radius: 2px; font-family: var(--font-body); font-size: 14px; }
+        
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: #040c17; border: 1px solid var(--border-bright); color: var(--accent); font-family: var(--font-display); font-size: 11px; letter-spacing: 2px; padding: 12px 24px; border-radius: 3px; z-index: 999; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; box-shadow: var(--glow); }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+        #toast.error { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
+
         @keyframes hq-pulse { 0% { r: 12; opacity: 1; } 100% { r: 35; opacity: 0; } }
         .hq-ring-53rd { animation: hq-pulse 2.0s ease-out infinite; stroke: #00aaff; stroke-width: 2.5; }
         .hq-ring-501st { animation: hq-pulse 2.2s ease-out infinite; stroke: #2a6eff; stroke-width: 2; }
@@ -125,12 +155,9 @@
 <canvas id="starfield"></canvas>
 
 <div id="config-screen" style="display:none;"></div>
+<div id="setup-banner" style="display:none;"></div>
 
-<div id="setup-banner" style="display:none;">
-    ⚠ INITIALIZING SECTORS — Stand by while the core engine deploys the galactic coordinate array index...
-</div>
-
-<div id="login-screen" style="display:none;">
+<div id="login-screen">
     <div class="login-box">
         <div class="login-icon">🔐</div>
         <div class="login-title">Secure Decryption</div>
@@ -195,15 +222,6 @@
 
     <div id="map-container">
         <svg id="map-svg" xmlns="http://www.w3.org/2000/svg" style="width: 2500px; height: 2500px;">
-            <defs>
-                <filter id="glow-filter">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                    <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                </filter>
-            </defs>
             <g id="grid-backdrop"></g>
             <g id="map-g">
                 <g id="connections-layer"></g>
@@ -310,14 +328,12 @@
     async function saveConfig() {
         const url = "https://yjvgwniprmgnwvgavqpj.supabase.co";
         const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
-        document.getElementById('config-screen').style.display = 'none';
         initApp(url, key);
     }
 
     function checkConfig() {
         const url = "https://yjvgwniprmgnwvgavqpj.supabase.co";
         const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
-        document.getElementById('config-screen').style.display = 'none';
         initApp(url, key);
     }
 
@@ -425,10 +441,10 @@
     }
 
     function openAdmin() {
-        if(!isAdmin) { document.getElementById('login-screen').style.display = 'flex'; document.getElementById('admin-password').focus(); }
+        if(!isAdmin) { document.getElementById('login-screen').classList.add('open'); document.getElementById('admin-password').focus(); }
         else { document.getElementById('admin-modal').classList.add('open'); switchTab('campaign'); }
     }
-    function closeLogin() { document.getElementById('login-screen').style.display = 'none'; }
+    function closeLogin() { document.getElementById('login-screen').classList.remove('open'); }
     function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
 
     function doLogin() {
@@ -437,6 +453,8 @@
             isAdmin = true; document.getElementById('login-error').textContent = ''; document.getElementById('admin-password').value = ''; closeLogin(); openAdmin();
         } else { document.getElementById('login-error').textContent = 'DECRYPTION KEY INCORRECT'; }
     }
+
+    function closeLogin() { document.getElementById('login-screen').classList.remove('open'); }
 
     function switchTab(tab) { activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); renderAdminBody(); }
     
@@ -503,7 +521,7 @@
         let rep = DB.factions.find(f => f.name === "Galactic Republic"); let cis = DB.factions.find(f => f.name === "Confederacy of Independent Systems");
         if (!rep || !cis) return;
 
-        showToast("COMPUTING EXPANDED SECTOR FRONT ENCOUNTERS Front...");
+        showToast("COMPUTING EXPANDED SECTOR FRONT ENCOUNTERS...");
         let simulationLogs = [];
 
         let repGain = 0; let cisGain = 0;
