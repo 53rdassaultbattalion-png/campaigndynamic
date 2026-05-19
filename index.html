@@ -783,15 +783,16 @@
     function getSVRadius(sv) { return { 'Low': 5, 'Medium': 8, 'High': 11, 'Critical': 15 }[sv] || 7; }
 
     function rebuild3DScene() {
+        // Clear old visual vectors cleanly
         planetMeshes.forEach(m => {
             if(m.g_rings) scene.remove(m.g_rings);
             scene.remove(m);
         });
         planetMeshes = [];
 
-        const hyperlanes = scene.getObjectsByProperty('isLine', true);
-        const stalks = scene.getObjectsByProperty('isStalk', true);
-        [...hyperlanes, ...stalks].forEach(obj => scene.remove(obj));
+        // Corrected Three.js query lookups safely mapping children tracking variables directly
+        const targetsForRemoval = scene.children.filter(obj => obj.isLine || obj.isStalk);
+        targetsForRemoval.forEach(obj => scene.remove(obj));
 
         const scaleX = 0.5;
         const scaleZ = 0.5;
