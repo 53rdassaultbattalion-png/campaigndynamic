@@ -183,7 +183,6 @@
         .login-error { color: var(--danger); font-size: 12px; margin-top: 12px; min-height: 18px; font-family: var(--font-display); }
 
         .form-group { margin-bottom: 16px; }
-        .form-label { display: block; font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; }
         .form-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-bright); padding: 10px 14px; border-radius: 2px; font-size: 14px; }
         
         #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: #030914; border: 1px solid var(--border-bright); color: var(--accent); font-family: var(--font-display); font-size: 11px; letter-spacing: 2px; padding: 12px 24px; border-radius: 3px; z-index: 999; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; box-shadow: 0 0 15px rgba(0,180,255,0.3); }
@@ -434,15 +433,14 @@
 
     async function checkConfig() {
         const url = "https://yjvgwniprmgnwvgavqpj.supabase.co";
-        // Paste your actual, long public anon key token down inside the placeholder below
-        const key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.YOUR_LONG_ANON_TOKEN_HERE";
+        const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
         initApp(url, key);
     }
 
     async function initApp(url, key) {
         supabaseClient = window.supabase.createClient(url, key);
         document.getElementById('app').style.display = 'grid';
-        onWindowResize(); // Force WebGL layout update
+        onWindowResize(); 
         
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) { isAdmin = true; }
@@ -468,20 +466,18 @@
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2.1; // Restricts viewport from clipping underneath the holotable
+        controls.maxPolarAngle = Math.PI / 2.1; 
         controls.minDistance = 150;
         controls.maxDistance = 1200;
 
         reset3DCamera();
 
-        // 3D Tactical Concentric Table Ring Base Elements
         const gridHelper = new THREE.GridHelper(1800, 36, 0x00aeff, 0x002b5c);
         gridHelper.position.y = -60;
         gridHelper.material.opacity = 0.25;
         gridHelper.material.transparent = true;
         scene.add(gridHelper);
 
-        // Volumetric Ambient Nebulae & Dust Clouds
         const starGeo = new THREE.BufferGeometry();
         const starCount = 1800;
         const positions = new Float32Array(starCount * 3);
@@ -489,8 +485,7 @@
 
         for (let i = 0; i < starCount * 3; i += 3) {
             positions[i] = (Math.random() - 0.5) * 1600;
-            positions[i+1] = (Math.random() - 0.5) * 180 + (Math.sin(positions[i]/100) * 30); // Dynamic cosmic wave
-            positions[i+2] = (Math.random() - 0.5) * 1600;
+            positions[i+1] = (Math.random() - 0.5) * 180 + (Math.sin(positions[i]/100) * 30); 
 
             colors[i] = 0.0; colors[i+1] = 0.6 + Math.random()*0.4; colors[i+2] = 1.0;
         }
@@ -542,7 +537,6 @@
         renderer.render(scene, camera);
     }
 
-    /* Trailing system tag strings matching coordinates across 3D vector conversions */
     function updateHtmlLabels() {
         const container = document.getElementById('map-container');
         const labelsLayer = document.getElementById('html-labels-layer');
@@ -554,11 +548,9 @@
             const wp = new THREE.Vector3();
             mesh.getWorldPosition(wp);
             
-            // Offset text strings slightly above the 3D geometry bounds
             wp.y += 18; 
             wp.project(camera);
 
-            // Hide coordinates if twisted completely outside viewport boundaries
             if(wp.z > 1) return;
 
             const x = (wp.x * .5 + .5) * container.clientWidth;
@@ -581,7 +573,6 @@
 
     async function loadAll() {
         try {
-            // Isolate parallel network targets into explicit slots to catch isolated faults
             const [f, p, c, u, s, l, upg] = await Promise.all([
                 supabaseClient.from('factions').select('*').order('name'),
                 supabaseClient.from('planets').select('*').order('name'),
@@ -791,50 +782,41 @@
     
     function getSVRadius(sv) { return { 'Low': 5, 'Medium': 8, 'High': 11, 'Critical': 15 }[sv] || 7; }
 
-    /* 🪐 Rebuild 3D Spatial Geometry Objects */
     function rebuild3DScene() {
-        // Purge old assets from scene
         planetMeshes.forEach(m => {
             if(m.g_rings) scene.remove(m.g_rings);
             scene.remove(m);
         });
         planetMeshes = [];
 
-        // Clear previous hyperlane vectors
         const hyperlanes = scene.getObjectsByProperty('isLine', true);
         const stalks = scene.getObjectsByProperty('isStalk', true);
         [...hyperlanes, ...stalks].forEach(obj => scene.remove(obj));
 
-        // Coordinate scaling factors mapping flat DB grids into full WebGL spaces
         const scaleX = 0.5;
         const scaleZ = 0.5;
         const centerX = 650;
         const centerZ = 650;
 
-        // Loop A: Project 3D Node Structures
         DB.planets.forEach(p => {
             const r = getSVRadius(p.strategic_value);
             const colorHex = p.under_invasion ? 0xff3333 : getFactionHexColor(p.controlling_faction);
 
-            // Generate physical 3D Sphere mesh
             const geometry = new THREE.SphereGeometry(r, 16, 16);
             const material = new THREE.MeshBasicMaterial({ color: colorHex, wireframe: true, transparent: true, opacity: 0.85 });
             const mesh = new THREE.Mesh(geometry, material);
 
-            // Establish 3D position vector
             const posX = (p.x - centerX) * scaleX;
             const posZ = (p.y - centerZ) * scaleZ;
             
-            // Map height procedurally or based on ID properties to generate that 3D depth topology
             let posY = ((p.id % 5) * 20) - 40; 
-            if (p.under_invasion) posY += 15; // Invasions shift upwards visually
+            if (p.under_invasion) posY += 15; 
 
             mesh.position.set(posX, posY, posZ);
             mesh.userData = p;
             scene.add(mesh);
             planetMeshes.push(mesh);
 
-            // Add Tactical Stalk dropping down from node to the grid base floor plane
             const stalkGeo = new THREE.BufferGeometry().setFromPoints([
                 new THREE.Vector3(posX, posY, posZ),
                 new THREE.Vector3(posX, -60, posZ)
@@ -844,33 +826,34 @@
             stalk.isStalk = true;
             scene.add(stalk);
 
-            // Generate glowing aura tracking ring structures
             const ringCount = (DB.settings.loc_53rd == p.id ? 1 : 0) + (DB.settings.loc_501st == p.id ? 1 : 0);
             if(ringCount > 0 || p.under_invasion) {
                 const outerRingGeo = new THREE.RingGeometry(r + 6, r + 8, 32);
                 const outerRingMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.4 });
                 const ringMesh = new THREE.Mesh(outerRingGeo, outerRingMat);
                 ringMesh.position.set(posX, posY, posZ);
-                ringMesh.lookAt(camera.position); // Billboard effect tracking viewport focus
+                ringMesh.lookAt(camera.position); 
                 mesh.g_rings = ringMesh;
                 scene.add(ringMesh);
             }
         });
 
-        // Loop B: Construct Luminous Hyperlane Intersections
         DB.connections.forEach(c => {
             const meshA = planetMeshes.find(m => m.userData.name === c.planet_a);
             const meshB = planetMeshes.find(m => m.userData.name === c.planet_b);
             if (!meshA || !meshB) return;
 
             const points = [meshA.position, meshB.position];
-            const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+            const lineGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(meshA.position.x, meshA.position.y, meshA.position.z),
+                new THREE.Vector3(meshB.position.x, meshB.position.y, meshB.position.z)
+            ]);
 
             let laneColor = 0x00b3ff;
             if(meshA.userData.controlling_faction === meshB.userData.controlling_faction && meshA.userData.controlling_faction !== 'Neutral') {
                 laneColor = getFactionHexColor(meshA.userData.controlling_faction);
             } else if (meshA.userData.controlling_faction !== 'Neutral' && meshB.userData.controlling_faction !== 'Neutral') {
-                laneColor = 0xffaa00; // Contested border systems
+                laneColor = 0xffaa00; 
             }
 
             const lineMat = new THREE.LineBasicMaterial({ color: laneColor, transparent: true, opacity: 0.35 });
