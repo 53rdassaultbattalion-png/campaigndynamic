@@ -8,209 +8,145 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --bg: #00050f;
-  --panel: rgba(0,8,20,0.96);
-  --border: rgba(0,160,255,0.12);
-  --border-bright: rgba(0,200,255,0.35);
-  --text: #a8c8e8;
-  --text-dim: #3a5a7a;
-  --text-bright: #e8f4ff;
-  --accent: #00aaff;
-  --accent2: #00eeff;
-  --warn: #ffaa00;
-  --danger: #ff3333;
-  --success: #00ff88;
-  --republic: #00aaff;
-  --cis: #ff3333;
-  --neutral: #445566;
-  --fd: 'Orbitron', monospace;
-  --fb: 'Rajdhani', sans-serif;
+  --bg:#00050f; --panel:rgba(0,8,20,0.96); --border:rgba(0,160,255,0.12);
+  --border-bright:rgba(0,200,255,0.35); --text:#a8c8e8; --text-dim:#3a5a7a;
+  --text-bright:#e8f4ff; --accent:#00aaff; --accent2:#00eeff;
+  --warn:#ffaa00; --danger:#ff3333; --success:#00ff88;
+  --fd:'Orbitron',monospace; --fb:'Rajdhani',sans-serif;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--fb); font-size:14px; }
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);}
+#layout{display:grid;grid-template-columns:300px 1fr 320px;grid-template-rows:56px 1fr;height:100vh;}
 
-/* Scanline overlay */
-body::after {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
-  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px);
-}
+header{grid-column:1/-1;background:linear-gradient(90deg,#000510,#001428 50%,#000510);border-bottom:1px solid var(--border-bright);display:flex;align-items:center;padding:0 20px;gap:16px;position:relative;z-index:100;box-shadow:0 2px 30px rgba(0,0,0,0.8);}
+header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent2) 30%,var(--accent2) 70%,transparent);opacity:0.6;}
+.h-title{font-family:var(--fd);font-size:15px;font-weight:900;letter-spacing:4px;color:var(--accent2);text-transform:uppercase;text-shadow:0 0 20px rgba(0,238,255,0.4);}
+.h-sub{font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-top:1px;}
+.h-phase{font-family:var(--fd);font-size:11px;letter-spacing:2px;color:var(--warn);border:1px solid rgba(255,170,0,0.3);padding:4px 12px;background:rgba(255,170,0,0.04);border-radius:2px;}
+.h-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
 
-#layout { display:grid; grid-template-columns:300px 1fr 320px; grid-template-rows:56px 1fr; height:100vh; }
+.btn{font-family:var(--fd);font-size:10px;letter-spacing:1.5px;padding:6px 14px;border-radius:2px;border:1px solid var(--border-bright);background:transparent;color:var(--accent);cursor:pointer;transition:all 0.2s;text-transform:uppercase;white-space:nowrap;}
+.btn:hover{background:rgba(0,160,255,0.12);box-shadow:0 0 12px rgba(0,160,255,0.25);color:var(--text-bright);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;}
+.btn.ok{border-color:rgba(0,255,136,0.4);color:var(--success);}
+.btn.ok:hover{background:rgba(0,255,136,0.08);}
+.btn.red{border-color:rgba(255,51,51,0.4);color:var(--danger);}
+.btn.red:hover{background:rgba(255,51,51,0.08);}
 
-/* ── HEADER ── */
-header {
-  grid-column:1/-1;
-  background:linear-gradient(90deg,#000510,#001428 50%,#000510);
-  border-bottom:1px solid var(--border-bright);
-  display:flex; align-items:center; padding:0 20px; gap:16px;
-  position:relative; z-index:100;
-  box-shadow:0 2px 30px rgba(0,0,0,0.8);
-}
-header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--accent2) 30%,var(--accent2) 70%,transparent); opacity:0.6; }
-.h-title { font-family:var(--fd); font-size:15px; font-weight:900; letter-spacing:4px; color:var(--accent2); text-transform:uppercase; text-shadow:0 0 20px rgba(0,238,255,0.4); }
-.h-sub { font-size:10px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-top:1px; }
-.h-phase { font-family:var(--fd); font-size:11px; letter-spacing:2px; color:var(--warn); border:1px solid rgba(255,170,0,0.3); padding:4px 12px; background:rgba(255,170,0,0.04); border-radius:2px; }
-.h-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+#left{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.panel-section{border-bottom:1px solid var(--border);padding:12px 14px;flex-shrink:0;}
+.panel-section.scrollable{overflow-y:auto;flex:1;}
+.sec-label{font-family:var(--fd);font-size:9px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;}
 
-.btn { font-family:var(--fd); font-size:10px; letter-spacing:1.5px; padding:6px 14px; border-radius:2px; border:1px solid var(--border-bright); background:transparent; color:var(--accent); cursor:pointer; transition:all 0.2s; text-transform:uppercase; white-space:nowrap; }
-.btn:hover { background:rgba(0,160,255,0.12); box-shadow:0 0 12px rgba(0,160,255,0.25); color:var(--text-bright); }
-.btn:disabled { opacity:0.35; cursor:not-allowed; }
-.btn.ok { border-color:rgba(0,255,136,0.4); color:var(--success); }
-.btn.ok:hover { background:rgba(0,255,136,0.08); }
-.btn.red { border-color:rgba(255,51,51,0.4); color:var(--danger); }
-.btn.red:hover { background:rgba(255,51,51,0.08); }
+.faction-card{background:rgba(255,255,255,0.015);border:1px solid var(--border);border-radius:3px;padding:10px 12px;margin-bottom:8px;}
+.faction-card:last-child{margin-bottom:0;}
+.fc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.fc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.fc-name{font-family:var(--fd);font-size:10px;letter-spacing:1px;color:var(--text-bright);text-transform:uppercase;}
+.fc-creds{font-family:var(--fd);font-size:14px;color:var(--accent2);font-weight:700;text-shadow:0 0 8px rgba(0,238,255,0.3);}
+.fc-bar-wrap{width:100%;height:2px;background:rgba(255,255,255,0.05);border-radius:1px;margin:4px 0 6px;}
+.fc-bar{height:100%;border-radius:1px;transition:width 0.4s;}
+.fc-terr{font-size:11px;color:var(--text-dim);}
+.fc-terr span{color:var(--text);font-weight:600;}
 
-/* ── LEFT PANEL ── */
-#left { background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
-.panel-section { border-bottom:1px solid var(--border); padding:12px 14px; flex-shrink:0; }
-.panel-section.scrollable { overflow-y:auto; flex:1; }
-.sec-label { font-family:var(--fd); font-size:9px; letter-spacing:3px; color:var(--text-dim); text-transform:uppercase; margin-bottom:10px; }
+.accord{border:1px solid var(--border);border-radius:3px;margin-bottom:8px;overflow:hidden;}
+.accord-hd{font-family:var(--fd);font-size:9px;letter-spacing:2px;padding:10px 12px;background:rgba(0,160,255,0.03);color:var(--accent2);display:flex;justify-content:space-between;align-items:center;cursor:pointer;text-transform:uppercase;}
+.accord-hd:hover{background:rgba(0,160,255,0.08);}
+.accord-body{padding:8px;display:none;}
+.accord-body.open{display:block;}
+.sub-accord{border:1px solid rgba(0,160,255,0.06);border-radius:2px;margin-bottom:6px;}
+.sub-hd{font-family:var(--fd);font-size:8px;letter-spacing:1px;padding:7px 10px;color:var(--text);display:flex;justify-content:space-between;align-items:center;cursor:pointer;text-transform:uppercase;}
+.sub-hd:hover{color:var(--accent);}
+.sub-body{padding:6px;display:none;}
+.sub-body.open{display:block;}
+.shop-row{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;border:1px solid rgba(0,160,255,0.07);border-radius:2px;margin-bottom:4px;font-size:12px;cursor:pointer;transition:all 0.15s;background:rgba(255,255,255,0.01);}
+.shop-row:hover{background:rgba(0,160,255,0.07);border-color:var(--accent);}
+.shop-cost{color:var(--warn);font-family:var(--fd);font-size:10px;font-weight:700;}
+.shop-strike{text-decoration:line-through;color:var(--text-dim);font-size:9px;margin-right:3px;}
+.tech-card{background:rgba(0,4,14,0.6);border:1px solid var(--border);padding:9px 10px;border-radius:2px;margin-bottom:6px;}
+.tech-card.on{border-color:rgba(0,255,136,0.2);background:rgba(0,255,136,0.02);}
+.tech-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:4px;}
+.tech-name{font-family:var(--fd);font-size:10px;color:var(--text-bright);text-transform:uppercase;letter-spacing:0.5px;line-height:1.2;}
+.tech-desc{font-size:11px;color:var(--text-dim);line-height:1.4;}
+.tech-badge{font-family:var(--fd);font-size:7px;padding:2px 6px;border-radius:2px;flex-shrink:0;}
+.tech-badge.active{background:rgba(0,255,136,0.1);color:var(--success);border:1px solid rgba(0,255,136,0.3);}
+.tech-badge.locked{background:rgba(255,170,0,0.08);color:var(--warn);border:1px solid rgba(255,170,0,0.2);}
 
-/* Faction cards */
-.faction-card { background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:3px; padding:10px 12px; margin-bottom:8px; }
-.faction-card:last-child { margin-bottom:0; }
-.fc-head { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-.fc-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.fc-name { font-family:var(--fd); font-size:10px; letter-spacing:1px; color:var(--text-bright); text-transform:uppercase; }
-.fc-creds { font-family:var(--fd); font-size:14px; color:var(--accent2); font-weight:700; text-shadow:0 0 8px rgba(0,238,255,0.3); }
-.fc-bar-wrap { width:100%; height:2px; background:rgba(255,255,255,0.05); border-radius:1px; margin:4px 0 6px; }
-.fc-bar { height:100%; border-radius:1px; transition:width 0.4s; }
-.fc-terr { font-size:11px; color:var(--text-dim); }
-.fc-terr span { color:var(--text); font-weight:600; }
+#map-wrap{position:relative;overflow:hidden;background:#00010a;}
+#galactic-canvas{display:block;width:100%;height:100%;}
+#map-controls{position:absolute;bottom:16px;left:16px;display:flex;gap:6px;}
+.map-btn{width:30px;height:30px;background:var(--panel);border:1px solid var(--border);color:var(--accent);font-size:14px;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.map-btn:hover{border-color:var(--border-bright);color:var(--text-bright);}
+#map-legend{position:absolute;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:3px;font-size:11px;}
+.leg-title{font-family:var(--fd);font-size:8px;letter-spacing:2px;color:var(--text-dim);margin-bottom:7px;text-transform:uppercase;}
+.leg-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;color:var(--text);}
+.leg-dot{width:7px;height:7px;border-radius:50%;}
 
-/* Accordion */
-.accord { border:1px solid var(--border); border-radius:3px; margin-bottom:8px; overflow:hidden; }
-.accord-hd { font-family:var(--fd); font-size:9px; letter-spacing:2px; padding:10px 12px; background:rgba(0,160,255,0.03); color:var(--accent2); display:flex; justify-content:space-between; align-items:center; cursor:pointer; text-transform:uppercase; }
-.accord-hd:hover { background:rgba(0,160,255,0.08); }
-.accord-body { padding:8px; display:none; }
-.accord-body.open { display:block; }
+#right{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+#detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-dim);padding:20px;text-align:center;}
+.d-icon{font-size:40px;opacity:0.15;animation:bob 4s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.d-hint{font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
+#detail-content{display:none;flex-direction:column;flex:1;overflow:hidden;}
+#detail-content.vis{display:flex;}
 
-.sub-accord { border:1px solid rgba(0,160,255,0.06); border-radius:2px; margin-bottom:6px; }
-.sub-hd { font-family:var(--fd); font-size:8px; letter-spacing:1px; padding:7px 10px; color:var(--text); display:flex; justify-content:space-between; align-items:center; cursor:pointer; text-transform:uppercase; }
-.sub-hd:hover { color:var(--accent); }
-.sub-body { padding:6px; display:none; }
-.sub-body.open { display:block; }
+.d-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.d-sector-tag{font-family:var(--fd);font-size:9px;letter-spacing:3px;color:var(--accent2);background:rgba(0,180,255,0.08);padding:3px 8px;border-left:2px solid var(--accent);margin-bottom:10px;text-transform:uppercase;display:inline-block;}
+.sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:5px;margin-bottom:12px;}
+.sg-node{display:flex;flex-direction:column;align-items:center;padding:5px 3px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.04);border-radius:2px;cursor:pointer;transition:all 0.15s;text-align:center;}
+.sg-node:hover{background:rgba(0,160,255,0.07);border-color:var(--accent);}
+.sg-node.cur{border-color:var(--accent2);background:rgba(0,40,80,0.3);}
+.sg-name{font-size:9px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
+.sg-dot{width:4px;height:4px;border-radius:50%;margin-top:3px;}
+.planet-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.d-name{font-family:var(--fd);font-size:15px;letter-spacing:2px;color:var(--text-bright);text-transform:uppercase;}
+.d-faction-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:2px;border:1px solid currentColor;font-family:var(--fd);font-size:9px;letter-spacing:1px;background:rgba(255,255,255,0.02);margin-top:6px;}
+.hq-badges{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
+.hq-badge{display:inline-flex;align-items:center;font-family:var(--fd);font-size:8px;letter-spacing:1px;padding:3px 8px;border-radius:2px;border:1px solid;width:fit-content;}
+.lib-box{margin-top:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,160,255,0.08);padding:8px 10px;border-radius:2px;}
+.lib-meta{display:flex;justify-content:space-between;font-family:var(--fd);font-size:8px;letter-spacing:1px;margin-bottom:4px;}
+.lib-outer{width:100%;height:5px;background:rgba(255,51,51,0.25);border-radius:1px;overflow:hidden;}
+.lib-inner{height:100%;background:var(--accent);border-radius:1px;transition:width 0.5s cubic-bezier(.1,.8,.2,1);box-shadow:0 0 8px var(--accent);}
+.d-scroll{overflow-y:auto;flex:1;}
+.d-section{padding:12px 16px;border-bottom:1px solid var(--border);}
+.d-sec-title{font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase;}
+.d-row{display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px;}
+.d-key{color:var(--text-dim);}
+.d-val{color:var(--text-bright);font-weight:600;}
+.d-val.green{font-family:var(--fd);color:var(--success);}
+.d-actions{padding:12px 16px;margin-top:auto;display:flex;flex-direction:column;gap:6px;flex-shrink:0;border-top:1px solid var(--border);}
 
-.shop-row { display:flex; justify-content:space-between; align-items:center; padding:7px 9px; border:1px solid rgba(0,160,255,0.07); border-radius:2px; margin-bottom:4px; font-size:12px; cursor:pointer; transition:all 0.15s; background:rgba(255,255,255,0.01); }
-.shop-row:hover { background:rgba(0,160,255,0.07); border-color:var(--accent); }
-.shop-cost { color:var(--warn); font-family:var(--fd); font-size:10px; font-weight:700; }
-.shop-strike { text-decoration:line-through; color:var(--text-dim); font-size:9px; margin-right:3px; }
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.overlay.open{display:flex;}
+.modal{background:#020c1a;border:1px solid var(--border-bright);border-radius:4px;width:480px;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,160,255,0.15);}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-title{font-family:var(--fd);font-size:11px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;}
+.modal-x{background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;line-height:1;}
+.modal-tabs{display:flex;padding:0 20px;border-bottom:1px solid var(--border);background:#010810;flex-shrink:0;}
+.mtab{font-family:var(--fd);font-size:9px;letter-spacing:2px;padding:12px 16px;cursor:pointer;color:var(--text-dim);border-bottom:2px solid transparent;text-transform:uppercase;}
+.mtab.on{color:var(--accent);border-bottom-color:var(--accent);}
+.modal-body{overflow-y:auto;padding:20px;flex:1;}
+.modal-ft{padding:10px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;flex-shrink:0;}
 
-.tech-card { background:rgba(0,4,14,0.6); border:1px solid var(--border); padding:9px 10px; border-radius:2px; margin-bottom:6px; }
-.tech-card.on { border-color:rgba(0,255,136,0.2); background:rgba(0,255,136,0.02); }
-.tech-top { display:flex; justify-content:space-between; align-items:flex-start; gap:6px; margin-bottom:4px; }
-.tech-name { font-family:var(--fd); font-size:10px; color:var(--text-bright); text-transform:uppercase; letter-spacing:0.5px; line-height:1.2; }
-.tech-desc { font-size:11px; color:var(--text-dim); line-height:1.4; }
-.tech-badge { font-family:var(--fd); font-size:7px; padding:2px 6px; border-radius:2px; flex-shrink:0; }
-.tech-badge.active { background:rgba(0,255,136,0.1); color:var(--success); border:1px solid rgba(0,255,136,0.3); }
-.tech-badge.locked { background:rgba(255,170,0,0.08); color:var(--warn); border:1px solid rgba(255,170,0,0.2); }
-
-/* ── MAP (CANVAS) ── */
-#map-wrap { position:relative; overflow:hidden; background:#00020a; }
-#galactic-canvas { display:block; width:100%; height:100%; }
-#map-ui { position:absolute; inset:0; pointer-events:none; }
-#map-controls { position:absolute; bottom:16px; left:16px; display:flex; gap:6px; pointer-events:all; }
-.map-btn { width:30px; height:30px; background:var(--panel); border:1px solid var(--border); color:var(--accent); font-size:14px; cursor:pointer; border-radius:2px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; pointer-events:all; }
-.map-btn:hover { border-color:var(--border-bright); color:var(--text-bright); }
-#map-legend { position:absolute; bottom:16px; right:16px; background:var(--panel); border:1px solid var(--border); padding:10px 14px; border-radius:3px; font-size:11px; pointer-events:all; }
-.leg-title { font-family:var(--fd); font-size:8px; letter-spacing:2px; color:var(--text-dim); margin-bottom:7px; text-transform:uppercase; }
-.leg-row { display:flex; align-items:center; gap:7px; margin-bottom:5px; color:var(--text); }
-.leg-dot { width:7px; height:7px; border-radius:50%; }
-
-/* ── RIGHT PANEL ── */
-#right { background:var(--panel); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
-#detail-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--text-dim); padding:20px; text-align:center; }
-.d-icon { font-size:40px; opacity:0.15; animation:bob 4s ease-in-out infinite; }
-@keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-.d-hint { font-family:var(--fd); font-size:9px; letter-spacing:2px; color:var(--accent); text-transform:uppercase; }
-
-#detail-content { display:none; flex-direction:column; flex:1; overflow:hidden; }
-#detail-content.vis { display:flex; }
-
-.d-header { padding:16px 16px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
-.d-sector-tag { font-family:var(--fd); font-size:9px; letter-spacing:3px; color:var(--accent2); background:rgba(0,180,255,0.08); padding:3px 8px; border-left:2px solid var(--accent); margin-bottom:10px; text-transform:uppercase; display:inline-block; }
-
-/* Sector mini-grid */
-.sector-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(58px,1fr)); gap:5px; margin-bottom:12px; }
-.sg-node { display:flex; flex-direction:column; align-items:center; padding:5px 3px; background:rgba(255,255,255,0.015); border:1px solid rgba(255,255,255,0.04); border-radius:2px; cursor:pointer; transition:all 0.15s; text-align:center; }
-.sg-node:hover { background:rgba(0,160,255,0.07); border-color:var(--accent); }
-.sg-node.cur { border-color:var(--accent2); background:rgba(0,40,80,0.3); }
-.sg-emoji { font-size:14px; margin-bottom:2px; }
-.sg-name { font-size:9px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
-.sg-dot { width:4px; height:4px; border-radius:50%; margin-top:3px; }
-
-.planet-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-.d-name { font-family:var(--fd); font-size:16px; letter-spacing:2px; color:var(--text-bright); text-transform:uppercase; }
-.d-faction-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:2px; border:1px solid currentColor; font-family:var(--fd); font-size:9px; letter-spacing:1px; background:rgba(255,255,255,0.02); margin-top:6px; }
-.hq-badges { display:flex; flex-direction:column; gap:4px; margin-top:6px; }
-.hq-badge { display:inline-flex; align-items:center; font-family:var(--fd); font-size:8px; letter-spacing:1px; padding:3px 8px; border-radius:2px; border:1px solid; width:fit-content; }
-
-.lib-box { margin-top:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(0,160,255,0.08); padding:8px 10px; border-radius:2px; }
-.lib-meta { display:flex; justify-content:space-between; font-family:var(--fd); font-size:8px; letter-spacing:1px; margin-bottom:4px; }
-.lib-outer { width:100%; height:5px; background:rgba(255,51,51,0.25); border-radius:1px; overflow:hidden; }
-.lib-inner { height:100%; background:var(--accent); border-radius:1px; transition:width 0.5s cubic-bezier(.1,.8,.2,1); box-shadow:0 0 8px var(--accent); }
-
-/* Detail tabs */
-.dtabs { display:flex; background:rgba(0,0,0,0.4); border-bottom:1px solid var(--border); flex-shrink:0; }
-.dtab { padding:9px; flex:1; text-align:center; font-family:var(--fd); font-size:9px; cursor:pointer; color:var(--text-dim); border-bottom:2px solid transparent; transition:all 0.15s; text-transform:uppercase; letter-spacing:1px; }
-.dtab.on { color:var(--text); border-bottom-color:var(--accent); }
-
-.d-scroll { overflow-y:auto; flex:1; }
-.d-section { padding:12px 16px; border-bottom:1px solid var(--border); }
-.d-sec-title { font-family:var(--fd); font-size:9px; letter-spacing:2px; color:var(--text-dim); margin-bottom:10px; text-transform:uppercase; }
-.d-row { display:flex; justify-content:space-between; margin-bottom:7px; font-size:13px; }
-.d-key { color:var(--text-dim); }
-.d-val { color:var(--text-bright); font-weight:600; }
-.d-val.green { font-family:var(--fd); color:var(--success); }
-
-.unit-row { background:rgba(255,255,255,0.018); border:1px solid var(--border); border-radius:2px; padding:8px 10px; font-size:12px; margin-bottom:5px; }
-.unit-name { color:var(--text-bright); font-weight:600; }
-.unit-asset { border-left:2px dashed var(--success); }
-.unit-asset .unit-name { color:var(--success); }
-
-.enc-intel { background:rgba(255,51,51,0.03); border:1px dashed rgba(255,51,51,0.25); padding:10px; border-radius:2px; text-align:center; }
-.enc-title { font-family:var(--fd); font-size:10px; color:var(--danger); text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
-.enc-val { font-size:15px; font-weight:700; color:var(--text-bright); }
-
-.d-actions { padding:12px 16px; margin-top:auto; display:flex; flex-direction:column; gap:6px; flex-shrink:0; border-top:1px solid var(--border); }
-
-/* ── MODALS ── */
-.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:500; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
-.overlay.open { display:flex; }
-.modal { background:#020c1a; border:1px solid var(--border-bright); border-radius:4px; width:480px; max-height:82vh; display:flex; flex-direction:column; box-shadow:0 0 40px rgba(0,160,255,0.15); }
-.modal-hd { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-.modal-title { font-family:var(--fd); font-size:11px; letter-spacing:2px; color:var(--accent2); text-transform:uppercase; }
-.modal-x { background:none; border:none; color:var(--text-dim); font-size:20px; cursor:pointer; line-height:1; }
-.modal-tabs { display:flex; gap:0; padding:0 20px; border-bottom:1px solid var(--border); background:#010810; flex-shrink:0; }
-.mtab { font-family:var(--fd); font-size:9px; letter-spacing:2px; padding:12px 16px; cursor:pointer; color:var(--text-dim); border-bottom:2px solid transparent; text-transform:uppercase; }
-.mtab.on { color:var(--accent); border-bottom-color:var(--accent); }
-.modal-body { overflow-y:auto; padding:20px; flex:1; }
-.modal-ft { padding:10px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; flex-shrink:0; }
-
-/* Login */
-#login-screen { position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:600; display:none; align-items:center; justify-content:center; backdrop-filter:blur(8px); }
-#login-screen.open { display:flex; }
-.login-box { background:#020c1a; border:1px solid var(--border-bright); border-radius:4px; padding:32px; width:340px; box-shadow:0 0 40px rgba(0,160,255,0.2); text-align:center; }
-.login-title { font-family:var(--fd); font-size:13px; letter-spacing:3px; color:var(--accent); margin-bottom:4px; text-transform:uppercase; }
-.login-sub { font-size:11px; color:var(--text-dim); margin-bottom:20px; }
-.form-group { margin-bottom:14px; text-align:left; }
-.form-label { font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px; }
-.form-input { width:100%; background:rgba(0,0,0,0.5); border:1px solid var(--border); color:var(--text-bright); padding:9px 12px; border-radius:2px; font-size:13px; outline:none; }
-.form-input:focus { border-color:var(--accent); }
-.login-err { color:var(--danger); font-size:11px; margin-top:10px; min-height:16px; font-family:var(--fd); }
-
-/* Toast */
-#toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(80px); background:#020c1a; border:1px solid var(--border-bright); color:var(--accent); font-family:var(--fd); font-size:10px; letter-spacing:2px; padding:10px 20px; border-radius:3px; z-index:9000; transition:transform 0.3s cubic-bezier(.175,.885,.32,1.275); white-space:nowrap; }
-#toast.show { transform:translateX(-50%) translateY(0); }
-#toast.err { border-color:rgba(255,51,51,0.5); color:var(--danger); }
-
-/* Scrollbar */
-::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border-bright); border-radius:2px; }
+#login-screen{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+#login-screen.open{display:flex;}
+.login-box{background:#020c1a;border:1px solid var(--border-bright);border-radius:4px;padding:32px;width:340px;box-shadow:0 0 40px rgba(0,160,255,0.2);text-align:center;}
+.login-title{font-family:var(--fd);font-size:13px;letter-spacing:3px;color:var(--accent);margin-bottom:4px;text-transform:uppercase;}
+.login-sub{font-size:11px;color:var(--text-dim);margin-bottom:20px;}
+.form-group{margin-bottom:14px;text-align:left;}
+.form-label{font-size:11px;color:var(--text-dim);display:block;margin-bottom:4px;}
+.form-input{width:100%;background:rgba(0,0,0,0.5);border:1px solid var(--border);color:var(--text-bright);padding:9px 12px;border-radius:2px;font-size:13px;outline:none;}
+.form-input:focus{border-color:var(--accent);}
+.login-err{color:var(--danger);font-size:11px;margin-top:10px;min-height:16px;font-family:var(--fd);}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#020c1a;border:1px solid var(--border-bright);color:var(--accent);font-family:var(--fd);font-size:10px;letter-spacing:2px;padding:10px 20px;border-radius:3px;z-index:9000;transition:transform 0.3s cubic-bezier(.175,.885,.32,1.275);white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.err{border-color:rgba(255,51,51,0.5);color:var(--danger);}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px;}
 </style>
 </head>
 <body>
 
-<!-- Login -->
 <div id="login-screen">
   <div class="login-box">
     <div style="font-size:36px;margin-bottom:12px">🔐</div>
@@ -224,7 +160,6 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
   </div>
 </div>
 
-<!-- Admin Modal -->
 <div class="overlay" id="admin-modal">
   <div class="modal">
     <div class="modal-hd">
@@ -240,7 +175,6 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
   </div>
 </div>
 
-<!-- Main App -->
 <div id="layout">
   <header>
     <div>
@@ -253,15 +187,12 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
     </div>
   </header>
 
-  <!-- LEFT -->
   <div id="left">
     <div class="panel-section">
       <div class="sec-label">Faction Treasury</div>
       <div id="faction-list"></div>
     </div>
-
     <div class="panel-section scrollable">
-      <!-- Shop -->
       <div class="accord">
         <div class="accord-hd" onclick="togAccord('shop-body','shop-icon')">
           <span>📦 Vehicle Requisition</span><span id="shop-icon">▼</span>
@@ -296,8 +227,6 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
           </div>
         </div>
       </div>
-
-      <!-- Research -->
       <div class="accord">
         <div class="accord-hd" onclick="togAccord('res-body','res-icon')">
           <span>🧬 Kaminoan Research</span><span id="res-icon">▼</span>
@@ -309,26 +238,22 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
     </div>
   </div>
 
-  <!-- MAP -->
   <div id="map-wrap">
     <canvas id="galactic-canvas"></canvas>
-    <div id="map-ui">
-      <div id="map-controls">
-        <button class="map-btn" onclick="resetCamera()" title="Reset view">⊙</button>
-        <button class="map-btn" onclick="zoomIn()" title="Zoom in">+</button>
-        <button class="map-btn" onclick="zoomOut()" title="Zoom out">−</button>
-      </div>
-      <div id="map-legend">
-        <div class="leg-title">Threat Index</div>
-        <div class="leg-row"><div class="leg-dot" style="background:#445566"></div> Neutral</div>
-        <div class="leg-row"><div class="leg-dot" style="background:#00aaff"></div> Republic</div>
-        <div class="leg-row"><div class="leg-dot" style="background:#ff3333"></div> CIS</div>
-        <div class="leg-row"><div class="leg-dot" style="background:#ff3333;box-shadow:0 0 6px #ff3333"></div> Invasion</div>
-      </div>
+    <div id="map-controls">
+      <button class="map-btn" onclick="resetCamera()">⊙</button>
+      <button class="map-btn" onclick="zoomIn()">+</button>
+      <button class="map-btn" onclick="zoomOut()">−</button>
+    </div>
+    <div id="map-legend">
+      <div class="leg-title">Threat Index</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#445566"></div> Neutral</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#00aaff"></div> Republic</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#ff3333"></div> CIS</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#ff3333;box-shadow:0 0 6px #ff3333"></div> Invasion</div>
     </div>
   </div>
 
-  <!-- RIGHT -->
   <div id="right">
     <div id="detail-empty">
       <div class="d-icon">📡</div>
@@ -341,7 +266,6 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
         <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sector Nodes</div>
         <div class="sector-grid" id="d-sector-grid"></div>
         <div class="planet-row">
-          <div style="font-size:36px" id="d-emoji">🪐</div>
           <div>
             <div class="d-name" id="d-name">Planet</div>
             <div class="d-faction-badge" id="d-fac-badge">Faction</div>
@@ -356,22 +280,14 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
           <div class="lib-outer"><div class="lib-inner" id="d-lib-bar"></div></div>
         </div>
       </div>
-      <div class="dtabs">
-        <div class="dtab on" id="dt-garrison" onclick="setDTab('garrison')">Garrison Intel</div>
-        <div class="dtab" id="dt-assets" onclick="setDTab('assets')">53rd Assets</div>
-      </div>
       <div class="d-scroll">
         <div class="d-section" id="ds-intel">
           <div class="d-sec-title">System Intel</div>
           <div class="d-row"><span class="d-key">Strategic Value</span><span class="d-val" id="d-sv">—</span></div>
-          <div class="d-row"><span class="d-key">Credit Yield</span><span class="d-val green" id="d-yield">—</span></div>
+          <div class="d-row"><span class="d-key">Credit Yield / Phase</span><span class="d-val green" id="d-yield">—</span></div>
           <div style="font-size:12px;color:var(--text-dim);line-height:1.6;margin-top:8px" id="d-desc"></div>
         </div>
-        <div class="d-section" id="ds-garrison">
-          <div class="d-sec-title">Garrisoned Forces</div>
-          <div id="d-units"></div>
-        </div>
-        <div class="d-section" id="ds-assets" style="display:none">
+        <div class="d-section">
           <div class="d-sec-title">53rd Fleet Cache</div>
           <div id="d-53rd-assets"></div>
         </div>
@@ -384,45 +300,58 @@ header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; hei
 <div id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════
-const SUPABASE_URL = "https://yjvgwniprmgnwvgavqpj.supabase.co";
-const SUPABASE_KEY = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
+const SUPABASE_URL="https://yjvgwniprmgnwvgavqpj.supabase.co";
+const SUPABASE_KEY="sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
 
-let sb = null;
-let DB = { factions:[], planets:[], connections:[], units:[], settings:{}, logs:[], upgrades:[] };
-let selPlanet = null;
-let isAdmin = false;
-let dTab = 'garrison';
-let mTab = 'controls';
+let sb=null;
+let DB={factions:[],planets:[],connections:[],units:[],settings:{},logs:[],upgrades:[]};
+let selPlanet=null;
+let isAdmin=false;
+let mTab='controls';
 
-// ── MAP STATE ──
-const canvas = document.getElementById('galactic-canvas');
-const ctx = canvas.getContext('2d');
-let cam = { x:0, y:0, scale:1 };
-let dragging = false, lastMouse = null;
-let animFrame = 0;
-let pulseT = 0;
+// ── CANVAS STATE ──
+const canvas=document.getElementById('galactic-canvas');
+const ctx=canvas.getContext('2d');
+let cam={x:0,y:0,scale:1};
+let dragging=false,lastMouse=null,dragMoved=false;
+let pulseT=0;
 
-// ═══════════════════════════════════════════════
-// BOOT
-// ═══════════════════════════════════════════════
-window.onload = async () => {
-  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  const { data:{ session } } = await sb.auth.getSession();
-  if (session) isAdmin = true;
+// ── SECTOR COLOUR PALETTE ──
+// Each sector gets a distinct hue for its territory fill
+const SECTOR_COLORS={
+  'Core':           {rep:'rgba(0,120,255,0.13)',  cis:'rgba(255,40,40,0.13)',  neu:'rgba(60,80,100,0.10)'},
+  'Expansion':      {rep:'rgba(0,160,220,0.12)',  cis:'rgba(220,50,50,0.12)',  neu:'rgba(50,70,90,0.09)'},
+  'Mid Rim':        {rep:'rgba(0,100,200,0.11)',  cis:'rgba(200,30,30,0.11)',  neu:'rgba(40,60,80,0.09)'},
+  'Outer Rim':      {rep:'rgba(0,80,180,0.10)',   cis:'rgba(180,20,20,0.10)',  neu:'rgba(30,50,70,0.08)'},
+};
+
+// Planet layout: arranged in rough galaxy rings around Coruscant (center)
+// x,y in canvas-world space; Coruscant = 0,0
+const PLANET_POSITIONS={
+  'Coruscant':    {wx:0,    wy:0},
+  'Naboo':        {wx:-180, wy:120},
+  'Mandalore':    {wx:-220, wy:-180},
+  'Christophsis': {wx:200,  wy:-150},
+  'Rodia':        {wx:100,  wy:200},
+  'Ryloth':       {wx:-100, wy:320},
+  'Kamino':       {wx:320,  wy:280},
+  'Felucia':      {wx:380,  wy:-80},
+  'Geonosis':     {wx:440,  wy:160},
+  'Mustafar':     {wx:500,  wy:-220},
+};
+
+window.onload=async()=>{
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  const {data:{session}}=await sb.auth.getSession();
+  if(session) isAdmin=true;
   await loadAll();
   setupRealtime();
   initCanvas();
 };
 
-// ═══════════════════════════════════════════════
-// DATA
-// ═══════════════════════════════════════════════
-async function loadAll() {
-  try {
-    const [f,p,c,u,s,l,upg] = await Promise.all([
+async function loadAll(){
+  try{
+    const[f,p,c,u,s,l,upg]=await Promise.all([
       sb.from('factions').select('*').order('name'),
       sb.from('planets').select('*').order('name'),
       sb.from('planet_connections').select('*'),
@@ -431,53 +360,49 @@ async function loadAll() {
       sb.from('campaign_log').select('*').order('created_at',{ascending:false}).limit(30),
       sb.from('upgrades').select('*')
     ]);
-    if([f,p,c,u,s,l,upg].some(r=>r.error)) throw new Error("Stream fault");
-    DB.factions = f.data||[]; DB.planets = p.data||[]; DB.connections = c.data||[];
-    DB.units = u.data||[]; DB.settings = {};
+    if([f,p,c,u,s,l,upg].some(r=>r.error)) throw new Error("stream fault");
+    DB.factions=f.data||[];DB.planets=p.data||[];DB.connections=c.data||[];
+    DB.units=u.data||[];DB.settings={};
     (s.data||[]).forEach(r=>DB.settings[r.key]=r.value);
-    DB.logs = l.data||[]; DB.upgrades = upg.data||[];
+    DB.logs=l.data||[];DB.upgrades=upg.data||[];
     renderAll();
-  } catch(e) { toast("Data stream fault — check console",true); console.error(e); }
+  }catch(e){toast("Data stream fault",true);console.error(e);}
 }
 
-function setupRealtime() {
+function setupRealtime(){
   sb.channel('changes').on('postgres_changes',{event:'*',schema:'public'},()=>loadAll()).subscribe();
 }
 
-function isUnlocked(key) { return (DB.upgrades.find(u=>u.upgrade_key===key)||{}).unlocked||false; }
-function getFinalCost(base,cat) {
-  if(cat==='ground'&&isUnlocked('repulsor_foundry')) return Math.round(base*0.75);
-  if(cat==='air'&&isUnlocked('staging_berths')) return Math.round(base*0.75);
-  return base;
+function isUnlocked(k){return(DB.upgrades.find(u=>u.upgrade_key===k)||{}).unlocked||false;}
+function getFinalCost(b,c){
+  if(c==='ground'&&isUnlocked('repulsor_foundry')) return Math.round(b*0.75);
+  if(c==='air'&&isUnlocked('staging_berths')) return Math.round(b*0.75);
+  return b;
 }
+async function writeLog(t,d){try{await sb.from('campaign_log').insert([{event_type:t,description:d}]);}catch{}}
 
-async function writeLog(type, desc) {
-  try { await sb.from('campaign_log').insert([{event_type:type,description:desc}]); } catch{}
-}
-
-// ═══════════════════════════════════════════════
-// RENDER ALL
-// ═══════════════════════════════════════════════
-function renderAll() {
-  renderHeader(); renderFactions(); renderShopCosts(); renderUpgrades();
+function renderAll(){
+  renderHeader();renderFactions();renderShopCosts();renderUpgrades();
   if(selPlanet) showDetail(selPlanet);
   if(document.getElementById('admin-modal').classList.contains('open')) renderAdminBody();
-  const btn = document.getElementById('admin-btn');
-  btn.textContent = isAdmin ? '✓ HQ CONNECTED' : '⚙ TERMINAL';
-  btn.style.borderColor = isAdmin ? 'rgba(0,255,136,0.4)' : '';
-  btn.style.color = isAdmin ? 'var(--success)' : '';
+  const btn=document.getElementById('admin-btn');
+  btn.textContent=isAdmin?'✓ HQ CONNECTED':'⚙ TERMINAL';
+  btn.style.borderColor=isAdmin?'rgba(0,255,136,0.4)':'';
+  btn.style.color=isAdmin?'var(--success)':'';
 }
 
-function renderHeader() {
-  document.getElementById('h-era').textContent = DB.settings.campaign_era||'Clone Wars Theater';
-  document.getElementById('h-phase').textContent = 'PHASE '+(DB.settings.campaign_turn||1);
+function renderHeader(){
+  document.getElementById('h-era').textContent=DB.settings.campaign_era||'Clone Wars Theater';
+  document.getElementById('h-phase').textContent='PHASE '+(DB.settings.campaign_turn||1);
 }
 
-function renderFactions() {
-  const max = Math.max(...DB.factions.map(f=>f.credits),1);
-  document.getElementById('faction-list').innerHTML = DB.factions.map(f=>{
-    const terr = DB.planets.filter(p=>p.controlling_faction===f.name).length;
-    return `<div class="faction-card">
+function renderFactions(){
+  // Only show Republic and CIS — skip Neutral
+  const show=DB.factions.filter(f=>f.name!=='Neutral');
+  const max=Math.max(...show.map(f=>f.credits),1);
+  document.getElementById('faction-list').innerHTML=show.map(f=>{
+    const terr=DB.planets.filter(p=>p.controlling_faction===f.name).length;
+    return`<div class="faction-card">
       <div class="fc-head">
         <div class="fc-dot" style="background:${f.color};box-shadow:0 0 6px ${f.color}"></div>
         <div class="fc-name">${f.emoji||''} ${f.shortname||f.name}</div>
@@ -489,8 +414,8 @@ function renderFactions() {
   }).join('');
 }
 
-function renderShopCosts() {
-  const cfg = [
+function renderShopCosts(){
+  const cfg=[
     {id:'c-barc',base:50,cat:'ground'},{id:'c-itt',base:150,cat:'ground'},
     {id:'c-tx130',base:250,cat:'ground'},{id:'c-atte',base:750,cat:'ground'},
     {id:'c-laati',base:350,cat:'air'},{id:'c-laatc',base:500,cat:'air'},
@@ -498,497 +423,499 @@ function renderShopCosts() {
     {id:'c-vwing',base:300,cat:'air'},{id:'c-z95',base:200,cat:'air'}
   ];
   cfg.forEach(c=>{
-    const el=document.getElementById(c.id); if(!el) return;
-    const final=getFinalCost(c.base,c.cat);
-    el.innerHTML = final!==c.base?`<span class="shop-strike">${c.base}c</span>${final}c`:`${c.base}c`;
+    const el=document.getElementById(c.id);if(!el)return;
+    const fin=getFinalCost(c.base,c.cat);
+    el.innerHTML=fin!==c.base?`<span class="shop-strike">${c.base}c</span>${fin}c`:`${c.base}c`;
   });
-  const hasHeavy=isUnlocked('heavy_ordnance'), hasOrb=isUnlocked('dreadnought_supremacy');
-  document.getElementById('special-tab').style.display=(hasHeavy||hasOrb)?'block':'none';
-  document.getElementById('av7-row').style.display=hasHeavy?'flex':'none';
-  document.getElementById('orbital-row').style.display=hasOrb?'flex':'none';
+  const hasH=isUnlocked('heavy_ordnance'),hasO=isUnlocked('dreadnought_supremacy');
+  document.getElementById('special-tab').style.display=(hasH||hasO)?'block':'none';
+  document.getElementById('av7-row').style.display=hasH?'flex':'none';
+  document.getElementById('orbital-row').style.display=hasO?'flex':'none';
 }
 
-function renderUpgrades() {
+function renderUpgrades(){
   const rep=DB.factions.find(f=>f.name==="Galactic Republic");
   const bal=rep?rep.credits:0;
-  const descriptions={
+  const desc={
     repulsor_foundry:'Permanent 25% discount on all land vehicles.',
     staging_berths:'Permanent 25% discount on all air vehicles.',
     heavy_ordnance:'Unlocks AV-7 Artillery. Reduces invasion probability by 50%.',
     dreadnought_supremacy:'Unlocks Orbital Bombardment Strike (+30% liberation instantly).'
   };
-  document.getElementById('upgrades-list').innerHTML = DB.upgrades.map(u=>`
+  document.getElementById('upgrades-list').innerHTML=DB.upgrades.map(u=>`
     <div class="tech-card ${u.unlocked?'on':''}">
       <div class="tech-top">
         <span class="tech-name">${u.name}</span>
         <span class="tech-badge ${u.unlocked?'active':'locked'}">${u.unlocked?'ACTIVE':u.cost.toLocaleString()+'c'}</span>
       </div>
-      <div class="tech-desc">${descriptions[u.upgrade_key]||''}</div>
+      <div class="tech-desc">${desc[u.upgrade_key]||''}</div>
       ${(!u.unlocked&&isAdmin)?`<button class="btn ok" style="margin-top:6px;font-size:8px;padding:3px 7px" ${bal<u.cost?'disabled':''} onclick="buyUpgrade('${u.upgrade_key}',${u.cost})">BUY</button>`:''}
     </div>`).join('');
 }
 
-// ═══════════════════════════════════════════════
-// GALACTIC MAP — Canvas 2D Helldivers style
-// ═══════════════════════════════════════════════
-function initCanvas() {
+// ════════════════════════════════════════════
+// CANVAS MAP — Helldivers 2 style
+// ════════════════════════════════════════════
+function initCanvas(){
   resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  canvas.addEventListener('mousedown', onMD);
-  canvas.addEventListener('mousemove', onMM);
-  canvas.addEventListener('mouseup', onMU);
-  canvas.addEventListener('mouseleave', onMU);
-  canvas.addEventListener('wheel', onWheel, {passive:false});
-  canvas.addEventListener('click', onMapClick);
-  resetCamera();
-  requestAnimationFrame(drawLoop);
-}
-
-function resizeCanvas() {
-  const wrap = document.getElementById('map-wrap');
-  canvas.width = wrap.clientWidth;
-  canvas.height = wrap.clientHeight;
-}
-
-function resetCamera() {
-  cam.x = canvas.width/2;
-  cam.y = canvas.height/2;
-  cam.scale = 0.7;
-}
-function zoomIn() { cam.scale = Math.min(3, cam.scale*1.2); }
-function zoomOut() { cam.scale = Math.max(0.3, cam.scale/1.2); }
-
-function onMD(e) { dragging=true; lastMouse={x:e.clientX,y:e.clientY}; }
-function onMU() { dragging=false; lastMouse=null; }
-function onMM(e) {
-  if(!dragging||!lastMouse) return;
-  cam.x += e.clientX-lastMouse.x;
-  cam.y += e.clientY-lastMouse.y;
-  lastMouse={x:e.clientX,y:e.clientY};
-}
-function onWheel(e) {
-  e.preventDefault();
-  const factor = e.deltaY<0?1.1:0.9;
-  cam.scale = Math.max(0.3,Math.min(3,cam.scale*factor));
-}
-
-function worldToScreen(wx,wy) {
-  const scale = 0.55;
-  return { x: cam.x + (wx-650)*scale*cam.scale, y: cam.y + (wy-650)*scale*cam.scale };
-}
-
-function onMapClick(e) {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX-rect.left, my = e.clientY-rect.top;
-  let hit = null, minDist = 999;
-  DB.planets.forEach(p=>{
-    const {x,y} = worldToScreen(p.x,p.y);
-    const d = Math.hypot(mx-x,my-y);
-    const r = getRadius(p.strategic_value)*cam.scale;
-    if(d<r+10 && d<minDist) { minDist=d; hit=p; }
+  window.addEventListener('resize',resizeCanvas);
+  canvas.addEventListener('mousedown',e=>{dragging=true;dragMoved=false;lastMouse={x:e.clientX,y:e.clientY};});
+  canvas.addEventListener('mousemove',e=>{
+    if(!dragging||!lastMouse)return;
+    const dx=e.clientX-lastMouse.x,dy=e.clientY-lastMouse.y;
+    if(Math.abs(dx)>2||Math.abs(dy)>2) dragMoved=true;
+    cam.x+=dx;cam.y+=dy;lastMouse={x:e.clientX,y:e.clientY};
   });
-  if(hit) { selPlanet=hit.id; renderAll(); }
+  canvas.addEventListener('mouseup',e=>{
+    if(!dragMoved) onMapClick(e);
+    dragging=false;lastMouse=null;
+  });
+  canvas.addEventListener('mouseleave',()=>{dragging=false;lastMouse=null;});
+  canvas.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const f=e.deltaY<0?1.12:0.9;
+    cam.scale=Math.max(0.3,Math.min(4,cam.scale*f));
+  },{passive:false});
+  resetCamera();
+  requestAnimationFrame(loop);
 }
 
-function getRadius(sv) { return {Low:5,Medium:7,High:10,Critical:13}[sv]||6; }
-function getFactionColor(name) {
-  if(!name||name==='Neutral') return '#445566';
-  const f=DB.factions.find(f=>f.name===name); return f?f.color:'#445566';
+function resizeCanvas(){
+  const w=document.getElementById('map-wrap');
+  canvas.width=w.clientWidth;canvas.height=w.clientHeight;
 }
 
-function drawLoop() {
-  pulseT += 0.02;
-  draw();
-  requestAnimationFrame(drawLoop);
+function resetCamera(){
+  cam.x=canvas.width/2;cam.y=canvas.height/2;cam.scale=1;
+}
+function zoomIn(){cam.scale=Math.min(4,cam.scale*1.2);}
+function zoomOut(){cam.scale=Math.max(0.3,cam.scale/1.2);}
+
+function wx2s(wx){return cam.x+wx*cam.scale;}
+function wy2s(wy){return cam.y+wy*cam.scale;}
+
+function getPlanetPos(p){
+  const pp=PLANET_POSITIONS[p.name];
+  if(pp) return{sx:wx2s(pp.wx),sy:wy2s(pp.wy)};
+  // fallback: map from DB x/y relative to Coruscant (650,650)
+  return{sx:wx2s((p.x-650)*0.6),sy:wy2s((p.y-650)*0.6)};
 }
 
-function draw() {
-  const W=canvas.width, H=canvas.height;
+function onMapClick(e){
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  let hit=null,best=9999;
+  DB.planets.forEach(p=>{
+    const{sx,sy}=getPlanetPos(p);
+    const d=Math.hypot(mx-sx,my-sy);
+    const r=getR(p.strategic_value)*cam.scale+8;
+    if(d<r&&d<best){best=d;hit=p;}
+  });
+  if(hit){selPlanet=hit.id;renderAll();}
+}
+
+function getR(sv){return{Low:5,Medium:7,High:10,Critical:14}[sv]||6;}
+function getFactionColor(n){
+  if(!n||n==='Neutral')return'#445566';
+  const f=DB.factions.find(f=>f.name===n);return f?f.color:'#445566';
+}
+
+// Deterministic stars
+const STARS=[];
+(function(){let x=99991;function r(){x=((x*1103515245)+12345)&0x7fffffff;return x/0x7fffffff;}
+for(let i=0;i<400;i++)STARS.push({rx:r(),ry:r(),s:r()*1.8+0.3,a:r()*0.6+0.15,twink:r()*Math.PI*2});})();
+
+function loop(){pulseT+=0.018;draw();requestAnimationFrame(loop);}
+
+function draw(){
+  const W=canvas.width,H=canvas.height;
   ctx.clearRect(0,0,W,H);
 
-  // Deep space background
-  ctx.fillStyle='#00020a';
-  ctx.fillRect(0,0,W,H);
+  // Deep space
+  ctx.fillStyle='#00010a';ctx.fillRect(0,0,W,H);
 
-  // Nebula glow blobs
-  drawNebula(W*0.3,H*0.3,180,'rgba(0,60,140,0.06)');
-  drawNebula(W*0.7,H*0.6,220,'rgba(60,0,100,0.05)');
-  drawNebula(W*0.5,H*0.8,150,'rgba(0,80,120,0.04)');
+  // Galaxy core glow — centred on Coruscant
+  const cx=wx2s(0),cy=wy2s(0);
+  const coreG=ctx.createRadialGradient(cx,cy,0,cx,cy,300*cam.scale);
+  coreG.addColorStop(0,'rgba(40,80,180,0.18)');
+  coreG.addColorStop(0.4,'rgba(20,40,100,0.08)');
+  coreG.addColorStop(1,'transparent');
+  ctx.fillStyle=coreG;ctx.fillRect(0,0,W,H);
 
-  // Star field (static, seeded)
-  drawStars(W,H);
+  // Outer nebula arms
+  drawNebula(cx-200*cam.scale,cy+100*cam.scale,160*cam.scale,'rgba(80,0,120,0.05)');
+  drawNebula(cx+180*cam.scale,cy-80*cam.scale,140*cam.scale,'rgba(0,40,120,0.06)');
+  drawNebula(cx+300*cam.scale,cy+200*cam.scale,180*cam.scale,'rgba(120,0,40,0.04)');
 
-  // Grid
+  // Stars (parallax-lite: fixed screen-space with tiny cam offset)
+  STARS.forEach(s=>{
+    const px=(s.rx*W+cam.x*0.04)%W;
+    const py=(s.ry*H+cam.y*0.04)%H;
+    const twinkle=0.4+Math.sin(pulseT*0.7+s.twink)*0.2;
+    ctx.beginPath();ctx.arc(px,py,s.s,0,Math.PI*2);
+    ctx.fillStyle=`rgba(160,210,255,${s.a*twinkle})`;ctx.fill();
+  });
+
+  // Grid (very subtle)
   drawGrid(W,H);
 
-  // Connections (hyperlanes)
+  // Sector regions — convex hull fills per sector
+  drawSectorRegions();
+
+  // Hyperlanes
   DB.connections.forEach(c=>{
     const pa=DB.planets.find(p=>p.name===c.planet_a);
     const pb=DB.planets.find(p=>p.name===c.planet_b);
-    if(!pa||!pb) return;
-    const a=worldToScreen(pa.x,pa.y), b=worldToScreen(pb.x,pb.y);
-    drawHyperlane(a,b,pa,pb);
+    if(!pa||!pb)return;
+    const a=getPlanetPos(pa),b=getPlanetPos(pb);
+    drawLane(a,b,pa,pb);
   });
 
   // Planets
   DB.planets.forEach(p=>drawPlanet(p));
 }
 
-function drawNebula(cx,cy,r,color) {
+function drawNebula(cx,cy,r,col){
   const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-  g.addColorStop(0,color); g.addColorStop(1,'transparent');
-  ctx.fillStyle=g; ctx.fillRect(cx-r,cy-r,r*2,r*2);
+  g.addColorStop(0,col);g.addColorStop(1,'transparent');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
 }
 
-// Deterministic star field
-const STARS=[];
-(function(){
-  let x=12345;
-  function rng(){x=((x*1103515245)+12345)&0x7fffffff;return x/0x7fffffff;}
-  for(let i=0;i<300;i++) STARS.push({x:rng(),y:rng(),s:rng()*1.5+0.3,a:rng()*0.5+0.2});
-})();
+function drawGrid(W,H){
+  const sp=80*cam.scale;
+  const ox=(cam.x%sp+sp)%sp,oy=(cam.y%sp+sp)%sp;
+  ctx.strokeStyle='rgba(0,100,180,0.04)';ctx.lineWidth=0.5;
+  for(let x=ox;x<W;x+=sp){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=oy;y<H;y+=sp){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+}
 
-function drawStars(W,H) {
-  STARS.forEach(s=>{
+function drawSectorRegions(){
+  // Group planets by sector
+  const sectors={};
+  DB.planets.forEach(p=>{
+    const s=p.sector||'Unknown';
+    if(!sectors[s])sectors[s]=[];
+    sectors[s].push(p);
+  });
+
+  Object.entries(sectors).forEach(([sector,planets])=>{
+    if(planets.length<2)return;
+    const pts=planets.map(p=>{const pos=getPlanetPos(p);return[pos.sx,pos.sy];});
+    const hull=convexHull(pts);
+    if(hull.length<2)return;
+
+    // Determine dominant faction in sector
+    const repC=planets.filter(p=>p.controlling_faction.includes('Republic')).length;
+    const cisC=planets.filter(p=>p.controlling_faction.includes('Confederacy')).length;
+    const sc=SECTOR_COLORS[sector]||SECTOR_COLORS['Outer Rim'];
+    const fillCol=repC>cisC?sc.rep:cisC>repC?sc.cis:sc.neu;
+
+    // Expand hull slightly for padding
+    const centX=hull.reduce((a,b)=>a+b[0],0)/hull.length;
+    const centY=hull.reduce((a,b)=>a+b[1],0)/hull.length;
+    const pad=40*cam.scale;
+    const expanded=hull.map(([x,y])=>{
+      const dx=x-centX,dy=y-centY;
+      const d=Math.hypot(dx,dy)||1;
+      return[x+dx/d*pad,y+dy/d*pad];
+    });
+
     ctx.beginPath();
-    ctx.arc(s.x*W,s.y*H,s.s,0,Math.PI*2);
-    ctx.fillStyle=`rgba(150,200,255,${s.a})`;
-    ctx.fill();
+    ctx.moveTo(expanded[0][0],expanded[0][1]);
+    for(let i=1;i<expanded.length;i++) ctx.lineTo(expanded[i][0],expanded[i][1]);
+    ctx.closePath();
+    ctx.fillStyle=fillCol;ctx.fill();
+    ctx.strokeStyle=fillCol.replace(/[\d.]+\)$/,'0.35)');
+    ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);
+
+    // Sector label at centroid
+    if(cam.scale>0.5){
+      ctx.font=`${Math.max(9,10*cam.scale)}px Orbitron,monospace`;
+      ctx.textAlign='center';
+      ctx.fillStyle='rgba(150,200,255,0.25)';
+      ctx.fillText(sector.toUpperCase()+' SECTOR',centX,centY-8);
+    }
   });
 }
 
-function drawGrid(W,H) {
-  const spacing=60*cam.scale;
-  const ox=(cam.x%spacing+spacing)%spacing;
-  const oy=(cam.y%spacing+spacing)%spacing;
-  ctx.strokeStyle='rgba(0,120,200,0.06)';
-  ctx.lineWidth=0.5;
-  for(let x=ox;x<W;x+=spacing){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(let y=oy;y<H;y+=spacing){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+// Simple convex hull (gift wrapping)
+function convexHull(pts){
+  if(pts.length<3)return pts;
+  let start=pts.reduce((a,b)=>b[0]<a[0]?b:a);
+  const hull=[];let cur=start;
+  do{
+    hull.push(cur);
+    let next=pts[0];
+    for(let i=1;i<pts.length;i++){
+      const cross=(next[0]-cur[0])*(pts[i][1]-cur[1])-(next[1]-cur[1])*(pts[i][0]-cur[0]);
+      if(next===cur||cross>0) next=pts[i];
+    }
+    cur=next;
+  }while(cur!==start&&hull.length<pts.length+1);
+  return hull;
 }
 
-function drawHyperlane(a,b,pa,pb) {
-  let color='rgba(0,140,220,0.25)';
-  if(pa.under_invasion||pb.under_invasion) color='rgba(255,51,51,0.3)';
+function drawLane(a,b,pa,pb){
+  let col='rgba(0,120,200,0.2)';
+  if(pa.under_invasion||pb.under_invasion)col='rgba(255,51,51,0.35)';
   else if(pa.controlling_faction===pb.controlling_faction&&pa.controlling_faction!=='Neutral')
-    color = pa.controlling_faction.includes('Republic')?'rgba(0,140,255,0.3)':'rgba(220,40,40,0.3)';
+    col=pa.controlling_faction.includes('Republic')?'rgba(0,140,255,0.28)':'rgba(220,40,40,0.28)';
   else if(pa.controlling_faction!=='Neutral'&&pb.controlling_faction!=='Neutral')
-    color='rgba(255,160,0,0.25)';
-
-  // Dashed hyperlane line
-  ctx.save();
-  ctx.setLineDash([4*cam.scale,6*cam.scale]);
-  ctx.strokeStyle=color;
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  ctx.moveTo(a.x,a.y);
-  ctx.lineTo(b.x,b.y);
-  ctx.stroke();
+    col='rgba(255,150,0,0.22)';
+  ctx.save();ctx.setLineDash([3*cam.scale,5*cam.scale]);
+  ctx.strokeStyle=col;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(a.sx,a.sy);ctx.lineTo(b.sx,b.sy);ctx.stroke();
   ctx.restore();
 }
 
-function drawPlanet(p) {
-  const {x,y}=worldToScreen(p.x,p.y);
-  const r=getRadius(p.strategic_value)*cam.scale;
-  const color=p.under_invasion?'#ff3333':getFactionColor(p.controlling_faction);
-  const isSelected=selPlanet===p.id;
+function drawPlanet(p){
+  const{sx,sy}=getPlanetPos(p);
+  const r=getR(p.strategic_value)*cam.scale;
+  const col=p.under_invasion?'#ff3333':getFactionColor(p.controlling_faction);
+  const isSel=selPlanet===p.id;
   const is53rd=DB.settings.loc_53rd==p.id;
-  const isInvasion=p.under_invasion;
 
-  // Outer pulse ring (for special planets)
-  if(isInvasion||is53rd) {
-    const pulse=0.15+Math.sin(pulseT*(isInvasion?3:2))*0.08;
-    ctx.beginPath();
-    ctx.arc(x,y,r*3.5,0,Math.PI*2);
-    ctx.strokeStyle=isInvasion?`rgba(255,51,51,${pulse})`:`rgba(0,170,255,${pulse})`;
-    ctx.lineWidth=1;
-    ctx.stroke();
+  // Invasion pulse
+  if(p.under_invasion){
+    const pulse=0.12+Math.abs(Math.sin(pulseT*3))*0.12;
+    ctx.beginPath();ctx.arc(sx,sy,r*4,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(255,51,51,${pulse})`;ctx.lineWidth=1;ctx.stroke();
+  }
+
+  // 53rd deployment pulse
+  if(is53rd){
+    const pulse=0.10+Math.abs(Math.sin(pulseT*2))*0.08;
+    ctx.beginPath();ctx.arc(sx,sy,r*3.5,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(0,180,255,${pulse})`;ctx.lineWidth=1;ctx.stroke();
   }
 
   // Selection ring
-  if(isSelected) {
-    ctx.beginPath();
-    ctx.arc(x,y,r*2.2+Math.sin(pulseT*2)*1.5,0,Math.PI*2);
-    ctx.strokeStyle='rgba(0,238,255,0.6)';
-    ctx.lineWidth=1.5;
-    ctx.stroke();
+  if(isSel){
+    ctx.beginPath();ctx.arc(sx,sy,r*2.4+Math.sin(pulseT*2),0,Math.PI*2);
+    ctx.strokeStyle='rgba(0,238,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();
   }
 
   // Orbit ring
+  ctx.beginPath();ctx.arc(sx,sy,r*1.9,0,Math.PI*2);
+  ctx.strokeStyle=col+'30';ctx.lineWidth=0.8;ctx.stroke();
+
+  // Rotating arc — Helldivers style
+  const a0=pulseT*(p.id%2===0?0.4:-0.35);
+  ctx.beginPath();ctx.arc(sx,sy,r*1.9,a0,a0+Math.PI*0.7);
+  ctx.strokeStyle=col+'70';ctx.lineWidth=1.2;ctx.stroke();
+
+  // Glow halo
+  const g=ctx.createRadialGradient(sx,sy,0,sx,sy,r*2.2);
+  g.addColorStop(0,col+'35');g.addColorStop(1,'transparent');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,r*2.2,0,Math.PI*2);ctx.fill();
+
+  // Planet body
+  ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
+  ctx.fillStyle=col+'20';ctx.fill();
+  ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
+
+  // Inner crosshair detail
+  ctx.strokeStyle=col+'50';ctx.lineWidth=0.5;
   ctx.beginPath();
-  ctx.arc(x,y,r*1.8,0,Math.PI*2);
-  ctx.strokeStyle=`${color}33`;
-  ctx.lineWidth=0.8;
+  ctx.moveTo(sx-r*0.55,sy);ctx.lineTo(sx+r*0.55,sy);
+  ctx.moveTo(sx,sy-r*0.55);ctx.lineTo(sx,sy+r*0.55);
   ctx.stroke();
 
-  // Rotating orbit arc (Helldivers style)
-  const arcStart=pulseT*(p.id%2===0?1:-1)*0.5;
-  ctx.beginPath();
-  ctx.arc(x,y,r*1.8,arcStart,arcStart+Math.PI*0.8);
-  ctx.strokeStyle=color+'80';
-  ctx.lineWidth=1;
-  ctx.stroke();
-
-  // Glow
-  const g=ctx.createRadialGradient(x,y,0,x,y,r*2);
-  g.addColorStop(0,color+'40');
-  g.addColorStop(1,'transparent');
-  ctx.fillStyle=g;
-  ctx.beginPath();
-  ctx.arc(x,y,r*2,0,Math.PI*2);
-  ctx.fill();
-
-  // Planet body — wireframe sphere style
-  ctx.beginPath();
-  ctx.arc(x,y,r,0,Math.PI*2);
-  ctx.strokeStyle=color;
-  ctx.lineWidth=1.5;
-  ctx.stroke();
-  ctx.fillStyle=color+'18';
-  ctx.fill();
-
-  // Inner cross detail
-  ctx.strokeStyle=color+'60';
-  ctx.lineWidth=0.5;
-  ctx.beginPath();
-  ctx.moveTo(x-r*0.6,y);ctx.lineTo(x+r*0.6,y);
-  ctx.moveTo(x,y-r*0.6);ctx.lineTo(x,y+r*0.6);
-  ctx.stroke();
-
-  // Invasion blip
-  if(isInvasion) {
-    ctx.beginPath();
-    ctx.arc(x+r*0.6,y-r*0.6,2.5,0,Math.PI*2);
-    ctx.fillStyle='#ff3333';
-    ctx.fill();
+  // Coruscant special: extra rings
+  if(p.name==='Coruscant'){
+    ctx.beginPath();ctx.arc(sx,sy,r*2.8,0,Math.PI*2);
+    ctx.strokeStyle='rgba(0,200,255,0.12)';ctx.lineWidth=1;ctx.stroke();
+    ctx.beginPath();ctx.arc(sx,sy,r*3.5,0,Math.PI*2);
+    ctx.strokeStyle='rgba(0,200,255,0.06)';ctx.lineWidth=1;ctx.stroke();
   }
 
   // Label
-  const fontSize=Math.max(8,Math.min(11,9*cam.scale));
-  ctx.font=`${fontSize}px Orbitron, monospace`;
-  ctx.textAlign='center';
-  ctx.fillStyle='rgba(0,0,0,0.8)';
-  ctx.fillText(p.name,x+1,y-r*1.4-1);
-  ctx.fillStyle=isSelected?'#00eeff':color;
-  ctx.fillText(p.name,x,y-r*1.4);
+  const fs=Math.max(8,Math.min(11,9*cam.scale));
+  ctx.font=`${fs}px Orbitron,monospace`;ctx.textAlign='center';
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fillText(p.name,sx+1,sy-r*1.5-1);
+  // Text
+  ctx.fillStyle=isSel?'#00eeff':(p.under_invasion?'#ff6666':col);
+  ctx.fillText(p.name,sx,sy-r*1.5);
 
-  // Emoji
-  if(cam.scale>0.6) {
-    ctx.font=`${Math.max(8,r*0.9)}px serif`;
-    ctx.textAlign='center';
-    ctx.fillText(p.emoji||'🪐',x,y+r*0.4);
+  // Liberation tick mark beneath planet
+  if(p.liberation_pct>0&&p.liberation_pct<100){
+    const barW=r*3,barH=2;
+    const bx=sx-barW/2,by=sy+r*1.6;
+    ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(bx,by,barW,barH);
+    ctx.fillStyle=p.under_invasion?'#ffaa00':'#00aaff';
+    ctx.fillRect(bx,by,barW*(p.liberation_pct/100),barH);
   }
 }
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // DETAIL PANEL
-// ═══════════════════════════════════════════════
-function showDetail(id) {
-  const p=DB.planets.find(pl=>pl.id===id); if(!p) return;
+// ════════════════════════════════════════════
+function showDetail(id){
+  const p=DB.planets.find(pl=>pl.id===id);if(!p)return;
   document.getElementById('detail-empty').style.display='none';
   document.getElementById('detail-content').classList.add('vis');
 
-  // Sector tag + grid
   document.getElementById('d-sector-tag').textContent=(p.sector||'Unknown')+' Sector';
-  const sectorPlanets=DB.planets.filter(sp=>sp.sector===p.sector);
-  document.getElementById('d-sector-grid').innerHTML=sectorPlanets.map(sp=>{
+
+  const sp=DB.planets.filter(s=>s.sector===p.sector);
+  document.getElementById('d-sector-grid').innerHTML=sp.map(s=>{
     let sc='var(--text-dim)';
-    if(sp.under_invasion) sc='var(--danger)';
-    else if(sp.controlling_faction.includes('Republic')) sc='var(--accent)';
-    else if(sp.controlling_faction.includes('Confederacy')) sc='var(--danger)';
-    return `<div class="sg-node ${sp.id===p.id?'cur':''}" onclick="selPlanet=${sp.id};renderAll()">
-      <div class="sg-emoji">${sp.emoji||'🪐'}</div>
-      <div class="sg-name">${sp.name}</div>
+    if(s.under_invasion)sc='var(--danger)';
+    else if(s.controlling_faction.includes('Republic'))sc='var(--accent)';
+    else if(s.controlling_faction.includes('Confederacy'))sc='var(--danger)';
+    return`<div class="sg-node ${s.id===p.id?'cur':''}" onclick="selPlanet=${s.id};renderAll()">
+      <div class="sg-name">${s.name}</div>
       <div class="sg-dot" style="background:${sc};box-shadow:0 0 3px ${sc}"></div>
     </div>`;
   }).join('');
 
-  document.getElementById('d-emoji').textContent=p.emoji||'🪐';
   document.getElementById('d-name').textContent=p.name;
-
   const badge=document.getElementById('d-fac-badge');
   badge.textContent=p.under_invasion?'⚠ CIS INVASION HOST':p.controlling_faction;
   badge.style.color=p.under_invasion?'var(--danger)':getFactionColor(p.controlling_faction);
 
-  // HQ badges
-  const hq=document.getElementById('d-hq-badges'); hq.innerHTML='';
-  if(p.under_invasion) hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,51,51,0.1);border-color:var(--danger);color:#ff6b6b">🚨 CIS SECTOR INVASION</div>`;
-  if(DB.settings.loc_53rd==p.id) hq.innerHTML+=`<div class="hq-badge" style="background:rgba(0,170,255,0.08);border-color:var(--accent);color:var(--accent2)">🛡️ 53rd Battalion Base</div>`;
-  if(DB.settings.loc_501st==p.id) hq.innerHTML+=`<div class="hq-badge" style="background:rgba(42,110,255,0.08);border-color:#2a6eff;color:#85aeff">⚡ 501st Legion</div>`;
-  if(DB.settings.loc_212th==p.id) hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,153,0,0.08);border-color:#ff9900;color:#ffd166">🔶 212th Attack Bn</div>`;
-  if(DB.settings.loc_104th==p.id) hq.innerHTML+=`<div class="hq-badge" style="background:rgba(164,176,190,0.08);border-color:#a4b0be;color:#dfe6e9">🐺 104th Wolfpack</div>`;
+  const hq=document.getElementById('d-hq-badges');hq.innerHTML='';
+  if(p.under_invasion)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,51,51,0.1);border-color:var(--danger);color:#ff6b6b">🚨 CIS SECTOR INVASION</div>`;
+  if(DB.settings.loc_53rd==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(0,170,255,0.08);border-color:var(--accent);color:var(--accent2)">🛡️ 53rd Battalion Base</div>`;
+  if(DB.settings.loc_501st==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(42,110,255,0.08);border-color:#2a6eff;color:#85aeff">⚡ 501st Legion</div>`;
+  if(DB.settings.loc_212th==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,153,0,0.08);border-color:#ff9900;color:#ffd166">🔶 212th Attack Bn</div>`;
+  if(DB.settings.loc_104th==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(164,176,190,0.08);border-color:#a4b0be;color:#dfe6e9">🐺 104th Wolfpack</div>`;
 
-  // Liberation bar
   const lib=p.liberation_pct||0;
-  document.getElementById('d-lib-label').textContent=p.under_invasion?'DEFENSE SECURITY INDEX':'LIBERATION INDEX';
+  document.getElementById('d-lib-label').textContent=p.under_invasion?'DEFENSE INDEX':'LIBERATION INDEX';
   document.getElementById('d-lib-pct').textContent=lib+'%';
   const bar=document.getElementById('d-lib-bar');
   bar.style.width=lib+'%';
   bar.style.background=p.under_invasion?'var(--warn)':'var(--accent)';
 
-  // Intel
   document.getElementById('d-sv').textContent=p.strategic_value;
   let yld=p.credit_yield||0;
-  if(p.controlling_faction==='Neutral') yld=Math.round(yld*(lib/100));
-  if(p.under_invasion) yld=Math.round(yld*0.5);
+  if(p.controlling_faction==='Neutral')yld=Math.round(yld*(lib/100));
+  if(p.under_invasion)yld=Math.round(yld*0.5);
   document.getElementById('d-yield').textContent='+'+yld+' c';
   document.getElementById('d-desc').textContent=p.description||'No database records found.';
 
-  // Units
-  const all=DB.units.filter(u=>u.planet_id===p.id&&u.status!=='Destroyed');
-  const garrison=all.filter(u=>u.unit_type!=='Purchased Logistics Asset');
-  const assets=all.filter(u=>u.unit_type==='Purchased Logistics Asset');
-  const isAllied=p.controlling_faction.includes('Republic');
-
-  const uEl=document.getElementById('d-units');
-  if(!isAdmin&&!isAllied&&p.controlling_faction!=='Neutral'&&!p.under_invasion) {
-    let sz='Minor Presence';
-    if(garrison.length>=5) sz='Massive Armored Fleet';
-    else if(garrison.length>=3) sz='Medium Combat Garrison';
-    else if(garrison.length===0) sz='Negligible Footprint';
-    uEl.innerHTML=`<div class="enc-intel"><div class="enc-title">⚠ Encrypted CIS Signals</div><div class="enc-val">${sz}</div></div>`;
-  } else {
-    uEl.innerHTML=garrison.length?garrison.map(u=>`<div class="unit-row"><div class="unit-name">${u.name}</div></div>`).join(''):'<div style="color:var(--text-dim);font-size:11px">No active garrison.</div>';
-  }
-
+  // 53rd assets only
+  const assets=DB.units.filter(u=>u.planet_id===p.id&&u.unit_type==='Purchased Logistics Asset'&&u.status!=='Destroyed');
   const aEl=document.getElementById('d-53rd-assets');
-  aEl.innerHTML=assets.length?assets.map(u=>`<div class="unit-row unit-asset"><div class="unit-name">${u.name}</div></div>`).join(''):'<div style="color:var(--text-dim);font-size:11px">No fleet cache registered.</div>';
+  aEl.innerHTML=assets.length?assets.map(u=>`<div style="background:rgba(0,255,136,0.03);border:1px solid rgba(0,255,136,0.15);border-left:2px solid var(--success);border-radius:2px;padding:7px 10px;font-size:12px;margin-bottom:5px;color:var(--success)">${u.name}</div>`).join(''):`<div style="color:var(--text-dim);font-size:11px">No fleet cache registered.</div>`;
 
-  // Admin actions
-  const act=document.getElementById('d-actions'); act.innerHTML='';
-  if(isAdmin) {
-    if(isUnlocked('dreadnought_supremacy')&&!isAllied) {
+  const act=document.getElementById('d-actions');act.innerHTML='';
+  if(isAdmin){
+    if(isUnlocked('dreadnought_supremacy')&&!p.controlling_faction.includes('Republic'))
       act.innerHTML+=`<button class="btn red" style="width:100%" onclick="doOrbitalStrike('${p.id}')">⚡ ORBITAL BOMBARDMENT (2,500c)</button>`;
-    }
-    if(DB.settings.loc_53rd==p.id) {
+    if(DB.settings.loc_53rd==p.id){
       act.innerHTML+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
         <button class="btn ok" style="font-size:9px" onclick="battleResult('${p.id}',true)">🟢 VICTORY</button>
         <button class="btn red" style="font-size:9px" onclick="battleResult('${p.id}',false)">🔴 DEFEAT</button>
       </div>`;
-    } else {
+    }else{
       act.innerHTML+=`<button class="btn ok" style="width:100%" onclick="move53rd('${p.id}')">🔷 DEPLOY 53rd HERE</button>`;
     }
   }
 }
 
-function setDTab(t) {
-  dTab=t;
-  ['garrison','assets'].forEach(k=>{
-    document.getElementById('dt-'+k).className='dtab'+(k===t?' on':'');
-  });
-  document.getElementById('ds-garrison').style.display=t==='garrison'?'block':'none';
-  document.getElementById('ds-assets').style.display=t==='assets'?'block':'none';
-}
-
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // ACTIONS
-// ═══════════════════════════════════════════════
-async function buyAsset(name,base,cat) {
-  if(!isAdmin){toast("Access denied — admin credentials required",true);return;}
-  const rep=DB.factions.find(f=>f.name==="Galactic Republic"); if(!rep) return;
+// ════════════════════════════════════════════
+async function buyAsset(name,base,cat){
+  if(!isAdmin){toast("Admin credentials required",true);return;}
+  const rep=DB.factions.find(f=>f.name==="Galactic Republic");if(!rep)return;
   const cost=getFinalCost(base,cat);
   if(rep.credits<cost){toast(`Insufficient funds — need ${cost-rep.credits}c more`,true);return;}
   if(!selPlanet){toast("Select a destination planet first",true);return;}
   await sb.from('factions').update({credits:rep.credits-cost}).eq('id',rep.id);
   await sb.from('units').insert([{name:`53rd ${name}`,faction:"Galactic Republic",unit_type:"Purchased Logistics Asset",size:"Standard",status:"Active",planet_id:selPlanet}]);
   await writeLog("Asset Acquired",`Requisitioned ${name} (-${cost}c).`);
-  toast(`ACQUIRED: ${name}`);
-  loadAll();
+  toast(`ACQUIRED: ${name}`);loadAll();
 }
 
-async function buyUpgrade(key,cost) {
-  if(!isAdmin) return;
+async function buyUpgrade(key,cost){
+  if(!isAdmin)return;
   const rep=DB.factions.find(f=>f.name==="Galactic Republic");
   if(!rep||rep.credits<cost){toast("Insufficient treasury funds",true);return;}
   await sb.from('factions').update({credits:rep.credits-cost}).eq('id',rep.id);
   await sb.from('upgrades').update({unlocked:true}).eq('upgrade_key',key);
   const u=DB.upgrades.find(u=>u.upgrade_key===key);
   await writeLog("Upgrade Unlocked",`Purchased: ${u?u.name:key} (-${cost}c).`);
-  toast("UPGRADE ACTIVE");
-  loadAll();
+  toast("UPGRADE ACTIVE");loadAll();
 }
 
-async function doOrbitalStrike(pid) {
-  if(!isAdmin) return;
+async function doOrbitalStrike(pid){
+  if(!isAdmin)return;
   const rep=DB.factions.find(f=>f.name==="Galactic Republic");
   if(!rep||rep.credits<2500){toast("Insufficient credits",true);return;}
-  const p=DB.planets.find(pl=>pl.id==pid); if(!p) return;
-  const nextCreds=rep.credits-2500;
-  await sb.from('factions').update({credits:nextCreds}).eq('id',rep.id);
+  const p=DB.planets.find(pl=>pl.id==pid);if(!p)return;
   const nextLib=Math.min(100,(p.liberation_pct||0)+30);
   const upd={liberation_pct:nextLib};
   if(nextLib>=100){upd.controlling_faction="Galactic Republic";upd.under_invasion=false;}
+  await sb.from('factions').update({credits:rep.credits-2500}).eq('id',rep.id);
   await sb.from('planets').update(upd).eq('id',pid);
   await writeLog("Orbital Strike",`Bombardment on ${p.name} — liberation +30%.`);
-  toast("ORBITAL STRIKE CONCLUDED");
-  loadAll();
+  toast("ORBITAL STRIKE CONCLUDED");loadAll();
 }
 
-async function battleResult(pid,win) {
-  const p=DB.planets.find(pl=>pl.id==pid); if(!p) return;
-  if(p.under_invasion) {
+async function battleResult(pid,win){
+  const p=DB.planets.find(pl=>pl.id==pid);if(!p)return;
+  if(p.under_invasion){
     if(win){
       await sb.from('planets').update({under_invasion:false,liberation_pct:100}).eq('id',pid);
-      await writeLog('Invasion Repelled',`53rd secured ${p.name}. CIS column broken.`);
-    } else {
+      await writeLog('Invasion Repelled',`53rd secured ${p.name}.`);
+    }else{
       await sb.from('planets').update({under_invasion:false,controlling_faction:"Confederacy of Independent Systems",liberation_pct:0}).eq('id',pid);
       await writeLog('Planet Fallen',`${p.name} lost to CIS.`);
     }
-  } else {
+  }else{
     const shift=Math.floor(Math.random()*10)+20;
     const cur=p.liberation_pct||0;
     const next=win?Math.min(100,cur+shift):Math.max(0,cur-Math.floor(shift/1.5));
     const upd={liberation_pct:next};
-    if(next>=100) upd.controlling_faction="Galactic Republic";
-    else if(next<=0) upd.controlling_faction="Confederacy of Independent Systems";
+    if(next>=100)upd.controlling_faction="Galactic Republic";
+    else if(next<=0)upd.controlling_faction="Confederacy of Independent Systems";
     await sb.from('planets').update(upd).eq('id',pid);
     await writeLog(win?'Victory':'Defeat',`Operations updated on ${p.name}.`);
   }
   loadAll();
 }
 
-async function move53rd(pid) {
+async function move53rd(pid){
   await sb.from('settings').upsert({key:'loc_53rd',value:String(pid)});
-  toast('53rd FLEET VECTORS UPDATED');
-  loadAll();
+  toast('53rd FLEET VECTORS UPDATED');loadAll();
 }
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // ADMIN MODAL
-// ═══════════════════════════════════════════════
-function openAdmin() {
+// ════════════════════════════════════════════
+function openAdmin(){
   if(!isAdmin){document.getElementById('login-screen').classList.add('open');setTimeout(()=>document.getElementById('lg-pass').focus(),100);}
   else{document.getElementById('admin-modal').classList.add('open');renderAdminBody();}
 }
 function closeAdmin(){document.getElementById('admin-modal').classList.remove('open');}
 function closeLogin(){document.getElementById('login-screen').classList.remove('open');}
 
-async function doLogin() {
+async function doLogin(){
   const email=document.getElementById('lg-email').value;
   const pass=document.getElementById('lg-pass').value;
   document.getElementById('lg-err').textContent='';
-  try {
-    const {error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error) throw error;
-    isAdmin=true; closeLogin(); openAdmin(); renderAll();
-  } catch(e){document.getElementById('lg-err').textContent='AUTHORIZATION REFUSED';}
+  try{
+    const{error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error)throw error;
+    isAdmin=true;closeLogin();openAdmin();renderAll();
+  }catch(e){document.getElementById('lg-err').textContent='AUTHORIZATION REFUSED';}
 }
 
-async function doLogout() {
-  await sb.auth.signOut(); isAdmin=false; closeAdmin(); loadAll();
-}
+async function doLogout(){await sb.auth.signOut();isAdmin=false;closeAdmin();loadAll();}
 
-function switchMTab(t) {
+function switchMTab(t){
   mTab=t;
-  ['controls','log'].forEach(k=>{
-    document.getElementById('mtab-'+k).className='mtab'+(k===t?' on':'');
-  });
+  ['controls','log'].forEach(k=>document.getElementById('mtab-'+k).className='mtab'+(k===t?' on':''));
   renderAdminBody();
 }
 
-function renderAdminBody() {
+function renderAdminBody(){
   const el=document.getElementById('admin-body');
-  if(mTab==='controls') {
+  if(mTab==='controls'){
     el.innerHTML=`
       <div style="background:rgba(255,255,255,0.01);border:1px solid var(--border);padding:14px;border-radius:3px;margin-bottom:12px">
         <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Campaign Phase</div>
@@ -998,22 +925,22 @@ function renderAdminBody() {
         </div>
       </div>
       <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions based on current territory holdings.</div>`;
-  } else {
+  }else{
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:5px">${
-      DB.logs.map(l=>`<div class="unit-row"><span style="color:var(--warn);font-family:var(--fd);font-size:9px">[${l.event_type}]</span> <span style="font-size:12px">${l.description}</span></div>`).join('')
+      DB.logs.map(l=>`<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:2px;padding:8px 10px"><span style="color:var(--warn);font-family:var(--fd);font-size:9px">[${l.event_type}]</span> <span style="font-size:12px">${l.description}</span></div>`).join('')
     }</div>`;
   }
 }
 
-async function advanceTurn() {
+async function advanceTurn(){
   const turn=parseInt(DB.settings.campaign_turn||1)+1;
   const rep=DB.factions.find(f=>f.name==="Galactic Republic");
   const cis=DB.factions.find(f=>f.name==="Confederacy of Independent Systems");
-  if(!rep||!cis) return;
+  if(!rep||!cis)return;
   let rg=0,cg=0;
   DB.planets.forEach(p=>{
-    if(p.controlling_faction.includes('Republic')) rg+=p.credit_yield||0;
-    else if(p.controlling_faction.includes('Confederacy')) cg+=p.credit_yield||0;
+    if(p.controlling_faction.includes('Republic'))rg+=p.credit_yield||0;
+    else if(p.controlling_faction.includes('Confederacy'))cg+=p.credit_yield||0;
   });
   await sb.from('factions').update({credits:rep.credits+rg}).eq('name','Galactic Republic');
   await sb.from('factions').update({credits:cis.credits+cg}).eq('name','Confederacy of Independent Systems');
@@ -1022,27 +949,18 @@ async function advanceTurn() {
   loadAll();
 }
 
-// ═══════════════════════════════════════════════
-// ACCORDION HELPERS
-// ═══════════════════════════════════════════════
-function togAccord(bodyId,iconId) {
-  const b=document.getElementById(bodyId),i=document.getElementById(iconId);
-  const open=b.classList.toggle('open');
-  if(i) i.textContent=open?'▼':'▶';
+function togAccord(b,i){
+  const el=document.getElementById(b),ic=document.getElementById(i);
+  const o=el.classList.toggle('open');if(ic)ic.textContent=o?'▼':'▶';
 }
-function togSub(bodyId,iconId) {
-  const b=document.getElementById(bodyId),i=document.getElementById(iconId);
-  const open=b.classList.toggle('open');
-  if(i) i.textContent=open?'▼':'▶';
+function togSub(b,i){
+  const el=document.getElementById(b),ic=document.getElementById(i);
+  const o=el.classList.toggle('open');if(ic)ic.textContent=o?'▼':'▶';
 }
 
-// ═══════════════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════════════
-function toast(msg,err=false) {
+function toast(msg,err=false){
   const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className=err?'show err':'show';
+  t.textContent=msg;t.className=err?'show err':'show';
   setTimeout(()=>t.className='',3000);
 }
 </script>
