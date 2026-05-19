@@ -353,7 +353,7 @@
                     </div>
                 </div>
             </div>
-
+            
             <div style="display:flex; background:rgba(0,0,0,0.4); border-bottom:1px solid var(--border)">
                 <div id="tab-btn-garrison" onclick="setDetailTab('garrison')" style="padding:10px; flex:1; text-align:center; font-family:var(--font-display); font-size:10px; cursor:pointer; color:var(--text); border-bottom:2px solid var(--accent)">GARRISON INTEL</div>
                 <div id="tab-btn-assets" onclick="setDetailTab('assets')" style="padding:10px; flex:1; text-align:center; font-family:var(--font-display); font-size:10px; cursor:pointer; color:var(--text-dim)">53rd LOG ASSETS</div>
@@ -393,7 +393,7 @@
 
     // ThreeJS Core Variables
     let scene, camera, renderer, controls;
-    let planetMeshes = [];
+    let planetMeshes = []; 
     let raycaster = new THREE.Raycaster();
     let mouse = new THREE.Vector2();
 
@@ -427,26 +427,164 @@
     }
 
     function showToast(msg, isError = false) {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
+        const t = document.getElementById('toast'); t.textContent = msg;
         t.className = isError ? 'show error' : 'show';
         setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    async function checkConfig() {
-        const url = "https://yjvgwniprmgnwvgavqpj.supabase.co"; 
-        const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H"; 
-        initApp(url, key);
+   async function checkConfig() {
+    const url = "https://yjvgwniprmgnwvgavqpj.supabase.co"; 
+    // USE THE PUBLISHABLE KEY HERE:
+    const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H"; 
+    initApp(url, key);
+}
+
+  function initApp(url, key) {
+    // Force the client to run unauthenticated to bypass the new browser-agent key blocks
+    window.supabaseClient = supabase.createClient(url, key, {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+        },
+        global: {
+            headers: {
+                // This ensures the publishable key is passed purely as an API route pass
+                'apikey': key 
+            }
+        }
+    });
+
+    // Run your data collection pull right after
+    loadAll();
+}
+
+    /* 🌌 Initialize ThreeJS Volumetric Environment */
+    function init3DEngine() {
+        const container = document.getElementById('map-container');
+        const canvas = document.getElementById('three-canvas-target');
+
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x00040a, 0.0018);
+
+        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 4000);
+        
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2.1; // Restricts viewport from clipping underneath the holotable
+        controls.minDistance = 150;
+        controls.maxDistance = 1200;
+
+        reset3DCamera();
+
+        // 3D Tactical Concentric Table Ring Base Elements
+        const gridHelper = new THREE.GridHelper(1800, 36, 0x00aeff, 0x002b5c);
+        gridHelper.position.y = -60;
+        gridHelper.material.opacity = 0.25;
+        gridHelper.material.transparent = true;
+        scene.add(gridHelper);
+
+        // Volumetric Ambient Nebulae & Dust Clouds
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 1800;
+        const positions = new Float32Array(starCount * 3);
+        const colors = new Float32Array(starCount * 3);
+
+        for (let i = 0; i < starCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 1600;
+            positions[i+1] = (Math.random() - 0.5) * 180 + (Math.sin(positions[i]/100) * 30); // Dynamic cosmic wave
+            positions[i+2] = (Math.random() - 0.5) * 1600;
+
+            colors[i] = 0.0; colors[i+1] = 0.6 + Math.random()*0.4; colors[i+2] = 1.0;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        
+        const starMaterial = new THREE.PointsMaterial({ size: 2.5, vertexColors: true, transparent: true, opacity: 0.4 });
+        const starField = new THREE.Points(starGeo, starMaterial);
+        scene.add(starField);
+
+        window.addEventListener('resize', onWindowResize);
+        canvas.addEventListener('click', onCanvasClick);
+        
+        animate();
     }
 
-    function initApp(url, key) {
-        window.supabaseClient = supabase.createClient(url, key);
-        
-        // Force display layout row bounds visible immediately so network lags never lock app screen blank
-        const appEl = document.getElementById('app');
-        if (appEl) appEl.style.display = 'grid';
-        
-        loadAll();
+    function reset3DCamera() {
+        camera.position.set(0, 500, 650);
+        controls.target.set(0, 0, 0);
+        controls.update();
+    }
+
+    function onWindowResize() {
+        const container = document.getElementById('map-container');
+        if (!container || !renderer) return;
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function onCanvasClick(event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(planetMeshes);
+
+        if (intersects.length > 0) {
+            const hitPlanet = intersects[0].object.userData;
+            onPlanetClick(hitPlanet.id);
+        }
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        updateHtmlLabels();
+        renderer.render(scene, camera);
+    }
+
+    /* Trailing system tag strings matching coordinates across 3D vector conversions */
+    function updateHtmlLabels() {
+        const container = document.getElementById('map-container');
+        const labelsLayer = document.getElementById('html-labels-layer');
+        if (!labelsLayer || !camera) return;
+
+        let htmlStrings = [];
+        planetMeshes.forEach(mesh => {
+            const pData = mesh.userData;
+            const wp = new THREE.Vector3();
+            mesh.getWorldPosition(wp);
+            
+            // Offset text strings slightly above the 3D geometry bounds
+            wp.y += 18; 
+            wp.project(camera);
+
+            // Hide coordinates if twisted completely outside viewport boundaries
+            if(wp.z > 1) return;
+
+            const x = (wp.x * .5 + .5) * container.clientWidth;
+            const y = (-(wp.y * .5) + .5) * container.clientHeight;
+
+            const isSelected = selectedPlanetId === pData.id;
+            let classList = "html-overlay-label";
+            if (isSelected) classList += " selected";
+            if (pData.under_invasion) classList += " invasion";
+
+            htmlStrings.push(`
+                <div class="${classList}" style="left:${x}px; top:${y}px;">
+                    <span>${pData.emoji || '🪐'}</span>
+                    <span>${pData.name}</span>
+                </div>
+            `);
+        });
+        labelsLayer.innerHTML = htmlStrings.join('');
     }
 
     async function loadAll() {
@@ -460,627 +598,455 @@
                 supabaseClient.from('campaign_log').select('*').order('created_at', {ascending: false}).limit(25),
                 supabaseClient.from('upgrades').select('*')
             ]);
-
-            if (!f.data || f.data.length === 0) {
-                console.log("Empty schema states mapped. Initializing custom unit lore database generation sequence...");
-                await seedLoreDatabase();
-                return;
-            }
-
-            DB.factions = f.data || [];
-            DB.planets = p.data || [];
-            DB.connections = c.data || [];
-            DB.units = u.data || [];
-            DB.settings = {};
-            if (s.data) s.data.forEach(r => DB.settings[r.key] = r.value);
+            DB.factions = f.data || []; DB.planets = p.data || []; DB.connections = c.data || []; DB.units = u.data || [];
+            DB.settings = {}; if(s.data) s.data.forEach(r => DB.settings[r.key] = r.value);
             DB.logs = l.data || [];
             DB.upgrades = upg.data || [];
-
+            
             renderAll();
-        } catch (e) {
-            console.error("Critical connection anomaly handled during database lookup sequence:", e);
-            showToast("System Link Divergence Detected - Forcing Standby Render Matrix", true);
-            renderAll();
-        }
+        } catch (e) { showToast("Data acquisition stream fault", true); }
     }
 
-    async function seedLoreDatabase() {
-        showToast("PRE-POPULATING AUTHENTIC MACRO SECTOR ATLASED ARRAY...", false);
+    function isUpgradeUnlocked(key) {
+        const u = DB.upgrades.find(item => item.upgrade_key === key);
+        return u ? u.unlocked : false;
+    }
+
+    function getRequisitionCost(baseCost, category) {
+        if (category === 'ground' && isUpgradeUnlocked('repulsor_foundry')) return Math.round(baseCost * 0.75);
+        if (category === 'air' && isUpgradeUnlocked('staging_berths')) return Math.round(baseCost * 0.75);
+        return baseCost;
+    }
+
+    async function buyGlobalUpgrade(key, cost) {
+        if(!isAdmin) return;
+        const rep = DB.factions.find(f => f.name === "Galactic Republic");
+        if (!rep || rep.credits < cost) { showToast("INSUFFICIENT TREASURY FUNDS", true); return; }
+
+        const nextCredits = rep.credits - cost;
+        await supabaseClient.from('factions').update({ credits: nextCredits }).eq('id', rep.id);
+        await supabaseClient.from('upgrades').update({ unlocked: true }).eq('upgrade_key', key);
+
+        const upgObj = DB.upgrades.find(u => u.upgrade_key === key);
+        await writeLog("Tech Unlocked", `Successfully purchased global technology array: ${upgObj ? upgObj.name : key} (-${cost}c).`);
+        showToast("GLOBAL ADVANCEMENT PROTOCOL ACTIVE");
+        loadAll();
+    }
+
+    async function purchaseAsset(assetName, baseCost, category) {
+        if(!isAdmin) { showToast("ACCESS ERROR: Tactical override credentials required.", true); return; }
+        const republicFaction = DB.factions.find(f => f.name === "Galactic Republic");
+        if(!republicFaction) return;
         
-        const startingFactions = [
-            { name: "Galactic Republic", shortname: "GAR", color: "#00b3ff", emoji: "🛡️", credits: 5000 },
-            { name: "Confederacy of Independent Systems", shortname: "CIS", color: "#ff3333", emoji: "🐙", credits: 7500 },
-            { name: "Neutral Systems", shortname: "NEU", color: "#1d293a", emoji: "🪐", credits: 0 }
-        ];
-        await supabaseClient.from('factions').insert(startingFactions);
+        const finalCost = getRequisitionCost(baseCost, category);
+        if(republicFaction.credits < finalCost) { showToast(`REQUISITION INSUFFICIENT: Pool missing ${finalCost - republicFaction.credits}c.`, true); return; }
+        if(!selectedPlanetId) { showToast("TARGET ERROR: Select destination system hub node first.", true); return; }
 
-        const startingPlanets = [
-            { name: "Coruscant", sector: "Core Worlds", emoji: "🏙️", x: 0, y: 0, controlling_faction: "Galactic Republic", credit_yield: 600, strategic_value: "High", liberation_pct: 100, description: "Galactic capital and administrative nerve-center of the Grand Army of the Republic." },
-            { name: "Kamino", sector: "Wild Space", emoji: "🌊", x: -95, y: -90, controlling_faction: "Galactic Republic", credit_yield: 450, strategic_value: "High", liberation_pct: 100, description: "Ocean world biosphere hosting the primary cloning lab nodes and incubation centers." },
-            { name: "Geonosis", sector: "Outer Rim", emoji: "🪰", x: 80, y: 70, controlling_faction: "Confederacy of Independent Systems", credit_yield: 400, strategic_value: "High", liberation_pct: 0, description: "Desolate desert hive-world processing bulk battle droid manufacturing pipelines." },
-            { name: "Kuat", sector: "Core Worlds", emoji: "🔧", x: 20, y: -25, controlling_faction: "Galactic Republic", credit_yield: 500, strategic_value: "High", liberation_pct: 100, description: "Heavy industrial orbital drydocks building deep-space Star Destroyers." },
-            { name: "Ryloth", sector: "Outer Rim", emoji: "🏜️", x: 95, y: -30, controlling_faction: "Confederacy of Independent Systems", credit_yield: 150, strategic_value: "Medium", liberation_pct: 15, description: "Twi'lek home sector locked down under heavy Separatist blockade operations." },
-            { name: "Anaxes", sector: "Azure Sector", emoji: "⛰️", x: -15, y: 35, controlling_faction: "Galactic Republic", credit_yield: 300, strategic_value: "Medium", liberation_pct: 100, description: "Strategic bulwark world hosting crucial Republic fleet staging facilities." },
-            { name: "Christophsis", sector: "Savareen Sector", emoji: "💎", x: 50, y: -65, controlling_faction: "Neutral Systems", credit_yield: 250, strategic_value: "Medium", liberation_pct: 50, description: "Crystalline planet rich in resources, caught directly between opposing operational lines." },
-            { name: "Felucia", sector: "Outer Rim", emoji: "🍄", x: 110, y: 20, controlling_faction: "Confederacy of Independent Systems", credit_yield: 200, strategic_value: "Medium", liberation_pct: 0, description: "Fungal jungle landscape hosting biological warfare research and toxic spore networks." },
-            { name: "Saleucami", sector: "Outer Rim", emoji: "🌵", x: 70, y: -10, controlling_faction: "Neutral Systems", credit_yield: 180, strategic_value: "Medium", liberation_pct: 40, description: "Caldera-pocked oasis world serving as a major communications relay station." },
-            { name: "Muunilinst", sector: "Outer Rim", emoji: "🏦", x: -40, y: 105, controlling_faction: "Confederacy of Independent Systems", credit_yield: 700, strategic_value: "High", liberation_pct: 0, description: "Financial core of the InterGalactic Banking Clan, funding the droid war machine." },
-            { name: "Mygeeto", sector: "Outer Rim", emoji: "🥶", x: 15, y: 115, controlling_faction: "Confederacy of Independent Systems", credit_yield: 350, strategic_value: "High", liberation_pct: 8, description: "Glacial crystal-vault world targeted for priority corporate asset acquisition operations." },
-            { name: "Utapau", sector: "Outer Rim", emoji: "🕳️", x: 45, y: 45, controlling_faction: "Neutral Systems", credit_yield: 220, strategic_value: "Medium", liberation_pct: 50, description: "Sinkhole-pocked lithosphere concealing massive underground local defensive networks." },
-            { name: "Naboon", sector: "Chommell", emoji: "🌱", x: 30, y: -85, controlling_faction: "Galactic Republic", credit_yield: 250, strategic_value: "Medium", liberation_pct: 100, description: "Lush terrestrial biosphere historically subjected to specialized corporate invasion tests." },
-            { name: "Tatooine", sector: "Arkanis", emoji: "☀️", x: 120, y: -75, controlling_faction: "Neutral Systems", credit_yield: 80, strategic_value: "Low", liberation_pct: 50, description: "Outer Rim desert junction domain run by major local criminal syndicates." },
-            { name: "Mon Cala", sector: "Outer Rim", emoji: "🦑", x: 130, y: 55, controlling_faction: "Galactic Republic", credit_yield: 380, strategic_value: "High", liberation_pct: 90, description: "Aquatic industrial super-structures producing advanced deep-sea heavy cruisers." },
-            { name: "Lothal", sector: "Outer Rim", emoji: "🌾", x: -80, y: 10, controlling_faction: "Neutral Systems", credit_yield: 120, strategic_value: "Low", liberation_pct: 50, description: "Frontier agricultural hub showing early signs of tactical mineral refinery operations." },
-            { name: "Mandallia", sector: "Mandalore", emoji: "⚔️", x: -55, y: -45, controlling_faction: "Neutral Systems", credit_yield: 200, strategic_value: "Medium", liberation_pct: 50, description: "Fiercely isolationist sector tracking heavy mercenary fleet mobilization patterns." },
-            { name: "Kessel", sector: "Outer Rim", emoji: "🌶️", x: 140, y: -15, controlling_faction: "Neutral Systems", credit_yield: 300, strategic_value: "Low", liberation_pct: 50, description: "Subterranean spice-mines and coaxium reserves controlled by autonomous cartel assets." },
-            { name: "Sullust", sector: "Outer Rim", emoji: "🌋", x: -25, y: -105, controlling_faction: "Confederacy of Independent Systems", credit_yield: 400, strategic_value: "High", liberation_pct: 0, description: "Volcanic mineral processing plants feeding critical alloys directly to Separatist fleets." },
-            { name: "Eriadu", sector: "Outer Rim", emoji: "🏭", x: -110, y: -20, controlling_faction: "Galactic Republic", credit_yield: 350, strategic_value: "High", liberation_pct: 100, description: "Heavily fortified industrial hub anchors the Rimma Trade Route network." }
-        ];
-        await supabaseClient.from('planets').insert(startingPlanets);
+        const nextCredits = republicFaction.credits - finalCost;
+        await supabaseClient.from('factions').update({ credits: nextCredits }).eq('id', republicFaction.id);
 
-        const connections = [
-            { planet_a: "Coruscant", planet_b: "Kuat" }, { planet_a: "Coruscant", planet_b: "Anaxes" },
-            { planet_a: "Kuat", planet_b: "Naboon" }, { planet_a: "Naboon", planet_b: "Christophsis" },
-            { planet_a: "Christophsis", planet_b: "Tatooine" }, { planet_a: "Tatooine", planet_b: "Ryloth" },
-            { planet_a: "Ryloth", planet_b: "Geonosis" }, { planet_a: "Geonosis", planet_b: "Utapau" },
-            { planet_a: "Utapau", planet_b: "Saleucami" }, { planet_a: "Saleucami", planet_b: "Felucia" },
-            { planet_a: "Felucia", planet_b: "Mon Cala" }, { planet_a: "Mon Cala", planet_b: "Kessel" },
-            { planet_a: "Coruscant", planet_b: "Muunilinst" }, { planet_a: "Muunilinst", planet_b: "Mygeeto" },
-            { planet_a: "Anaxes", planet_b: "Lothal" }, { planet_a: "Lothal", planet_b: "Eriadu" },
-            { planet_a: "Eriadu", planet_b: "Kamino" }, { planet_a: "Kamino", planet_b: "Sullust" },
-            { planet_a: "Sullust", planet_b: "Mandallia" }, { planet_a: "Mandallia", planet_b: "Kuat" }
-        ];
-        await supabaseClient.from('planet_connections').insert(connections);
+        await supabaseClient.from('units').insert([{
+            name: `53rd ${assetName}`, faction: "Galactic Republic", unit_type: "Purchased Logistics Asset", size: "Standard Item Cache", status: "Active", planet_id: selectedPlanetId
+        }]);
 
-        setTimeout(() => window.location.reload(), 1500);
+        await writeLog("Asset Requisitioned", `Acquired ${assetName} (-${finalCost}c). Routed down to target world.`);
+        showToast(`ACQUIRED: ${assetName} processed successfully!`);
+        loadAll();
+    }
+
+    async function executeOrbitalStrike(planetId) {
+        if(!isAdmin) return;
+        const rep = DB.factions.find(f => f.name === "Galactic Republic");
+        if (!rep || rep.credits < 2500) { showToast("INSUFFICIENT CREDITS FOR ORBITAL BOMBARDMENT", true); return; }
+        
+        const p = DB.planets.find(pl => pl.id === planetId);
+        if (!p || p.controlling_faction === 'Galactic Republic') return;
+
+        const nextCredits = rep.credits - 2500;
+        await supabaseClient.from('factions').update({ credits: nextCredits }).eq('id', rep.id);
+
+        let nextLib = Math.min(100, (p.liberation_pct || 0) + 30);
+        let updateData = { liberation_pct: nextLib };
+        if (nextLib >= 100) { updateData.controlling_faction = "Galactic Republic"; updateData.under_invasion = false; }
+
+        await supabaseClient.from('planets').update(updateData).eq('id', planetId);
+        await writeLog("Orbital Strike", `Dreadnought Supremacy asset authorized a tactical bombardment on ${p.name}. Planet liberation shifted +30% instantly.`);
+        showToast("ORBITAL BOMBARDMENT CONCLUDED");
+        loadAll();
+    }
+
+    function setDetailTab(tabKey) {
+        currentDetailTab = tabKey;
+        document.getElementById('tab-btn-garrison').style.borderBottomColor = tabKey === 'garrison' ? 'var(--accent)' : 'transparent';
+        document.getElementById('tab-btn-garrison').style.color = tabKey === 'garrison' ? 'var(--text)' : 'var(--text-dim)';
+        document.getElementById('tab-btn-assets').style.borderBottomColor = tabKey === 'assets' ? 'var(--accent)' : 'transparent';
+        document.getElementById('tab-btn-assets').style.color = tabKey === 'assets' ? 'var(--text)' : 'var(--text-dim)';
+        document.getElementById('detail-tab-garrison-view').style.display = tabKey === 'garrison' ? 'block' : 'none';
+        document.getElementById('detail-tab-assets-view').style.display = tabKey === 'assets' ? 'block' : 'none';
+    }
+
+    function renderSidebarUpgrades() {
+        const container = document.getElementById('sidebar-upgrades-container');
+        if (!container) return;
+        const rep = DB.factions.find(f => f.name === "Galactic Republic");
+        const balance = rep ? rep.credits : 0;
+
+        container.innerHTML = DB.upgrades.map(u => {
+            let description = '';
+            if (u.upgrade_key === 'repulsor_foundry') description = 'Permanent 25% discount across all Land Vehicles.';
+            if (u.upgrade_key === 'staging_berths') description = 'Permanent 25% discount across all Air Vehicles.';
+            if (u.upgrade_key === 'heavy_ordnance') description = 'Unlocks AV-7 Artillery. Extinguishes local invasion probabilities by 50%.';
+            if (u.upgrade_key === 'dreadnought_supremacy') description = 'Unlocks instant +30% Orbital Bombardment Strike capabilities.';
+
+            return `
+            <div class="tech-card ${u.unlocked ? 'unlocked' : ''}">
+                <div class="tech-meta">
+                    <span class="tech-name">${u.name}</span>
+                    <span class="tech-badge ${u.unlocked ? 'active' : 'locked'}">${u.unlocked ? 'ACTIVE' : u.cost.toLocaleString() + 'c'}</span>
+                </div>
+                <div class="tech-desc">${description}</div>
+                ${(!u.unlocked && isAdmin) ? `<button class="btn success" style="margin-top:6px; font-size:9px; padding:4px 8px;" ${balance < u.cost ? 'disabled' : ''} onclick="buyGlobalUpgrade('${u.upgrade_key}', ${u.cost})">BUY UPGRADE</button>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    function updateDynamicShopCosts() {
+        const shopConfig = [
+            { id: 'cost-barc', base: 50, cat: 'ground' }, { id: 'cost-itt', base: 150, cat: 'ground' },
+            { id: 'cost-tx130', base: 250, cat: 'ground' }, { id: 'cost-atte', base: 750, cat: 'ground' },
+            { id: 'cost-laati', base: 350, cat: 'air' }, { id: 'cost-laatc', base: 500, cat: 'air' },
+            { id: 'cost-arc170', base: 250, cat: 'air' }, { id: 'cost-ywing', base: 500, cat: 'air' },
+            { id: 'cost-vwing', base: 300, cat: 'air' }, { id: 'cost-z95', base: 200, cat: 'air' }
+        ];
+
+        shopConfig.forEach(cfg => {
+            const el = document.getElementById(cfg.id); if (!el) return;
+            const final = getRequisitionCost(cfg.base, cfg.cat);
+            el.innerHTML = final !== cfg.base ? `<span class="cost-strikethrough">${cfg.base}c</span>${final}c` : `${cfg.base}c`;
+        });
+
+        const specialSection = document.getElementById('sub-special-tab');
+        const hasHeavy = isUpgradeUnlocked('heavy_ordnance');
+        const hasOrbital = isUpgradeUnlocked('dreadnought_supremacy');
+        specialSection.style.display = (hasHeavy || hasOrbital) ? 'block' : 'none';
+        document.getElementById('shop-item-av7').style.display = hasHeavy ? 'flex' : 'none';
+        document.getElementById('shop-item-orbital').style.display = hasOrbital ? 'flex' : 'none';
     }
 
     function renderAll() {
-        renderFactionPools();
-        renderUpgradesTree();
-        syncThreeJSNodes();
-        renderDetailPanel();
+        updateHeader(); renderFactionPanel(); rebuild3DScene(); updateDynamicShopCosts(); renderSidebarUpgrades();
+        if (selectedPlanetId) showPlanetDetail(selectedPlanetId);
+        if (document.getElementById('admin-modal').classList.contains('open')) renderAdminBody();
+        const adminBtn = document.getElementById('admin-toggle-btn');
+        adminBtn.textContent = isAdmin ? ' HQ CONNECTED' : '⚙ TERMINAL OVERRIDE';
+        adminBtn.style.borderColor = isAdmin ? 'var(--success)' : 'var(--border-bright)';
     }
 
-    function renderFactionPools() {
+    function setupRealtime() {
+        supabaseClient.channel('matrix-changes').on('postgres_changes', { event: '*', schema: 'public' }, () => { loadAll(); }).subscribe();
+    }
+
+    function updateHeader() {
+        document.getElementById('header-era').textContent = DB.settings.campaign_era || 'Clone Wars Theater';
+        document.getElementById('header-turn').textContent = 'PHASE ' + (DB.settings.campaign_turn || '1');
+    }
+
+    function renderFactionPanel() {
         const container = document.getElementById('faction-list');
-        if (!container) return;
+        if(!DB.factions.length) return;
+        const maxCredits = Math.max(...DB.factions.map(f=>f.credits), 1);
         container.innerHTML = DB.factions.map(f => {
-            let totalPlanets = DB.planets.filter(p => p.controlling_faction === f.name).length;
-            let maxPlanets = DB.planets.length || 1;
-            let pct = (totalPlanets / maxPlanets) * 100;
+            const territories = DB.planets.filter(p=>p.controlling_faction===f.name).length;
             return `
-                <div class="faction-card">
-                    <div class="faction-header">
-                        <div class="faction-dot" style="color:${f.color}; background:${f.color}"></div>
-                        <div class="faction-name">${f.name}</div>
-                    </div>
-                    <div class="resource-row">
-                        <span style="color:var(--text-dim); font-size:11px; letter-spacing:1px">TREASURY BALANCE:</span>
-                        <span class="resource-val">${f.credits.toLocaleString()}c</span>
-                    </div>
-                    <div class="resource-bar-wrap">
-                        <div class="resource-bar" style="width:${pct}%; background:${f.color}"></div>
-                    </div>
-                    <div class="terr-count">Sovereign Control Matrix: <span>${totalPlanets}/${maxPlanets} Nodes</span></div>
+            <div class="faction-card">
+                <div class="faction-header">
+                    <div class="faction-dot" style="background:${f.color};color:${f.color}"></div>
+                    <div class="faction-name">${f.emoji || ''} ${f.shortname || f.name}</div>
                 </div>
-            `;
+                <div class="resource-row"><span class="resource-label">🪙 Treasury Pool</span><span class="resource-val">${(f.credits || 0).toLocaleString()} c</span></div>
+                <div class="resource-bar-wrap"><div class="resource-bar" style="width:${Math.min(100, ((f.credits || 0)/maxCredits)*100)}%;background:${f.color}"></div></div>
+                <div class="terr-count">🗺️ Managed Worlds: <span>${territories}</span></div>
+            </div>`;
         }).join('');
     }
 
-    function renderUpgradesTree() {
-        const container = document.getElementById('sidebar-upgrades-container');
-        if (!container) return;
-        if (DB.upgrades.length === 0) {
-            container.innerHTML = `<div style="font-size:11px;color:var(--text-dim);text-align:center;padding:10px;">No upgrades fetched from database structure</div>`;
-            return;
-        }
-
-        container.innerHTML = DB.upgrades.map(u => {
-            return `
-                <div class="tech-card ${u.unlocked ? 'unlocked' : ''}">
-                    <div class="tech-meta">
-                        <span class="tech-name">${u.name}</span>
-                        <span class="tech-badge ${u.unlocked ? 'active' : 'locked'}">${u.unlocked ? 'CONNECTED' : 'STAGED'}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-                        <span style="font-size:10px; color:var(--text-dim); text-transform:uppercase;">Class: ${u.category}</span>
-                        ${!u.unlocked ? `<button class="btn success" style="font-size:8px; padding:3px 8px;" onclick="unlockUpgradeBackend('${u.upgrade_key}', ${u.cost})">UNLOCK [${u.cost}c]</button>` : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        let hasSpecial = DB.upgrades.some(u => u.unlocked && (u.upgrade_key === 'heavy_ordnance' || u.upgrade_key === 'dreadnought_supremacy'));
-        const specTab = document.getElementById('sub-special-tab');
-        if (specTab) specTab.style.display = hasSpecial ? 'block' : 'none';
-        
-        let av7 = DB.upgrades.find(u => u.upgrade_key === 'heavy_ordnance' && u.unlocked);
-        let orb = DB.upgrades.find(u => u.upgrade_key === 'dreadnought_supremacy' && u.unlocked);
-        
-        const itemAv7 = document.getElementById('shop-item-av7');
-        const itemOrb = document.getElementById('shop-item-orbital');
-        if (itemAv7) itemAv7.style.display = av7 ? 'flex' : 'none';
-        if (itemOrb) itemOrb.style.display = orb ? 'flex' : 'none';
+    function getFactionHexColor(factionName) {
+        if(!factionName || factionName === 'Neutral') return 0x344152;
+        const f = DB.factions.find(fac=>fac.name===factionName); 
+        return f ? parseInt(f.color.replace('#', '0x')) : 0x344152;
     }
+    
+    function getSVRadius(sv) { return { 'Low': 5, 'Medium': 8, 'High': 11, 'Critical': 15 }[sv] || 7; }
 
-    async function unlockUpgradeBackend(key, cost) {
-        let rep = DB.factions.find(f => f.name === "Galactic Republic");
-        if (!rep) return;
-        if (rep.credits < cost) {
-            showToast("Insufficient treasury balances to authorize upgrade", true);
-            return;
-        }
-
-        await supabaseClient.from('factions').update({ credits: rep.credits - cost }).eq('name', 'Galactic Republic');
-        await supabaseClient.from('upgrades').update({ unlocked: true }).eq('upgrade_key', key);
-        await supabaseClient.from('campaign_log').insert({ event_type: "RESEARCH", description: `Kamino laboratories brought online upgrade node: ${key}` });
-        
-        showToast("Authorization Node Sync Complete");
-        loadAll();
-    }
-
-    function init3DEngine() {
-        const container = document.getElementById('map-container');
-        const canvas = document.getElementById('three-canvas-target');
-        
-        scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000206, 0.003);
-
-        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 1000);
-        camera.position.set(0, 140, 120);
-
-        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-        controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2.1;
-        controls.minDistance = 30;
-        controls.maxDistance = 220;
-
-        // Ambient Lights
-        const ambient = new THREE.AmbientLight(0x0a1e3f, 1.2);
-        scene.add(ambient);
-
-        const point = new THREE.PointLight(0x00ffff, 0.8, 300);
-        point.position.set(0, 50, 0);
-        scene.add(point);
-
-        // Grid Plane Floor Setup
-        const grid = new THREE.GridHelper(300, 40, 0x00b3ff, 0x002244);
-        grid.position.y = -2;
-        grid.material.opacity = 0.15;
-        grid.material.transparent = true;
-        scene.add(grid);
-
-        window.addEventListener('resize', onWindowResize);
-        canvas.addEventListener('click', onCanvasClick);
-
-        animate();
-    }
-
-    function onWindowResize() {
-        const container = document.getElementById('map-container');
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-        if (controls) controls.update();
-        
-        // Rotating effects for selection circles
-        planetMeshes.forEach(p => {
-            if (p.selectionRing) {
-                p.selectionRing.rotation.z += 0.01;
-                p.selectionRing.visible = (p.planetId === selectedPlanetId);
-            }
+    /* 🪐 Rebuild 3D Spatial Geometry Objects */
+    function rebuild3DScene() {
+        // Purge old assets from scene
+        planetMeshes.forEach(m => {
+            if(m.g_rings) scene.remove(m.g_rings);
+            scene.remove(m);
         });
-
-        if (renderer && scene && camera) {
-            renderer.render(scene, camera);
-            update2DLabelsLayer();
-        }
-    }
-
-    function syncThreeJSNodes() {
-        planetMeshes.forEach(m => scene.remove(m));
         planetMeshes = [];
 
-        // Clear layout paths
-        scene.children = scene.children.filter(c => c.isLight || c.isGridHelper);
+        // Clear previous hyperlane vectors
+        const hyperlanes = scene.getObjectsByProperty('isLine', true);
+        const stalks = scene.getObjectsByProperty('isStalk', true);
+        [...hyperlanes, ...stalks].forEach(obj => scene.remove(obj));
 
-        // Draw connections lines
-        DB.connections.forEach(conn => {
-            const pA = DB.planets.find(p => p.name === conn.planet_a);
-            const pB = DB.planets.find(p => p.name === conn.planet_b);
-            if (!pA || !pB) return;
+        // Coordinate scaling factors mapping flat DB grids into full WebGL spaces
+        const scaleX = 0.5;
+        const scaleZ = 0.5;
+        const centerX = 650;
+        const centerZ = 650;
 
-            const points = [new THREE.Vector3(pA.x, 0, pA.y), new THREE.Vector3(pB.x, 0, pB.y)];
-            const geom = new THREE.BufferGeometry().setFromPoints(points);
+        // Loop A: Project 3D Node Structures
+        DB.planets.forEach(p => {
+            const r = getSVRadius(p.strategic_value);
+            const colorHex = p.under_invasion ? 0xff3333 : getFactionHexColor(p.controlling_faction);
+
+            // Generate physical 3D Sphere mesh
+            const geometry = new THREE.SphereGeometry(r, 16, 16);
+            const material = new THREE.MeshBasicMaterial({ color: colorHex, wireframe: true, transparent: true, opacity: 0.85 });
+            const mesh = new THREE.Mesh(geometry, material);
+
+            // Establish 3D position vector ($Y$ represents topological height)
+            const posX = (p.x - centerX) * scaleX;
+            const posZ = (p.y - centerZ) * scaleZ;
             
-            let colorHex = 0x003366;
-            if (pA.controlling_faction === pB.controlling_faction && pA.controlling_faction !== "Neutral Systems") {
-                const facObj = DB.factions.find(f => f.name === pA.controlling_faction);
-                if (facObj) colorHex = parseInt(facObj.color.replace('#', '0x'));
+            // Map height procedurally or based on ID properties to generate that 3D depth topology
+            let posY = ((p.id % 5) * 20) - 40; 
+            if (p.under_invasion) posY += 15; // Invasions shift upwards visually
+
+            mesh.position.set(posX, posY, posZ);
+            mesh.userData = p;
+            scene.add(mesh);
+            planetMeshes.push(mesh);
+
+            // Add Tactical Stalk dropping down from node to the grid base floor plane
+            const stalkGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(posX, posY, posZ),
+                new THREE.Vector3(posX, -60, posZ)
+            ]);
+            const stalkMat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.15 });
+            const stalk = new THREE.Line(stalkGeo, stalkMat);
+            stalk.isStalk = true;
+            scene.add(stalk);
+
+            // Generate glowing aura tracking ring structures
+            const ringCount = (DB.settings.loc_53rd == p.id ? 1 : 0) + (DB.settings.loc_501st == p.id ? 1 : 0);
+            if(ringCount > 0 || p.under_invasion) {
+                const outerRingGeo = new THREE.RingGeometry(r + 6, r + 8, 32);
+                const outerRingMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.4 });
+                const ringMesh = new THREE.Mesh(outerRingGeo, outerRingMat);
+                ringMesh.position.set(posX, posY, posZ);
+                ringMesh.lookAt(camera.position); // Billboard effect tracking viewport focus
+                mesh.g_rings = ringMesh;
+                scene.add(ringMesh);
+            }
+        });
+
+        // Loop B: Construct Luminous Hyperlane Intersections
+        DB.connections.forEach(c => {
+            const meshA = planetMeshes.find(m => m.userData.name === c.planet_a);
+            const meshB = planetMeshes.find(m => m.userData.name === c.planet_b);
+            if (!meshA || !meshB) return;
+
+            const points = [meshA.position, meshB.position];
+            const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+
+            let laneColor = 0x00b3ff;
+            if(meshA.userData.controlling_faction === meshB.userData.controlling_faction && meshA.userData.controlling_faction !== 'Neutral') {
+                laneColor = getFactionHexColor(meshA.userData.controlling_faction);
+            } else if (meshA.userData.controlling_faction !== 'Neutral' && meshB.userData.controlling_faction !== 'Neutral') {
+                laneColor = 0xffaa00; // Contested border systems
             }
 
-            const mat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.4 });
-            const line = new THREE.Line(geom, mat);
-            scene.add(line);
-        });
-
-        // Draw node spheres
-        DB.planets.forEach(p => {
-            const group = new THREE.Group();
-            group.position.set(p.x, 0, p.y);
-            group.planetId = p.id;
-            group.planetData = p;
-
-            let colorHex = 0x1d293a;
-            const facObj = DB.factions.find(f => f.name === p.controlling_faction);
-            if (facObj) colorHex = parseInt(facObj.color.replace('#', '0x'));
-
-            const geom = new THREE.SphereGeometry(3, 16, 16);
-            const mat = new THREE.MeshStandardMaterial({
-                color: colorHex,
-                emissive: colorHex,
-                emissiveIntensity: 0.25,
-                roughness: 0.5,
-                metalness: 0.8
-            });
-            const mesh = new THREE.Mesh(geom, mat);
-            group.add(mesh);
-
-            // Ring element around selection target
-            const ringGeom = new THREE.RingGeometry(4.5, 5, 32);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
-            const ring = new THREE.Mesh(ringGeom, ringMat);
-            ring.rotation.x = Math.PI / 2;
-            ring.visible = false;
-            group.add(ring);
-            group.selectionRing = ring;
-
-            scene.add(group);
-            planetMeshes.push(group);
+            const lineMat = new THREE.LineBasicMaterial({ color: laneColor, transparent: true, opacity: 0.35 });
+            const hyperlane = new THREE.Line(lineGeo, lineMat);
+            hyperlane.isLine = true;
+            scene.add(hyperlane);
         });
     }
 
-    function update2DLabelsLayer() {
-        const container = document.getElementById('html-labels-layer');
-        if (!container) return;
-        container.innerHTML = '';
+    function onPlanetClick(id) { selectedPlanetId = id; renderAll(); }
 
-        planetMeshes.forEach(p => {
-            const wp = new THREE.Vector3();
-            p.getWorldPosition(wp);
-            wp.project(camera);
-
-            // Convert to web browser viewport coordinate boundaries
-            const x = (wp.x * .5 + .5) * container.clientWidth;
-            const y = (-(wp.y * .5) + .5) * container.clientHeight;
-
-            if (wp.z > 1) return; // Behind camera bounds culling
-
-            let labelClass = "html-overlay-label";
-            if (p.planetId === selectedPlanetId) labelClass += " selected";
-            
-            let isInvaded = DB.units.some(u => u.planet_id === p.planetId && u.faction === "Confederacy of Independent Systems" && p.planetData.controlling_faction === "Galactic Republic");
-            if (isInvaded) labelClass += " invasion";
-
-            container.innerHTML += `
-                <div class="${labelClass}" style="left:${x}px; top:${y - 8}px;">
-                    <span>${p.planetData.emoji || '🪐'}</span>
-                    <span>${p.planetData.name}</span>
-                </div>
-            `;
-        });
-    }
-
-    function onCanvasClick(e) {
-        const rect = renderer.domElement.getBoundingClientRect();
-        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.setFromCamera(mouse, camera);
-        const targets = planetMeshes.map(p => p.children[0]); // Intersect core sphere inside groups
-        const hits = raycaster.intersectObjects(targets);
-
-        if (hits.length > 0) {
-            selectedPlanetId = hits[0].object.parent.planetId;
-            showPlanetDetails(selectedPlanetId);
-        }
-    }
-
-    function reset3DCamera() {
-        if (controls) {
-            controls.reset();
-            camera.position.set(0, 140, 120);
-        }
-    }
-
-    function showPlanetDetails(id) {
-        selectedPlanetId = id;
-        renderDetailPanel();
-    }
-
-    function setDetailTab(type) {
-        currentDetailTab = type;
-        const btnG = document.getElementById('tab-btn-garrison');
-        const btnA = document.getElementById('tab-btn-assets');
-        const viewG = document.getElementById('detail-tab-garrison-view');
-        const viewA = document.getElementById('detail-tab-assets-view');
-
-        if (type === 'garrison') {
-            if (btnG) btnG.style.borderBottomColor = 'var(--accent)';
-            if (btnA) btnA.style.borderBottomColor = 'transparent';
-            if (viewG) viewG.style.display = 'block';
-            if (viewA) viewA.style.display = 'none';
-        } else {
-            if (btnG) btnG.style.borderBottomColor = 'transparent';
-            if (btnA) btnA.style.borderBottomColor = 'var(--accent)';
-            if (viewG) viewG.style.display = 'none';
-            if (viewA) viewA.style.display = 'block';
-        }
-    }
-
-    function renderDetailPanel() {
-        const emp = document.getElementById('detail-empty');
-        const cont = document.getElementById('detail-content');
-        if (!selectedPlanetId) {
-            if (emp) emp.style.display = 'flex';
-            if (cont) cont.style.display = 'none';
-            return;
-        }
-
-        if (emp) emp.style.display = 'none';
-        if (cont) cont.style.display = 'flex';
-
-        const p = DB.planets.find(pl => pl.id === selectedPlanetId);
-        if (!p) return;
+    function showPlanetDetail(id) {
+        const p = DB.planets.find(pl=>pl.id===id); if(!p) return;
+        document.getElementById('detail-empty').style.display = 'none';
+        const content = document.getElementById('detail-content'); content.classList.add('visible');
 
         document.getElementById('d-emoji').textContent = p.emoji || '🪐';
         document.getElementById('d-name').textContent = p.name;
-        document.getElementById('d-sector').textContent = p.sector || 'Uncharted Space';
+        document.getElementById('d-sector').textContent = (p.sector || 'Unscouted') + ' Sector';
         
         const badge = document.getElementById('d-faction-badge');
-        badge.textContent = p.controlling_faction;
-        let fac = DB.factions.find(f => f.name === p.controlling_faction);
-        badge.style.color = fac ? fac.color : 'var(--text)';
+        badge.textContent = p.under_invasion ? "CIS INVASION HOST" : p.controlling_faction; 
+        badge.style.color = p.under_invasion ? "var(--danger)" : getFactionColorText(p.controlling_faction);
 
-        // Display liberation status metrics
-        const libTxt = document.getElementById('d-liberation-txt');
-        const libBar = document.getElementById('d-liberation-bar');
-        const libLbl = document.getElementById('d-liberation-label');
+        const hqZone = document.getElementById('d-hq-zone'); hqZone.innerHTML = '';
+        if(p.under_invasion) hqZone.innerHTML += `<div class="hq-marker-badge invasion">🚨 CIS SECTOR INVASION TARGET</div>`;
+
+        const hqPlanetId = DB.settings.loc_53rd;
+        if(hqPlanetId === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#00b3ff;color:#00ffff">🛡️ 53rd Battalion Base</div>`;
+        if(DB.settings.loc_501st === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#2a6eff;color:#85aeff">⚡ 501st Legion</div>`;
+        if(DB.settings.loc_212th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#ff9900;color:#ffeaa7">🔶 212th Attack Bn</div>`;
+        if(DB.settings.loc_104th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#a4b0be;color:#f1f2f6">🐺 104th Wolfpack</div>`;
+
+        const libPct = p.liberation_pct || 0;
+        document.getElementById('d-liberation-label').textContent = p.under_invasion ? "REPUBLIC DEFENSE SECURITY ARRAY" : "REPUBLIC LIBERATION INDEX";
+        document.getElementById('d-liberation-txt').textContent = libPct + '%';
+        document.getElementById('d-liberation-bar').style.width = libPct + '%';
+        document.getElementById('d-liberation-bar').style.backgroundColor = p.under_invasion ? 'var(--warn)' : '#00b3ff';
+
+        const sv = document.getElementById('d-sv'); sv.textContent = p.strategic_value;
         
-        let pct = p.liberation_pct || 0;
-        if (libTxt) libTxt.textContent = pct + "%";
-        if (libBar) libBar.style.width = pct + "%";
-        
-        if (p.controlling_faction === "Galactic Republic") {
-            if (libLbl) { libLbl.textContent = "REPUBLIC SECURITY INDEX"; libLbl.style.color = "var(--accent)"; }
-            if (libBar) libBar.style.backgroundColor = "var(--accent)";
-        } else if (p.controlling_faction === "Confederacy of Independent Systems") {
-            if (libLbl) { libLbl.textContent = "CIS OCCUPATION FORCE"; libLbl.style.color = "var(--danger)"; }
-            if (libBar) libBar.style.backgroundColor = "var(--danger)";
+        let computedYield = p.credit_yield || 0;
+        if(p.controlling_faction === 'Neutral') computedYield = Math.round(computedYield * (libPct / 100));
+        if(p.under_invasion) computedYield = Math.round(computedYield * 0.5); 
+        document.getElementById('d-credits').textContent = '+' + computedYield + ' c';
+        document.getElementById('d-desc').textContent = p.description || 'No database logs found for this sector Node.';
+
+        const allUnits = DB.units.filter(u => u.planet_id === p.id && u.status !== 'Destroyed');
+        const garrisonForces = allUnits.filter(u => u.unit_type !== 'Purchased Logistics Asset');
+        const logisticsAssets = allUnits.filter(u => u.unit_type === 'Purchased Logistics Asset');
+
+        const list = document.getElementById('d-units');
+        const isPlayerAligned = p.controlling_faction.includes('Republic') || p.controlling_faction.includes('53rd');
+
+        if (!isAdmin && !isPlayerAligned && p.controlling_faction !== 'Neutral' && !p.under_invasion) {
+            let sizeRating = "Minor Presence Detected";
+            if (garrisonForces.length >= 5) sizeRating = "Massive Armored Fleet Array";
+            else if (garrisonForces.length >= 3) sizeRating = "Medium Combat Garrison";
+            else if (garrisonForces.length === 0) sizeRating = "Negligible Force Footprint";
+
+            list.innerHTML = `
+                <div class="garrison-intel-card">
+                    <div class="garrison-intel-title">⚠️ ENCRYPTED CIS SIGNALS</div>
+                    <div class="garrison-intel-val">${sizeRating}</div>
+                </div>`;
         } else {
-            if (libLbl) { libLbl.textContent = "SECTOR LIBERATION PROGRESS"; libLbl.style.color = "var(--warn)"; }
-            if (libBar) libBar.style.backgroundColor = "var(--warn)";
+            list.innerHTML = garrisonForces.length ? garrisonForces.map(u => `<div class="unit-item"><span class="unit-name">${u.name}</span></div>`).join('') : '<div style="color:var(--text-dim);font-size:12px;">No active garrison footprint.</div>';
         }
 
-        document.getElementById('d-sv').textContent = p.strategic_value || 'Medium';
-        document.getElementById('d-credits').textContent = "+" + (p.credit_yield || 0) + "c / Phase";
-        document.getElementById('d-desc').textContent = p.description || '';
+        const assetContainer = document.getElementById('d-53rd-cached-assets');
+        assetContainer.innerHTML = logisticsAssets.length ? logisticsAssets.map(u => `<div class="unit-item" style="border-left: 2px dashed var(--success)"><span class="unit-name" style="color:var(--success)">${u.name}</span></div>`).join('') : '<div style="color:var(--text-dim);font-size:12px;">No fleet cache tracked.</div>';
 
-        // Segregate units array entries
-        const planetUnits = DB.units.filter(u => u.planet_id === p.id);
-        const garrisonForces = planetUnits.filter(u => u.faction !== "53rd Assault Battalion");
-        const customFleetAssets = planetUnits.filter(u => u.faction === "53rd Assault Battalion");
-
-        // Garrison View
-        const gContainer = document.getElementById('d-units');
-        if (gContainer) {
-            if (garrisonsForces = garrisonForces, garrisonsForces.length === 0) {
-                gContainer.innerHTML = `<div style="font-size:12px;color:var(--text-dim);text-align:center;padding:12px;border:1px dashed var(--border)">No planetary defensive garisons stationed</div>`;
-            } else {
-                gContainer.innerHTML = garrisonsForces.map(u => `
-                    <div class="unit-item">
-                        <div class="unit-name" style="color:${u.faction === 'Galactic Republic' ? 'var(--accent)' : 'var(--danger)'}">[${u.faction}] ${u.name}</div>
-                        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${u.size || 'Standard Tier'} Unit • Status: ${u.status || 'Active'}</div>
-                    </div>
-                `).join('');
+        const actionArea = document.getElementById('d-admin-actions');
+        if(isAdmin) {
+            actionArea.innerHTML = '';
+            if (isUpgradeUnlocked('dreadnought_supremacy') && p.controlling_faction !== 'Galactic Republic') {
+                actionArea.innerHTML += `<button class="btn danger" style="width:100%" onclick="executeOrbitalStrike('${p.id}')">⚡ EXECUTE ORBITAL BOMBARDMENT (2,500c)</button>`;
             }
-        }
-
-        // 53rd Battalion Cache View
-        const aContainer = document.getElementById('d-53rd-cached-assets');
-        if (aContainer) {
-            if (customFleetAssets.length === 0) {
-                aContainer.innerHTML = `<div style="font-size:12px;color:var(--text-dim);text-align:center;padding:12px;border:1px dashed var(--border)">No log assets registered to this coordinate</div>`;
+            if (p.id === hqPlanetId) {
+                actionArea.innerHTML += `
+                    <div style="background:rgba(0,10,25,0.6); border:1px solid var(--border); padding:10px; border-radius:3px;">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                            <button class="btn success" style="font-size:9px;" onclick="process53rdBattleResult('${p.id}', true)">🟢 MISSION VICTORY</button>
+                            <button class="btn danger" style="font-size:9px;" onclick="process53rdBattleResult('${p.id}', false)">🔴 MISSION DEFEAT</button>
+                        </div>
+                    </div>`;
             } else {
-                aContainer.innerHTML = customFleetAssets.map(u => `
-                    <div class="unit-item" style="border-color:rgba(0,255,255,0.2); background:rgba(0,180,255,0.01)">
-                        <div class="unit-name" style="color:var(--accent2)">⚓ ${u.name}</div>
-                        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${u.unit_type || 'Asset'} Tier • Registry Code: #053-${u.id}</div>
-                    </div>
-                `).join('');
+                actionArea.innerHTML += `<button class="btn success" style="width:100%" onclick="move53rdBattalion('${p.id}')">🔷 DEPLOY 53rd SECTOR FLEET HERE</button>`;
             }
-        }
-
-        // Draw operational admin panel tags
-        const act = document.getElementById('d-admin-actions');
-        if (act) {
-            if (!isAdmin) {
-                act.innerHTML = `<div style="font-size:10px;color:var(--text-dim);text-align:center;letter-spacing:1px;text-transform:uppercase;">Connect override console to unlock deployment parameters</div>`;
-            } else {
-                act.innerHTML = `
-                    <div style="font-family:var(--font-display);font-size:9px;color:var(--warn);margin-bottom:4px;letter-spacing:1px">OPERATIONAL CONTROLS</div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-                        <button class="btn success" onclick="modifyPlanetOwnerBackend('${p.name}', 'Galactic Republic')">ANNEX TO GAR</button>
-                        <button class="btn danger" onclick="modifyPlanetOwnerBackend('${p.name}', 'Confederacy of Independent Systems')">CONCEDE TO CIS</button>
-                    </div>
-                    <div style="display:flex; gap:6px; margin-top:4px;">
-                        <input class="form-input" id="lib-input-field" type="number" value="${p.liberation_pct}" style="padding:4px 8px; font-size:12px; width:80px">
-                        <button class="btn" style="flex:1; padding:4px 10px;" onclick="updateLiberationPctBackend('${p.name}')">SET PROGRESS</button>
-                    </div>
-                `;
-            }
-        }
+        } else { actionArea.innerHTML = ''; }
     }
 
-    async function purchaseAsset(vehicleName, cost, type) {
-        let rep = DB.factions.find(f => f.name === "Galactic Republic");
-        if (!rep) return;
-        if (rep.credits < cost) {
-            showToast("Insufficient treasury balances to complete purchase asset authorization", true);
-            return;
+    function getFactionColorText(factionName) {
+        if(!factionName || factionName === 'Neutral') return '#4f6e8c';
+        const f = DB.factions.find(fac=>fac.name===factionName); return f ? f.color : '#4f6e8c';
+    }
+
+    async function process53rdBattleResult(planetId, isWin) {
+        const p = DB.planets.find(pl => pl.id === planetId); if(!p) return;
+        if (p.under_invasion) {
+            if (isWin) {
+                await supabaseClient.from('planets').update({ under_invasion: false, liberation_pct: 100 }).eq('id', planetId);
+                await writeLog('Invasion Repelled', `The 53rd Battalion secured a defense victory on ${p.name}, smashing through the CIS column line!`);
+            } else {
+                await supabaseClient.from('planets').update({ under_invasion: false, controlling_faction: "Confederacy of Independent Systems", liberation_pct: 0 }).eq('id', planetId);
+                await writeLog('Planet Fallen', `Defensive perimeter failure on ${p.name}. Systems forfeited to CIS automation armies.`);
+            }
+        } else {
+            let currentLib = p.liberation_pct || 0;
+            let libShift = Math.floor(Math.random() * 10) + 20; 
+            let nextLib = isWin ? Math.min(100, currentLib + libShift) : Math.max(0, currentLib - Math.floor(libShift / 1.5));
+            let updateData = { liberation_pct: nextLib };
+            if(nextLib >= 100) updateData.controlling_faction = "Galactic Republic";
+            else if(nextLib <= 0) updateData.controlling_faction = "Confederacy of Independent Systems";
+
+            await supabaseClient.from('planets').update(updateData).eq('id', planetId);
+            await writeLog(isWin ? '53rd Victory' : '53rd Fallback', `Operations updated on ${p.name}. Combat dynamic adjustments initialized.`);
         }
-
-        if (!selectedPlanetId) {
-            showToast("Select target node connection coordinates first", true);
-            return;
-        }
-
-        await supabaseClient.from('factions').update({ credits: rep.credits - cost }).eq('name', 'Galactic Republic');
-        await supabaseClient.from('units').insert({
-            name: vehicleName,
-            faction: "53rd Assault Battalion",
-            unit_type: type,
-            size: "Asset Token",
-            planet_id: selectedPlanetId
-        });
-
-        await supabaseClient.from('campaign_log').insert({
-            event_type: "REQUISITION",
-            description: `Authorized standard asset draw form for vehicle: ${vehicleName} directly to sector token destination`
-        });
-
-        showToast("Asset Requisition Synced Successfully");
         loadAll();
     }
 
-    async function modifyPlanetOwnerBackend(planetName, factionName) {
-        await supabaseClient.from('planets').update({ controlling_faction: factionName }).eq('name', planetName);
-        await supabaseClient.from('campaign_log').insert({ event_type: "SOVEREIGNTY", description: `Sector coordinates mapped to planet ${planetName} rewritten under authority: ${factionName}` });
-        showToast("Sovereignty parameters updated successfully");
-        loadAll();
-    }
-
-    async function updateLiberationPctBackend(planetName) {
-        const val = parseInt(document.getElementById('lib-input-field').value || 0);
-        await supabaseClient.from('planets').update({ liberation_pct: val }).eq('name', planetName);
-        showToast("Liberation percentages tracking refreshed");
+    async function move53rdBattalion(planetId) {
+        await supabaseClient.from('settings').upsert({ key: 'loc_53rd', value: String(planetId) });
+        showToast('53rd FLEET VECTORS UPDATED');
         loadAll();
     }
 
     function openAdmin() {
-        if (isAdmin) {
-            document.getElementById('admin-modal').classList.add('open');
-            renderAdminPanelBody();
-        } else {
-            document.getElementById('login-screen').classList.add('open');
-        }
+        if(!isAdmin) { document.getElementById('login-screen').classList.add('open'); document.getElementById('admin-password').focus(); }
+        else { document.getElementById('admin-modal').classList.add('open'); switchTab('campaign'); }
     }
-
+    function closeLogin() { document.getElementById('login-screen').classList.remove('open'); }
     function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
-    function closeLogin() { document.getElementById('login-screen').classList.remove('remove', 'open'); }
 
     async function doLogin() {
+        const email = document.getElementById('admin-email').value;
         const pass = document.getElementById('admin-password').value;
-        let correctPass = DB.settings['admin-password'] || 'changeme';
-
-        if (pass === correctPass) {
-            isAdmin = true;
-            document.getElementById('login-screen').classList.remove('open');
-            document.getElementById('admin-modal').classList.add('open');
-            showToast("Override verified successfully. Systems authorized.");
-            renderAdminPanelBody();
-            renderDetailPanel();
-        } else {
-            document.getElementById('login-error').textContent = "INVALID SECURITY ACCESS ENCRYPTION PARITY SIGNALS";
-        }
+        try {
+            const { error } = await supabaseClient.auth.signInWithPassword({ email: email, password: pass });
+            if (error) throw error;
+            isAdmin = true; closeLogin(); openAdmin(); renderAll();
+        } catch (e) { document.getElementById('login-error').textContent = 'AUTHORIZATION REFUSED'; }
     }
 
-    function doLogout() {
-        isAdmin = false;
-        closeAdmin();
-        showToast("Console Privileges Relinquished Successfully");
-        renderDetailPanel();
+    async function doLogout() {
+        await supabaseClient.auth.signOut(); isAdmin = false; closeAdmin(); loadAll();
     }
 
-    function switchTab(t) {
-        activeTab = t;
-        document.getElementById('tab-campaign').className = t === 'campaign' ? 'modal-tab active' : 'modal-tab';
-        document.getElementById('tab-log').className = t === 'log' ? 'modal-tab active' : 'modal-tab';
-        renderAdminPanelBody();
+    async function writeLog(eventType, description) {
+        try { await supabaseClient.from('campaign_log').insert([{ event_type: eventType, description: description }]); } catch(e) {}
     }
 
-    function renderAdminPanelBody() {
+    function switchTab(tab) { activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); renderAdminBody(); }
+    
+    function renderAdminBody() {
         const body = document.getElementById('admin-body');
-        if (!body) return;
-
-        if (activeTab === 'campaign') {
+        if(activeTab === 'campaign') {
             body.innerHTML = `
-                <div style="display:flex; flex-direction:column; gap:14px;">
-                    <div>
-                        <label class="form-label">Simulation Identity Tag Title</label>
-                        <input class="form-input" id="conf-campaign-name" type="text" value="${DB.settings.campaign_name || ''}">
-                    </div>
-                    <div style="display:grid; grid-template-columns: 1fr 100px; gap:8px; align-items:flex-end;">
-                        <div>
-                            <label class="form-label">Global Master Turn Timeline Track</label>
-                            <div class="turn-badge" style="text-align:center; font-size:14px; padding:8px;">PHASE ${DB.settings.campaign_turn || 1}</div>
-                        </div>
-                        <button class="btn success" style="padding:12px;" onclick="modifyTurn(1)">NEXT PHASE</button>
-                    </div>
-                    <button class="btn" style="margin-top:10px;" onclick="saveCampaignSettingsBackend()">COMMIT MASTER CHANGES</button>
+            <div style="padding:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border)">
+                <label class="form-label">Simulate Global Warzone Timeline</label>
+                <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
+                    <h2 style="font-family:var(--font-display);color:var(--warn);font-size:24px">${DB.settings.campaign_turn || 1}</h2>
+                    <button class="btn success" style="flex:1" onclick="modifyTurn(1)">⏩ ADVANCE SANDBOX PHASE CYCLE</button>
                 </div>
-            `;
+            </div>`;
         } else {
-            body.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;">${DB.logs.map(l => `<div class=\"unit-item\"><span style=\"color:var(--warn)\">[${l.event_type}]</span> ${l.description}</div>`).join('')}</div>`;
+            body.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;">${DB.logs.map(l => `<div class="unit-item"><span style="color:var(--warn)">[${l.event_type}]</span> ${l.description}</div>`).join('')}</div>`;
         }
-    }
-
-    async function saveCampaignSettingsBackend() {
-        const title = document.getElementById('conf-campaign-name').value;
-        await supabaseClient.from('settings').upsert({ key: 'campaign_name', value: title }, { onConflict: 'key' });
-        showToast("Global matrix layout configuration written out successfully");
-        loadAll();
     }
 
     async function modifyTurn(dir) {
-        let currentTurn = parseInt(DB.settings.campaign_turn || 1);
-        let nextTurn = currentTurn + 1;
-        
-        let rep = DB.factions.find(f => f.name === "Galactic Republic");
-        let cis = DB.factions.find(f => f.name === "Confederacy of Independent Systems");
+        let currentTurn = parseInt(DB.settings.campaign_turn || 1); let nextTurn = currentTurn + 1;
+        let rep = DB.factions.find(f => f.name === "Galactic Republic"); let cis = DB.factions.find(f => f.name === "Confederacy of Independent Systems");
         if (!rep || !cis) return;
 
         let repGain = 0; let cisGain = 0;
         DB.planets.forEach(p => {
             let y = p.credit_yield || 0;
-            if (p.controlling_faction === "Galactic Republic") repGain += y;
-            else if (p.controlling_faction === "Confederacy of Independent Systems") cisGain += y;
+            if(p.controlling_faction === "Galactic Republic") repGain += y;
+            else if(p.controlling_faction === "Confederacy of Independent Systems") cisGain += y;
         });
 
         await supabaseClient.from('factions').update({ credits: rep.credits + repGain }).eq('name', 'Galactic Republic');
         await supabaseClient.from('factions').update({ credits: cis.credits + cisGain }).eq('name', 'Confederacy of Independent Systems');
-        await supabaseClient.from('settings').upsert({ key: 'campaign_turn', value: nextTurn.toString() }, { onConflict: 'key' });
+        await supabaseClient.from('settings').upsert({ key: 'campaign_turn', value: String(nextTurn) });
         
-        await supabaseClient.from('campaign_log').insert({
-            event_type: "TURN_ADVANCE",
-            description: `Tactical theater advanced to Phase ${nextTurn}. Collected Yields: GAR +${repGain}c / CIS +${cisGain}c`
-        });
-
-        showToast("Turn Cycle Successfully Rolled Forward");
+        await writeLog("Campaign Sim", `Advanced to Phase ${nextTurn}. Resources harvested.`);
         loadAll();
-        closeAdmin();
     }
 </script>
-
 </body>
 </html>
