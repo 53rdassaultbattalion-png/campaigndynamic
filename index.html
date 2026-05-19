@@ -434,7 +434,8 @@
 
     async function checkConfig() {
         const url = "https://yjvgwniprmgnwvgavqpj.supabase.co";
-        const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
+        // Paste your actual, long public anon key token down inside the placeholder below
+        const key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.YOUR_LONG_ANON_TOKEN_HERE";
         initApp(url, key);
     }
 
@@ -580,6 +581,7 @@
 
     async function loadAll() {
         try {
+            // Isolate parallel network targets into explicit slots to catch isolated faults
             const [f, p, c, u, s, l, upg] = await Promise.all([
                 supabaseClient.from('factions').select('*').order('name'),
                 supabaseClient.from('planets').select('*').order('name'),
@@ -589,13 +591,33 @@
                 supabaseClient.from('campaign_log').select('*').order('created_at', {ascending: false}).limit(25),
                 supabaseClient.from('upgrades').select('*')
             ]);
-            DB.factions = f.data || []; DB.planets = p.data || []; DB.connections = c.data || []; DB.units = u.data || [];
-            DB.settings = {}; if(s.data) s.data.forEach(r => DB.settings[r.key] = r.value);
+
+            if (f.error) console.error("Database Error [Factions]:", f.error);
+            if (p.error) console.error("Database Error [Planets]:", p.error);
+            if (c.error) console.error("Database Error [Planet Connections]:", c.error);
+            if (u.error) console.error("Database Error [Units]:", u.error);
+            if (s.error) console.error("Database Error [Settings]:", s.error);
+            if (l.error) console.error("Database Error [Campaign Log]:", l.error);
+            if (upg.error) console.error("Database Error [Upgrades]:", upg.error);
+
+            if (f.error || p.error || c.error || u.error || s.error || l.error || upg.error) {
+                throw new Error("One or more network data streams failed structural verification.");
+            }
+
+            DB.factions = f.data || []; 
+            DB.planets = p.data || []; 
+            DB.connections = c.data || []; 
+            DB.units = u.data || [];
+            DB.settings = {}; 
+            if(s.data) s.data.forEach(r => DB.settings[r.key] = r.value);
             DB.logs = l.data || [];
             DB.upgrades = upg.data || [];
             
             renderAll();
-        } catch (e) { showToast("Data acquisition stream fault", true); }
+        } catch (e) { 
+            console.error("Critical Connection Exception Stack:", e);
+            showToast("Data acquisition stream fault", true); 
+        }
     }
 
     function isUpgradeUnlocked(key) {
@@ -799,7 +821,7 @@
             const material = new THREE.MeshBasicMaterial({ color: colorHex, wireframe: true, transparent: true, opacity: 0.85 });
             const mesh = new THREE.Mesh(geometry, material);
 
-            // Establish 3D position vector ($Y$ represents topological height)
+            // Establish 3D position vector
             const posX = (p.x - centerX) * scaleX;
             const posZ = (p.y - centerZ) * scaleZ;
             
