@@ -11,7 +11,7 @@
     <style>
         :root {
             --bg: #010409;
-            --bg2: #030a16;
+            --bg2: #020712;
             --panel: rgba(2, 6, 14, 0.93);
             --border: rgba(0, 180, 255, 0.15);
             --border-bright: rgba(0, 210, 255, 0.4);
@@ -100,7 +100,7 @@
         #map-container { 
             position: relative; 
             overflow: hidden; 
-            background: #000206;
+            background: #00030a;
         }
         #three-canvas-target {
             width: 100%; height: 100%; display: block;
@@ -119,13 +119,14 @@
         /* Pinned 2D Screen-space label overlays trailing the ThreeJS positions */
         .html-overlay-label {
             position: absolute; z-index: 5; transform: translate(-50%, -100%);
-            font-family: var(--font-display); font-size: 11px; font-weight: 600;
-            color: var(--text); pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,1);
-            padding: 2px 6px; background: rgba(0,4,10,0.6); border: 1px solid transparent; border-radius: 2px;
-            display: flex; align-items: center; gap: 4px; white-space: nowrap; transition: color 0.15s;
+            font-family: var(--font-display); font-size: 10px; font-weight: 700;
+            color: var(--text); pointer-events: none; text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 4px currentColor;
+            padding: 3px 8px; background: rgba(0,4,12,0.85); border: 1px solid rgba(0,180,255,0.2); border-radius: 2px;
+            display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: all 0.15s;
+            letter-spacing: 1px; text-transform: uppercase;
         }
-        .html-overlay-label.selected { border-color: var(--accent2); color: var(--accent2); background: rgba(0,20,40,0.8); }
-        .html-overlay-label.invasion { color: #ff5555; border-color: rgba(255,51,51,0.3); }
+        .html-overlay-label.selected { border-color: var(--accent2); color: var(--accent2); background: rgba(0,20,40,0.95); box-shadow: 0 0 12px rgba(0,255,255,0.25); }
+        .html-overlay-label.invasion { color: #ff5555; border-color: rgba(255,51,51,0.6); box-shadow: 0 0 10px rgba(255,51,51,0.2); }
 
         #detail-panel { background: var(--panel); border-left: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; backdrop-filter: blur(10px); box-shadow: -5px 0 25px rgba(0,0,0,0.6); }
         #detail-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-dim); padding: 20px; text-align: center; }
@@ -143,7 +144,7 @@
         
         .hq-container-badges { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
         .hq-marker-badge { display: inline-flex; align-items: center; background: rgba(0, 180, 255, 0.12); border: 1px solid var(--accent); color: var(--accent2); padding: 4px 10px; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; border-radius: 2px; text-shadow: 0 0 5px var(--accent); width: fit-content; }
-        .hq-marker-badge.invasion { background: rgba(255, 51, 51, 0.15); border-color: var(--danger); color: #ff6b6b; text-shadow: 0 0 5px var(--danger); }
+        .hq-marker-badge.invasion { background: rgba(255, 51, 51, 0.15); border-color: var(--danger); color: #ff6b6b; text-shadow: 0 0 5px var(--danger); width: fit-content; }
 
         .liberation-container { margin-top: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,180,255,0.1); padding: 10px; border-radius: 2px; }
         .liberation-meta { display: flex; justify-content: space-between; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; margin-bottom: 4px; }
@@ -317,11 +318,11 @@
         <div id="html-labels-layer" style="position:absolute; inset:0; pointer-events:none; overflow:hidden;"></div>
         
         <div id="map-controls">
-            <button class="map-btn" onclick="reset3DCamera()">⊙</button>
+            <button class="map-btn" onclick="reset2DCamera()">⊙</button>
         </div>
         <div id="map-legend">
             <div class="legend-title">Threat Index Matrix</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#1d293a"></div> Neutral Systems</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#344152"></div> Neutral Systems</div>
             <div class="legend-item"><div class="legend-dot" style="background:#00b3ff"></div> Galactic Republic</div>
             <div class="legend-item"><div class="legend-dot" style="background:#ff3333"></div> Confederacy (CIS)</div>
             <div class="legend-item"><div class="legend-dot" style="background:#ff3333; box-shadow: 0 0 8px #ff3333"></div> CIS Invasion Host</div>
@@ -393,6 +394,7 @@
     // ThreeJS Core Variables
     let scene, camera, renderer, controls;
     let planetMeshes = []; 
+    let visualDecorations = []; // Tracks rings and scanning helpers for animation loops
     let raycaster = new THREE.Raycaster();
     let mouse = new THREE.Vector2();
 
@@ -449,50 +451,62 @@
         setupRealtime();
     }
 
-    /* 🌌 Initialize ThreeJS Volumetric Environment */
+    /* 🌌 Initialize 2.5D Helldivers / Galactic Conquest Engine */
     function init3DEngine() {
         const container = document.getElementById('map-container');
         const canvas = document.getElementById('three-canvas-target');
 
         scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x00040a, 0.0018);
+        // Rich deep atmospheric space color matching Helldivers war rooms
+        scene.background = new THREE.Color(0x01050e);
+        scene.fog = new THREE.FogExp2(0x01050e, 0.0012);
 
-        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 4000);
+        camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 1, 5000);
         
         renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
 
+        // Locked Orbit Configuration mirroring strategic war room tables
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2.1; 
-        controls.minDistance = 150;
-        controls.maxDistance = 1200;
+        controls.dampingFactor = 0.06;
+        
+        // Strict rotation caps to maintain the distinct 2.5D presentation
+        controls.minPolarAngle = Math.PI / 4;  // Lock isometric pitch high
+        controls.maxPolarAngle = Math.PI / 3.5;
+        controls.minAzimuthAngle = -Math.PI / 12; // Prevent turning things upside down
+        controls.maxAzimuthAngle = Math.PI / 12;
+        
+        controls.minDistance = 350;
+        controls.maxDistance = 900;
 
-        reset3DCamera();
+        reset2DCamera();
 
-        const gridHelper = new THREE.GridHelper(1800, 36, 0x00aeff, 0x002b5c);
-        gridHelper.position.y = -60;
-        gridHelper.material.opacity = 0.25;
+        // High contrast primary scanning grid layer
+        const gridHelper = new THREE.GridHelper(2200, 44, 0x00d2ff, 0x021630);
+        gridHelper.position.y = -2;
+        gridHelper.material.opacity = 0.15;
         gridHelper.material.transparent = true;
         scene.add(gridHelper);
 
+        // Tech visual star fields matching data arrays
         const starGeo = new THREE.BufferGeometry();
-        const starCount = 1800;
+        const starCount = 1200;
         const positions = new Float32Array(starCount * 3);
         const colors = new Float32Array(starCount * 3);
 
         for (let i = 0; i < starCount * 3; i += 3) {
-            positions[i] = (Math.random() - 0.5) * 1600;
-            positions[i+1] = (Math.random() - 0.5) * 180 + (Math.sin(positions[i]/100) * 30); 
+            positions[i] = (Math.random() - 0.5) * 2000;
+            positions[i+1] = -50; // Pin stars strictly down below map space
+            positions[i+2] = (Math.random() - 0.5) * 2000;
 
-            colors[i] = 0.0; colors[i+1] = 0.6 + Math.random()*0.4; colors[i+2] = 1.0;
+            colors[i] = 0.0; colors[i+1] = 0.4 + Math.random()*0.4; colors[i+2] = 0.8;
         }
         starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         starGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         
-        const starMaterial = new THREE.PointsMaterial({ size: 2.5, vertexColors: true, transparent: true, opacity: 0.4 });
+        const starMaterial = new THREE.PointsMaterial({ size: 2.0, vertexColors: true, transparent: true, opacity: 0.3 });
         const starField = new THREE.Points(starGeo, starMaterial);
         scene.add(starField);
 
@@ -502,8 +516,8 @@
         animate();
     }
 
-    function reset3DCamera() {
-        camera.position.set(0, 500, 650);
+    function reset2DCamera() {
+        camera.position.set(0, 600, 500);
         controls.target.set(0, 0, 0);
         controls.update();
     }
@@ -533,6 +547,19 @@
     function animate() {
         requestAnimationFrame(animate);
         controls.update();
+        
+        // Dynamic continuous animations matching the Battlefront 2 map logic
+        const time = Date.now() * 0.001;
+        visualDecorations.forEach(deco => {
+            if (deco.isOrbitRing) {
+                deco.rotation.z = time * deco.rotationSpeed;
+            }
+            if (deco.isPulseRing) {
+                let s = 1.0 + (Math.sin(time * 3 + deco.pulseOffset) * 0.15);
+                deco.scale.set(s, s, s);
+            }
+        });
+
         updateHtmlLabels();
         renderer.render(scene, camera);
     }
@@ -548,7 +575,7 @@
             const wp = new THREE.Vector3();
             mesh.getWorldPosition(wp);
             
-            wp.y += 18; 
+            wp.y += 14; 
             wp.project(camera);
 
             if(wp.z > 1) return;
@@ -561,8 +588,14 @@
             if (isSelected) classList += " selected";
             if (pData.under_invasion) classList += " invasion";
 
+            // Add custom colorful shadow matching faction affiliation boundaries
+            let dynamicShadow = "rgba(0,179,255,0.4)";
+            if (pData.under_invasion) dynamicShadow = "rgba(255,51,51,0.6)";
+            else if (pData.controlling_faction === 'Confederacy of Independent Systems') dynamicShadow = "rgba(255,51,51,0.4)";
+            else if (pData.controlling_faction === 'Neutral') dynamicShadow = "rgba(79,110,140,0.2)";
+
             htmlStrings.push(`
-                <div class="${classList}" style="left:${x}px; top:${y}px;">
+                <div class="${classList}" style="left:${x}px; top:${y}px; color: ${pData.under_invasion ? '#ff5555' : getFactionColorText(pData.controlling_faction)}; box-shadow: 0 0 10px ${dynamicShadow};">
                     <span>${pData.emoji || '🪐'}</span>
                     <span>${pData.name}</span>
                 </div>
@@ -780,84 +813,112 @@
         return f ? parseInt(f.color.replace('#', '0x')) : 0x344152;
     }
     
-    function getSVRadius(sv) { return { 'Low': 5, 'Medium': 8, 'High': 11, 'Critical': 15 }[sv] || 7; }
+    function getSVRadius(sv) { return { 'Low': 6, 'Medium': 9, 'High': 12, 'Critical': 16 }[sv] || 8; }
 
     function rebuild3DScene() {
-        // Clear old visual vectors cleanly
-        planetMeshes.forEach(m => {
-            if(m.g_rings) scene.remove(m.g_rings);
-            scene.remove(m);
-        });
+        // Clear past meshes cleanly from canvas cache
+        planetMeshes.forEach(m => scene.remove(m));
         planetMeshes = [];
 
-        // Corrected Three.js query lookups safely mapping children tracking variables directly
-        const targetsForRemoval = scene.children.filter(obj => obj.isLine || obj.isStalk);
+        visualDecorations.forEach(d => scene.remove(d));
+        visualDecorations = [];
+
+        const targetsForRemoval = scene.children.filter(obj => obj.isLine || obj.isOrbitRing || obj.isPulseRing);
         targetsForRemoval.forEach(obj => scene.remove(obj));
 
-        const scaleX = 0.5;
-        const scaleZ = 0.5;
+        // Coordinate scaling to map the global galaxy cleanly across the 2D plane
+        const scaleX = 0.55;
+        const scaleZ = 0.55;
         const centerX = 650;
         const centerZ = 650;
 
         DB.planets.forEach(p => {
             const r = getSVRadius(p.strategic_value);
-            const colorHex = p.under_invasion ? 0xff3333 : getFactionHexColor(p.controlling_faction);
+            const baseColorHex = p.under_invasion ? 0xff3333 : getFactionHexColor(p.controlling_faction);
 
-            const geometry = new THREE.SphereGeometry(r, 16, 16);
-            const material = new THREE.MeshBasicMaterial({ color: colorHex, wireframe: true, transparent: true, opacity: 0.85 });
+            // 1. Core Node Sphere representation (Solid Glowing Holotable Aesthetics)
+            const geometry = new THREE.SphereGeometry(r, 24, 24);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: baseColorHex, 
+                wireframe: true, 
+                transparent: true, 
+                opacity: 0.85
+            });
             const mesh = new THREE.Mesh(geometry, material);
 
             const posX = (p.x - centerX) * scaleX;
             const posZ = (p.y - centerZ) * scaleZ;
-            
-            let posY = ((p.id % 5) * 20) - 40; 
-            if (p.under_invasion) posY += 15; 
+            const posY = 0; // Pinned flat vertically to lock into a clean strategic layout
 
             mesh.position.set(posX, posY, posZ);
             mesh.userData = p;
             scene.add(mesh);
             planetMeshes.push(mesh);
 
-            const stalkGeo = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(posX, posY, posZ),
-                new THREE.Vector3(posX, -60, posZ)
-            ]);
-            const stalkMat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.15 });
-            const stalk = new THREE.Line(stalkGeo, stalkMat);
-            stalk.isStalk = true;
-            scene.add(stalk);
+            // 2. Battlefront II Classic Outer Spinning Track rings
+            const ringRadius = r + 6;
+            const ringGeo = new THREE.RingGeometry(ringRadius, ringRadius + 0.5, 32);
+            // Rotate ring flat onto XZ plane
+            ringGeo.rotateX(-Math.PI / 2);
+            const ringMat = new THREE.MeshBasicMaterial({ 
+                color: baseColorHex, 
+                side: THREE.DoubleSide, 
+                transparent: true, 
+                opacity: 0.25 
+            });
+            const trackRing = new THREE.Mesh(ringGeo, ringMat);
+            trackRing.position.set(posX, posY, posZ);
+            trackRing.isOrbitRing = true;
+            trackRing.rotationSpeed = (Math.random() > 0.5 ? 1 : -1) * (0.1 + Math.random() * 0.2);
+            scene.add(trackRing);
+            visualDecorations.push(trackRing);
 
-            const ringCount = (DB.settings.loc_53rd == p.id ? 1 : 0) + (DB.settings.loc_501st == p.id ? 1 : 0);
-            if(ringCount > 0 || p.under_invasion) {
-                const outerRingGeo = new THREE.RingGeometry(r + 6, r + 8, 32);
-                const outerRingMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.4 });
-                const ringMesh = new THREE.Mesh(outerRingGeo, outerRingMat);
-                ringMesh.position.set(posX, posY, posZ);
-                ringMesh.lookAt(camera.position); 
-                mesh.g_rings = ringMesh;
-                scene.add(ringMesh);
+            // 3. Continuous pulse ring logic for combat actions or user base structures
+            const hasDeployment = (DB.settings.loc_53rd == p.id || DB.settings.loc_501st == p.id || p.under_invasion);
+            if (hasDeployment) {
+                const pulseGeo = new THREE.RingGeometry(ringRadius + 2, ringRadius + 5, 32);
+                pulseGeo.rotateX(-Math.PI / 2);
+                const pulseMat = new THREE.MeshBasicMaterial({
+                    color: baseColorHex,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.12
+                });
+                const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
+                pulseMesh.position.set(posX, posY, posZ);
+                pulseMesh.isPulseRing = true;
+                pulseMesh.pulseOffset = Math.random() * Math.PI;
+                scene.add(pulseMesh);
+                visualDecorations.push(pulseMesh);
             }
         });
 
+        // 4. Helldivers Supply Line Style Glowing Connections
         DB.connections.forEach(c => {
             const meshA = planetMeshes.find(m => m.userData.name === c.planet_a);
             const meshB = planetMeshes.find(m => m.userData.name === c.planet_b);
             if (!meshA || !meshB) return;
 
-            const points = [meshA.position, meshB.position];
             const lineGeo = new THREE.BufferGeometry().setFromPoints([
                 new THREE.Vector3(meshA.position.x, meshA.position.y, meshA.position.z),
                 new THREE.Vector3(meshB.position.x, meshB.position.y, meshB.position.z)
             ]);
 
             let laneColor = 0x00b3ff;
-            if(meshA.userData.controlling_faction === meshB.userData.controlling_faction && meshA.userData.controlling_faction !== 'Neutral') {
+            if (meshA.userData.under_invasion || meshB.userData.under_invasion) {
+                laneColor = 0xff3333; // Sector lines drop to threat alerts during combat splits
+            } else if(meshA.userData.controlling_faction === meshB.userData.controlling_faction && meshA.userData.controlling_faction !== 'Neutral') {
                 laneColor = getFactionHexColor(meshA.userData.controlling_faction);
             } else if (meshA.userData.controlling_faction !== 'Neutral' && meshB.userData.controlling_faction !== 'Neutral') {
                 laneColor = 0xffaa00; 
             }
 
-            const lineMat = new THREE.LineBasicMaterial({ color: laneColor, transparent: true, opacity: 0.35 });
+            const lineMat = new THREE.LineBasicMaterial({ 
+                color: laneColor, 
+                transparent: true, 
+                opacity: 0.4,
+                linewidth: 2 // Boost visibility weight across the flat field
+            });
             const hyperlane = new THREE.Line(lineGeo, lineMat);
             hyperlane.isLine = true;
             scene.add(hyperlane);
