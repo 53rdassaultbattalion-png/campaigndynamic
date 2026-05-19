@@ -150,7 +150,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 <div id="login-screen">
   <div class="login-box">
     <div style="font-size:36px;margin-bottom:12px">🔐</div>
-    <div class="login-title">Secure Override</div>
+    <div class="login-title">Terminal Override</div>
     <div class="login-sub">Commander authentication required</div>
     <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="lg-email" type="email" value="admin@53rdassaultbattalion.com"></div>
     <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="lg-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -178,12 +178,12 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 <div id="layout">
   <header>
     <div>
-      <div class="h-title" id="h-name">53rd Command</div>
+      <div class="h-title" id="h-name">53rd Tactical Command</div>
       <div class="h-sub" id="h-era">Clone Wars Theater</div>
     </div>
     <div class="h-phase" id="h-phase">PHASE 1</div>
     <div class="h-right">
-      <button class="btn" id="admin-btn" onclick="openAdmin()">⚙ TERMINAL</button>
+      <button class="btn" id="admin-btn" onclick="openAdmin()">⚙ TERMINAL OVERRIDE</button>
     </div>
   </header>
 
@@ -317,7 +317,6 @@ let dragging=false,lastMouse=null,dragMoved=false;
 let pulseT=0;
 
 // ── SECTOR COLOUR PALETTE ──
-// Each sector gets a distinct hue for its territory fill
 const SECTOR_COLORS={
   'Core':           {rep:'rgba(0,120,255,0.13)',  cis:'rgba(255,40,40,0.13)',  neu:'rgba(60,80,100,0.10)'},
   'Expansion':      {rep:'rgba(0,160,220,0.12)',  cis:'rgba(220,50,50,0.12)',  neu:'rgba(50,70,90,0.09)'},
@@ -325,10 +324,10 @@ const SECTOR_COLORS={
   'Outer Rim':      {rep:'rgba(0,80,180,0.10)',   cis:'rgba(180,20,20,0.10)',  neu:'rgba(30,50,70,0.08)'},
 };
 
-// Planet layout: arranged in rough galaxy rings around Coruscant (center)
-// x,y in canvas-world space; Coruscant = 0,0
+// Planet layout arranged around core galaxy center
 const PLANET_POSITIONS={
   'Coruscant':    {wx:0,    wy:0},
+  'Kuat':         {wx:60,   wy:-50},
   'Naboo':        {wx:-180, wy:120},
   'Mandalore':    {wx:-220, wy:-180},
   'Christophsis': {wx:200,  wy:-150},
@@ -342,8 +341,13 @@ const PLANET_POSITIONS={
 
 window.onload=async()=>{
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-  const {data:{session}}=await sb.auth.getSession();
-  if(session) isAdmin=true;
+  
+  // Notice 1 Fixed: Explicit listener for session tracking and auto-recovery across reloads
+  sb.auth.onAuthStateChange((event, session) => {
+    isAdmin = !!session;
+    renderAll();
+  });
+
   await loadAll();
   setupRealtime();
   initCanvas();
@@ -385,8 +389,10 @@ function renderAll(){
   renderHeader();renderFactions();renderShopCosts();renderUpgrades();
   if(selPlanet) showDetail(selPlanet);
   if(document.getElementById('admin-modal').classList.contains('open')) renderAdminBody();
+  
+  // Terminal Override header styling matching configuration requests
   const btn=document.getElementById('admin-btn');
-  btn.textContent=isAdmin?'✓ HQ CONNECTED':'⚙ TERMINAL';
+  btn.textContent=isAdmin?'✓ HQ CONNECTED':'⚙ TERMINAL OVERRIDE';
   btn.style.borderColor=isAdmin?'rgba(0,255,136,0.4)':'';
   btn.style.color=isAdmin?'var(--success)':'';
 }
@@ -397,7 +403,6 @@ function renderHeader(){
 }
 
 function renderFactions(){
-  // Only show Republic and CIS — skip Neutral
   const show=DB.factions.filter(f=>f.name!=='Neutral');
   const max=Math.max(...show.map(f=>f.credits),1);
   document.getElementById('faction-list').innerHTML=show.map(f=>{
@@ -453,9 +458,7 @@ function renderUpgrades(){
     </div>`).join('');
 }
 
-// ════════════════════════════════════════════
-// CANVAS MAP — Helldivers 2 style
-// ════════════════════════════════════════════
+// ── CANVAS MAP ──
 function initCanvas(){
   resizeCanvas();
   window.addEventListener('resize',resizeCanvas);
@@ -497,7 +500,6 @@ function wy2s(wy){return cam.y+wy*cam.scale;}
 function getPlanetPos(p){
   const pp=PLANET_POSITIONS[p.name];
   if(pp) return{sx:wx2s(pp.wx),sy:wy2s(pp.wy)};
-  // fallback: map from DB x/y relative to Coruscant (650,650)
   return{sx:wx2s((p.x-650)*0.6),sy:wy2s((p.y-650)*0.6)};
 }
 
@@ -520,7 +522,6 @@ function getFactionColor(n){
   const f=DB.factions.find(f=>f.name===n);return f?f.color:'#445566';
 }
 
-// Deterministic stars
 const STARS=[];
 (function(){let x=99991;function r(){x=((x*1103515245)+12345)&0x7fffffff;return x/0x7fffffff;}
 for(let i=0;i<400;i++)STARS.push({rx:r(),ry:r(),s:r()*1.8+0.3,a:r()*0.6+0.15,twink:r()*Math.PI*2});})();
@@ -530,11 +531,8 @@ function loop(){pulseT+=0.018;draw();requestAnimationFrame(loop);}
 function draw(){
   const W=canvas.width,H=canvas.height;
   ctx.clearRect(0,0,W,H);
-
-  // Deep space
   ctx.fillStyle='#00010a';ctx.fillRect(0,0,W,H);
 
-  // Galaxy core glow — centred on Coruscant
   const cx=wx2s(0),cy=wy2s(0);
   const coreG=ctx.createRadialGradient(cx,cy,0,cx,cy,300*cam.scale);
   coreG.addColorStop(0,'rgba(40,80,180,0.18)');
@@ -542,12 +540,10 @@ function draw(){
   coreG.addColorStop(1,'transparent');
   ctx.fillStyle=coreG;ctx.fillRect(0,0,W,H);
 
-  // Outer nebula arms
   drawNebula(cx-200*cam.scale,cy+100*cam.scale,160*cam.scale,'rgba(80,0,120,0.05)');
   drawNebula(cx+180*cam.scale,cy-80*cam.scale,140*cam.scale,'rgba(0,40,120,0.06)');
   drawNebula(cx+300*cam.scale,cy+200*cam.scale,180*cam.scale,'rgba(120,0,40,0.04)');
 
-  // Stars (parallax-lite: fixed screen-space with tiny cam offset)
   STARS.forEach(s=>{
     const px=(s.rx*W+cam.x*0.04)%W;
     const py=(s.ry*H+cam.y*0.04)%H;
@@ -556,13 +552,9 @@ function draw(){
     ctx.fillStyle=`rgba(160,210,255,${s.a*twinkle})`;ctx.fill();
   });
 
-  // Grid (very subtle)
   drawGrid(W,H);
-
-  // Sector regions — convex hull fills per sector
   drawSectorRegions();
 
-  // Hyperlanes
   DB.connections.forEach(c=>{
     const pa=DB.planets.find(p=>p.name===c.planet_a);
     const pb=DB.planets.find(p=>p.name===c.planet_b);
@@ -571,7 +563,6 @@ function draw(){
     drawLane(a,b,pa,pb);
   });
 
-  // Planets
   DB.planets.forEach(p=>drawPlanet(p));
 }
 
@@ -590,7 +581,6 @@ function drawGrid(W,H){
 }
 
 function drawSectorRegions(){
-  // Group planets by sector
   const sectors={};
   DB.planets.forEach(p=>{
     const s=p.sector||'Unknown';
@@ -604,13 +594,11 @@ function drawSectorRegions(){
     const hull=convexHull(pts);
     if(hull.length<2)return;
 
-    // Determine dominant faction in sector
     const repC=planets.filter(p=>p.controlling_faction.includes('Republic')).length;
     const cisC=planets.filter(p=>p.controlling_faction.includes('Confederacy')).length;
     const sc=SECTOR_COLORS[sector]||SECTOR_COLORS['Outer Rim'];
     const fillCol=repC>cisC?sc.rep:cisC>repC?sc.cis:sc.neu;
 
-    // Expand hull slightly for padding
     const centX=hull.reduce((a,b)=>a+b[0],0)/hull.length;
     const centY=hull.reduce((a,b)=>a+b[1],0)/hull.length;
     const pad=40*cam.scale;
@@ -628,7 +616,6 @@ function drawSectorRegions(){
     ctx.strokeStyle=fillCol.replace(/[\d.]+\)$/,'0.35)');
     ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);
 
-    // Sector label at centroid
     if(cam.scale>0.5){
       ctx.font=`${Math.max(9,10*cam.scale)}px Orbitron,monospace`;
       ctx.textAlign='center';
@@ -638,7 +625,6 @@ function drawSectorRegions(){
   });
 }
 
-// Simple convex hull (gift wrapping)
 function convexHull(pts){
   if(pts.length<3)return pts;
   let start=pts.reduce((a,b)=>b[0]<a[0]?b:a);
@@ -675,53 +661,44 @@ function drawPlanet(p){
   const isSel=selPlanet===p.id;
   const is53rd=DB.settings.loc_53rd==p.id;
 
-  // Invasion pulse
   if(p.under_invasion){
     const pulse=0.12+Math.abs(Math.sin(pulseT*3))*0.12;
     ctx.beginPath();ctx.arc(sx,sy,r*4,0,Math.PI*2);
     ctx.strokeStyle=`rgba(255,51,51,${pulse})`;ctx.lineWidth=1;ctx.stroke();
   }
 
-  // 53rd deployment pulse
   if(is53rd){
     const pulse=0.10+Math.abs(Math.sin(pulseT*2))*0.08;
     ctx.beginPath();ctx.arc(sx,sy,r*3.5,0,Math.PI*2);
     ctx.strokeStyle=`rgba(0,180,255,${pulse})`;ctx.lineWidth=1;ctx.stroke();
   }
 
-  // Selection ring
   if(isSel){
     ctx.beginPath();ctx.arc(sx,sy,r*2.4+Math.sin(pulseT*2),0,Math.PI*2);
     ctx.strokeStyle='rgba(0,238,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();
   }
 
-  // Orbit ring
   ctx.beginPath();ctx.arc(sx,sy,r*1.9,0,Math.PI*2);
   ctx.strokeStyle=col+'30';ctx.lineWidth=0.8;ctx.stroke();
 
-  // Rotating arc — Helldivers style
   const a0=pulseT*(p.id%2===0?0.4:-0.35);
   ctx.beginPath();ctx.arc(sx,sy,r*1.9,a0,a0+Math.PI*0.7);
   ctx.strokeStyle=col+'70';ctx.lineWidth=1.2;ctx.stroke();
 
-  // Glow halo
   const g=ctx.createRadialGradient(sx,sy,0,sx,sy,r*2.2);
   g.addColorStop(0,col+'35');g.addColorStop(1,'transparent');
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,r*2.2,0,Math.PI*2);ctx.fill();
 
-  // Planet body
   ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
   ctx.fillStyle=col+'20';ctx.fill();
   ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
 
-  // Inner crosshair detail
   ctx.strokeStyle=col+'50';ctx.lineWidth=0.5;
   ctx.beginPath();
   ctx.moveTo(sx-r*0.55,sy);ctx.lineTo(sx+r*0.55,sy);
   ctx.moveTo(sx,sy-r*0.55);ctx.lineTo(sx,sy+r*0.55);
   ctx.stroke();
 
-  // Coruscant special: extra rings
   if(p.name==='Coruscant'){
     ctx.beginPath();ctx.arc(sx,sy,r*2.8,0,Math.PI*2);
     ctx.strokeStyle='rgba(0,200,255,0.12)';ctx.lineWidth=1;ctx.stroke();
@@ -729,16 +706,12 @@ function drawPlanet(p){
     ctx.strokeStyle='rgba(0,200,255,0.06)';ctx.lineWidth=1;ctx.stroke();
   }
 
-  // Label
   const fs=Math.max(8,Math.min(11,9*cam.scale));
   ctx.font=`${fs}px Orbitron,monospace`;ctx.textAlign='center';
-  // Shadow
   ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fillText(p.name,sx+1,sy-r*1.5-1);
-  // Text
   ctx.fillStyle=isSel?'#00eeff':(p.under_invasion?'#ff6666':col);
   ctx.fillText(p.name,sx,sy-r*1.5);
 
-  // Liberation tick mark beneath planet
   if(p.liberation_pct>0&&p.liberation_pct<100){
     const barW=r*3,barH=2;
     const bx=sx-barW/2,by=sy+r*1.6;
@@ -748,9 +721,7 @@ function drawPlanet(p){
   }
 }
 
-// ════════════════════════════════════════════
-// DETAIL PANEL
-// ════════════════════════════════════════════
+// ── DETAIL PANEL ──
 function showDetail(id){
   const p=DB.planets.find(pl=>pl.id===id);if(!p)return;
   document.getElementById('detail-empty').style.display='none';
@@ -796,7 +767,6 @@ function showDetail(id){
   document.getElementById('d-yield').textContent='+'+yld+' c';
   document.getElementById('d-desc').textContent=p.description||'No database records found.';
 
-  // 53rd assets only
   const assets=DB.units.filter(u=>u.planet_id===p.id&&u.unit_type==='Purchased Logistics Asset'&&u.status!=='Destroyed');
   const aEl=document.getElementById('d-53rd-assets');
   aEl.innerHTML=assets.length?assets.map(u=>`<div style="background:rgba(0,255,136,0.03);border:1px solid rgba(0,255,136,0.15);border-left:2px solid var(--success);border-radius:2px;padding:7px 10px;font-size:12px;margin-bottom:5px;color:var(--success)">${u.name}</div>`).join(''):`<div style="color:var(--text-dim);font-size:11px">No fleet cache registered.</div>`;
@@ -816,9 +786,7 @@ function showDetail(id){
   }
 }
 
-// ════════════════════════════════════════════
-// ACTIONS
-// ════════════════════════════════════════════
+// ── ACTIONS ──
 async function buyAsset(name,base,cat){
   if(!isAdmin){toast("Admin credentials required",true);return;}
   const rep=DB.factions.find(f=>f.name==="Galactic Republic");if(!rep)return;
@@ -884,9 +852,7 @@ async function move53rd(pid){
   toast('53rd FLEET VECTORS UPDATED');loadAll();
 }
 
-// ════════════════════════════════════════════
-// ADMIN MODAL
-// ════════════════════════════════════════════
+// ── TERMINAL OVERRIDE MODAL ──
 function openAdmin(){
   if(!isAdmin){document.getElementById('login-screen').classList.add('open');setTimeout(()=>document.getElementById('lg-pass').focus(),100);}
   else{document.getElementById('admin-modal').classList.add('open');renderAdminBody();}
@@ -901,11 +867,11 @@ async function doLogin(){
   try{
     const{error}=await sb.auth.signInWithPassword({email,password:pass});
     if(error)throw error;
-    isAdmin=true;closeLogin();openAdmin();renderAll();
+    closeLogin();openAdmin();
   }catch(e){document.getElementById('lg-err').textContent='AUTHORIZATION REFUSED';}
 }
 
-async function doLogout(){await sb.auth.signOut();isAdmin=false;closeAdmin();loadAll();}
+async function doLogout(){await sb.auth.signOut();closeAdmin();loadAll();}
 
 function switchMTab(t){
   mTab=t;
@@ -924,7 +890,7 @@ function renderAdminBody(){
           <button class="btn ok" style="flex:1" onclick="advanceTurn()">⏩ ADVANCE PHASE</button>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions based on current territory holdings.</div>`;
+      <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions and updates autonomous theater parameters.</div>`;
   }else{
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:5px">${
       DB.logs.map(l=>`<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:2px;padding:8px 10px"><span style="color:var(--warn);font-family:var(--fd);font-size:9px">[${l.event_type}]</span> <span style="font-size:12px">${l.description}</span></div>`).join('')
@@ -932,20 +898,37 @@ function renderAdminBody(){
   }
 }
 
+// Notice 3 Addressed: Expanded turn advancement engine with an injection point for autonomous CIS scaling logic
 async function advanceTurn(){
   const turn=parseInt(DB.settings.campaign_turn||1)+1;
   const rep=DB.factions.find(f=>f.name==="Galactic Republic");
   const cis=DB.factions.find(f=>f.name==="Confederacy of Independent Systems");
   if(!rep||!cis)return;
+  
   let rg=0,cg=0;
   DB.planets.forEach(p=>{
     if(p.controlling_faction.includes('Republic'))rg+=p.credit_yield||0;
     else if(p.controlling_faction.includes('Confederacy'))cg+=p.credit_yield||0;
   });
+
+  let finalCisCredits = cis.credits + cg;
+  let cisLogText = "";
+
+  // ── AUTONOMOUS CIS AI PURCHASE ENGINE ──
+  // The system automatically processes sector expenditures based on total yield pool
+  if(finalCisCredits >= 600) {
+    finalCisCredits -= 600;
+    cisLogText = " Autonomous CIS Commander purchased Subjugator Fleet Elements (-600c).";
+  } else if(finalCisCredits >= 200) {
+    finalCisCredits -= 200;
+    cisLogText = " Autonomous CIS Commander deployed Droid Garrison Battalions (-200c).";
+  }
+
   await sb.from('factions').update({credits:rep.credits+rg}).eq('name','Galactic Republic');
-  await sb.from('factions').update({credits:cis.credits+cg}).eq('name','Confederacy of Independent Systems');
+  await sb.from('factions').update({credits:finalCisCredits}).eq('name','Confederacy of Independent Systems');
   await sb.from('settings').upsert({key:'campaign_turn',value:String(turn)});
-  await writeLog("Phase Advanced",`Phase ${turn} begins. Republic +${rg}c, CIS +${cg}c.`);
+  
+  await writeLog("Phase Advanced", `Phase ${turn} begins. Republic +${rg}c, CIS +${cg}c.${cisLogText}`);
   loadAll();
 }
 
