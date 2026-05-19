@@ -1,852 +1,1994 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grand Republic Command Deck</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root {
-            --bg: #020408;
-            --bg2: #050d1a;
-            --panel: rgba(4, 11, 22, 0.96);
-            --border: rgba(0, 170, 255, 0.2);
-            --border-bright: rgba(0, 170, 255, 0.6);
-            --text: #c8dff0;
-            --text-dim: #5a7a99;
-            --text-bright: #e8f4ff;
-            --accent: #0af;
-            --accent2: #0ff;
-            --warn: #fa0;
-            --danger: #f44;
-            --success: #0f8;
-            --glow: 0 0 15px rgba(0, 170, 255, 0.25);
-            --font-display: 'Orbitron', monospace;
-            --font-body: 'Rajdhani', sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galactic Campaign — Star Wars Starsim</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Supabase JS not loaded in browser — all requests go through /api proxy worker -->
+<style>
+:root {
+  --bg: #020408;
+  --bg2: #060d14;
+  --bg3: #0a1520;
+  --panel: rgba(6,18,32,0.95);
+  --border: rgba(30,120,200,0.25);
+  --border-bright: rgba(30,180,255,0.5);
+  --text: #c8dff0;
+  --text-dim: #5a7a99;
+  --text-bright: #e8f4ff;
+  --accent: #0af;
+  --accent2: #0ff;
+  --warn: #fa0;
+  --danger: #f44;
+  --success: #0f8;
+  --glow: 0 0 20px rgba(0,170,255,0.3);
+  --font-display: 'Orbitron', monospace;
+  --font-body: 'Rajdhani', sans-serif;
+}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; height: 100vh; overflow: hidden; user-select: none; }
-        #starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-        #app { display: grid; grid-template-columns: 300px 1fr 340px; grid-template-rows: 60px 1fr; height: 100vh; position: relative; z-index: 1; }
+* { margin:0; padding:0; box-sizing:border-box; }
 
-        header {
-            grid-column: 1 / -1; background: linear-gradient(90deg, #020a14 0%, #051429 50%, #020a14 100%);
-            border-bottom: 1px solid var(--border-bright); display: flex; align-items: center; padding: 0 24px; gap: 20px; position: relative; box-shadow: 0 2px 20px rgba(0,0,0,0.5);
-        }
-        header::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent2), transparent); }
-        .header-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; letter-spacing: 3px; color: var(--accent2); text-shadow: 0 0 10px rgba(0, 255, 255, 0.4); text-transform: uppercase; }
-        .header-sub { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; margin-left: 2px; text-transform: uppercase; }
-        .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-        .turn-badge { font-family: var(--font-display); font-size: 12px; letter-spacing: 2px; color: var(--warn); border: 1px solid rgba(255, 170, 0, 0.4); padding: 5px 14px; background: rgba(255,170,0,0.05); border-radius: 2px; }
-        
-        .btn { font-family: var(--font-display); font-size: 11px; letter-spacing: 1.5px; padding: 7px 16px; border-radius: 2px; border: 1px solid var(--border-bright); background: transparent; color: var(--accent); cursor: pointer; transition: all 0.2s ease-in-out; text-transform: uppercase; }
-        .btn:hover { background: rgba(0, 170, 255, 0.15); box-shadow: var(--glow); color: var(--text-bright); }
-        .btn.danger { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
-        .btn.danger:hover { background: rgba(255, 68, 68, 0.15); }
-        .btn.success { border-color: rgba(0, 255, 136, 0.5); color: var(--success); }
-        .btn.success:hover { background: rgba(0, 255, 136, 0.15); }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
 
-        #faction-panel { background: var(--panel); border-right: 1px solid var(--border); overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
-        .panel-label { font-family: var(--font-display); font-size: 10px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-        .faction-card { background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border); border-radius: 3px; padding: 12px 14px; transition: all 0.2s; }
-        .faction-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .faction-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 10px currentColor; }
-        .faction-name { font-family: var(--font-display); font-size: 11px; letter-spacing: 1.5px; color: var(--text-bright); text-transform: uppercase; flex: 1; }
-        .resource-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 13px; }
-        .resource-val { color: var(--accent2); font-weight: 600; letter-spacing: 1px; font-family: var(--font-display); font-size: 12px;}
-        .resource-bar-wrap { width: 100%; height: 3px; background: rgba(255, 255, 255, 0.05); border-radius: 1px; margin-top: 4px; margin-bottom: 8px; overflow: hidden; }
-        .resource-bar { height: 100%; border-radius: 1px; transition: width 0.4s ease; }
-        .terr-count { font-size: 12px; color: var(--text-dim); margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 6px; }
-        .terr-count span { color: var(--text-bright); font-weight: 600; }
+/* ── STARFIELD ── */
+#starfield {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
 
-        .logistics-terminal { background: rgba(0, 10, 25, 0.4); border: 1px dashed var(--border-bright); padding: 12px; margin-top: 10px; border-radius: 3px; }
-        .logistics-title { font-family: var(--font-display); font-size: 9px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; margin-bottom: 8px; }
-        .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 10px; border: 1px solid rgba(0,170,255,0.1); margin-bottom: 6px; border-radius: 2px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-        .shop-item:hover { background: rgba(0,170,255,0.08); border-color: var(--accent); }
-        .shop-cost { color: var(--warn); font-family: var(--font-display); font-weight: bold; font-size: 11px; }
+/* ── LAYOUT ── */
+#app {
+  display: grid;
+  grid-template-columns: 280px 1fr 300px;
+  grid-template-rows: 56px 1fr;
+  height: 100vh;
+  position: relative;
+  z-index: 1;
+}
 
-        #map-container { position: relative; overflow: hidden; background: radial-gradient(ellipse at center, #051429 0%, #010408 80%); cursor: grab; }
-        #map-container:active { cursor: grabbing; }
-        #map-svg { width: 100%; height: 100%; position: absolute; inset: 0; }
-        #map-controls { position: absolute; bottom: 20px; left: 20px; display: flex; gap: 6px; z-index: 10; }
-        .map-btn { width: 34px; height: 34px; background: var(--panel); border: 1px solid var(--border); color: var(--accent); font-size: 18px; cursor: pointer; border-radius: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .map-btn:hover { border-color: var(--border-bright); box-shadow: var(--glow); color: var(--text-bright); }
-        #map-legend { position: absolute; bottom: 20px; right: 20px; background: var(--panel); border: 1px solid var(--border); padding: 12px 16px; border-radius: 3px; font-size: 11px; z-index: 10; }
-        .legend-title { font-family: var(--font-display); font-size: 9px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; }
-        .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--text); }
-        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+/* ── HEADER ── */
+header {
+  grid-column: 1 / -1;
+  background: linear-gradient(90deg, #020c18 0%, #041220 50%, #020c18 100%);
+  border-bottom: 1px solid var(--border-bright);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 20px;
+  position: relative;
+}
+header::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.header-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: var(--accent2);
+  text-shadow: 0 0 20px var(--accent);
+  text-transform: uppercase;
+}
+.header-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  margin-left: 4px;
+}
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.turn-badge {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--warn);
+  border: 1px solid rgba(255,170,0,0.4);
+  padding: 4px 12px;
+  border-radius: 2px;
+}
+.btn {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 6px 14px;
+  border-radius: 2px;
+  border: 1px solid var(--border-bright);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.btn:hover { background: rgba(0,170,255,0.1); box-shadow: var(--glow); }
+.btn.danger { border-color: rgba(255,68,68,0.5); color: var(--danger); }
+.btn.danger:hover { background: rgba(255,68,68,0.1); }
+.btn.success { border-color: rgba(0,255,136,0.5); color: var(--success); }
+.btn.success:hover { background: rgba(0,255,136,0.1); }
+.btn.warn { border-color: rgba(255,170,0,0.5); color: var(--warn); }
+.btn.warn:hover { background: rgba(255,170,0,0.1); }
 
-        #detail-panel { background: var(--panel); border-left: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
-        #detail-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-dim); padding: 20px; text-align: center; }
-        .detail-icon { font-size: 44px; opacity: 0.25; animation: float 4s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-        .detail-hint { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-family: var(--font-display); color: var(--accent); }
-        #detail-content { display: none; flex-direction: column; flex: 1; }
-        #detail-content.visible { display: flex; }
+/* ── LEFT PANEL — Factions ── */
+#faction-panel {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.panel-label {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.faction-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 10px 12px;
+  transition: all 0.2s;
+  cursor: default;
+}
+.faction-card:hover { border-color: var(--border-bright); background: rgba(0,170,255,0.04); }
+.faction-card.active { border-color: var(--border-bright); }
+.faction-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.faction-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+.faction-name {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-bright);
+  text-transform: uppercase;
+  flex: 1;
+}
+.faction-emoji { font-size: 14px; }
+.resource-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+  font-size: 11px;
+}
+.resource-label { color: var(--text-dim); }
+.resource-val { color: var(--text-bright); font-weight: 600; letter-spacing: 1px; }
+.resource-bar-wrap {
+  width: 100%;
+  height: 2px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 1px;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+.resource-bar {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.4s ease;
+}
+.terr-count {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.terr-count span { color: var(--accent); }
 
-        .detail-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); position: relative; }
-        .detail-planet-emoji { font-size: 36px; margin-bottom: 8px; }
-        .detail-planet-name { font-family: var(--font-display); font-size: 18px; letter-spacing: 2px; color: var(--text-bright); text-transform: uppercase; }
-        .detail-sector { font-size: 12px; color: var(--text-dim); letter-spacing: 1px; margin-top: 2px; }
-        .detail-faction-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 12px; border-radius: 2px; border: 1px solid currentColor; font-family: var(--font-display); font-size: 10px; letter-spacing: 1.5px; background: rgba(255,255,255,0.02); }
-        
-        .hq-container-badges { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
-        .hq-marker-badge { display: inline-flex; align-items: center; background: rgba(0, 170, 255, 0.12); border: 1px solid var(--accent); color: var(--accent2); padding: 4px 10px; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; border-radius: 2px; text-shadow: 0 0 5px var(--accent); width: fit-content; }
+/* ── MAP AREA ── */
+#map-container {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, #030d1a 0%, #010508 70%);
+  cursor: grab;
+}
+#map-container:active { cursor: grabbing; }
+#map-svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
 
-        .liberation-container { margin-top: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,170,255,0.1); padding: 10px; border-radius: 2px; }
-        .liberation-meta { display: flex; justify-content: space-between; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; margin-bottom: 4px; }
-        .liberation-bar-outer { width: 100%; height: 6px; background: rgba(255, 68, 68, 0.3); border-radius: 1px; overflow: hidden; position: relative; }
-        .liberation-bar-inner { height: 100%; background: #0af; width: 0%; transition: width 0.5s cubic-bezier(0.1, 0.8, 0.2, 1); box-shadow: 0 0 8px #0af; }
+/* Map zoom/pan controls */
+#map-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+.map-btn {
+  width: 32px; height: 32px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.map-btn:hover { border-color: var(--border-bright); box-shadow: var(--glow); }
 
-        .detail-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
-        .detail-section-title { font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 12px; text-transform: uppercase; }
-        .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-        .detail-key { color: var(--text-dim); }
-        .detail-val { color: var(--text-bright); font-weight: 600; }
-        .detail-val.yield { font-family: var(--font-display); color: var(--success); }
+/* Legend */
+#map-legend {
+  position: absolute;
+  bottom: 20px;
+  right: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: 3px;
+  font-size: 10px;
+  z-index: 10;
+}
+.legend-title {
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
 
-        .units-list { display: flex; flex-direction: column; gap: 8px; }
-        .unit-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 2px; padding: 10px 12px; font-size: 13px; }
-        .unit-name { color: var(--text-bright); font-weight: 600; }
-        .unit-meta { color: var(--text-dim); margin-top: 3px; font-size: 12px; }
+/* ── RIGHT PANEL — Planet Detail ── */
+#detail-panel {
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+#detail-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-dim);
+  padding: 20px;
+  text-align: center;
+}
+.detail-icon { font-size: 40px; opacity: 0.3; }
+.detail-hint {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+}
+#detail-content { display: none; flex-direction: column; flex: 1; }
+#detail-content.visible { display: flex; }
 
-        .garrison-intel-card { background: rgba(255, 68, 68, 0.03); border: 1px dashed rgba(255, 68, 68, 0.3); padding: 12px; border-radius: 2px; text-align: center; }
-        .garrison-intel-title { font-family: var(--font-display); font-size: 11px; letter-spacing: 1px; color: var(--danger); text-transform: uppercase; margin-bottom: 4px; }
-        .garrison-intel-val { font-size: 16px; font-weight: bold; color: var(--text-bright); }
+.detail-header {
+  padding: 20px 16px 14px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.detail-planet-emoji { font-size: 32px; margin-bottom: 6px; }
+.detail-planet-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--text-bright);
+  text-transform: uppercase;
+}
+.detail-sector {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+.detail-faction-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
 
-        /* Secure Modular Popups Setup */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-overlay.open { display: flex; }
-        .modal { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; width: 500px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,170,255,0.2); }
-        .modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-        .modal-title { font-family: var(--font-display); font-size: 13px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; }
-        .modal-close { background: none; border: none; color: var(--text-dim); font-size: 22px; cursor: pointer; line-height: 1; }
-        .modal-close:hover { color: var(--text-bright); }
-        .modal-body { overflow-y: auto; padding: 24px; flex: 1; }
-        .modal-tabs { display: flex; gap: 4px; padding: 0 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: #020812; }
-        .modal-tab { font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; padding: 14px 18px; cursor: pointer; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; }
-        .modal-tab:hover { color: var(--text); }
-        .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.detail-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.detail-section-title {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.detail-key { color: var(--text-dim); }
+.detail-val { color: var(--text-bright); font-weight: 600; }
 
-        #login-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        #login-screen.open { display: flex; }
-        .login-box { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; padding: 36px; width: 360px; box-shadow: 0 0 50px rgba(0,170,255,0.25); text-align: center; }
-        .login-icon { font-size: 40px; margin-bottom: 16px; }
-        .login-title { font-family: var(--font-display); font-size: 14px; letter-spacing: 3px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; }
-        .login-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 24px; }
-        .login-error { color: var(--danger); font-size: 12px; margin-top: 12px; min-height: 18px; font-family: var(--font-display); }
+.sv-badge {
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-family: var(--font-display);
+  letter-spacing: 1px;
+}
+.sv-Low { background: rgba(100,100,100,0.2); color: #aaa; border: 1px solid #555; }
+.sv-Medium { background: rgba(255,200,0,0.1); color: var(--warn); border: 1px solid rgba(255,200,0,0.3); }
+.sv-High { background: rgba(255,120,0,0.1); color: #f80; border: 1px solid rgba(255,120,0,0.3); }
+.sv-Critical { background: rgba(255,50,50,0.1); color: var(--danger); border: 1px solid rgba(255,50,50,0.4); }
 
-        .form-group { margin-bottom: 16px; }
-        .form-label { display: block; font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; }
-        .form-input { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--text-bright); padding: 10px 14px; border-radius: 2px; font-family: var(--font-body); font-size: 14px; }
-        
-        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: #040c17; border: 1px solid var(--border-bright); color: var(--accent); font-family: var(--font-display); font-size: 11px; letter-spacing: 2px; padding: 12px 24px; border-radius: 3px; z-index: 999; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; box-shadow: var(--glow); }
-        #toast.show { transform: translateX(-50%) translateY(0); }
-        #toast.error { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
+.units-list { display: flex; flex-direction: column; gap: 6px; }
+.unit-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+.unit-name { color: var(--text-bright); font-weight: 600; }
+.unit-meta { color: var(--text-dim); margin-top: 2px; }
+.unit-status {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-size: 9px;
+  margin-top: 4px;
+}
+.status-Active { background: rgba(0,255,136,0.15); color: var(--success); }
+.status-Engaged { background: rgba(255,68,68,0.15); color: var(--danger); }
+.status-Reserve { background: rgba(0,170,255,0.15); color: var(--accent); }
+.status-Retreating { background: rgba(255,170,0,0.15); color: var(--warn); }
+.status-Destroyed { background: rgba(80,80,80,0.3); color: #777; }
 
-        @keyframes hq-pulse { 0% { r: 12; opacity: 1; } 100% { r: 35; opacity: 0; } }
-        .hq-ring-53rd { animation: hq-pulse 2.0s ease-out infinite; stroke: #00aaff; stroke-width: 2.5; }
-        .hq-ring-501st { animation: hq-pulse 2.2s ease-out infinite; stroke: #2a6eff; stroke-width: 2; }
-        .hq-ring-212th { animation: hq-pulse 1.8s ease-out infinite; stroke: #ff9f1a; stroke-width: 2; }
-        .hq-ring-104th { animation: hq-pulse 2.4s ease-out infinite; stroke: #a4b0be; stroke-width: 2; }
-        .conflict-pulse { animation: hq-pulse 1.6s ease-out infinite; stroke: var(--danger); stroke-width: 2; }
-    </style>
+/* ── ADMIN PANEL (Modal) ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #071422;
+  border: 1px solid var(--border-bright);
+  border-radius: 4px;
+  width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 60px rgba(0,170,255,0.15);
+}
+.modal-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--accent2);
+  text-transform: uppercase;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close:hover { color: var(--text-bright); }
+.modal-body {
+  overflow-y: auto;
+  padding: 20px;
+  flex: 1;
+}
+.modal-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-tab {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--text-dim);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.modal-tab:hover { color: var(--text); }
+.modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Forms */
+.form-group { margin-bottom: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  padding: 8px 12px;
+  border-radius: 2px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--border-bright);
+  box-shadow: 0 0 0 1px rgba(0,170,255,0.1);
+}
+.form-select option { background: #071422; }
+.form-textarea { resize: vertical; min-height: 60px; }
+input[type="color"].form-input { padding: 2px 4px; height: 36px; cursor: pointer; }
+
+/* Admin login */
+#login-screen {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+}
+#login-screen.open { display: flex; }
+.login-box {
+  background: #071422;
+  border: 1px solid var(--border-bright);
+  border-radius: 4px;
+  padding: 32px 36px;
+  width: 340px;
+  box-shadow: 0 0 60px rgba(0,170,255,0.2);
+  text-align: center;
+}
+.login-icon { font-size: 36px; margin-bottom: 16px; }
+.login-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.login-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 24px; }
+.login-error { color: var(--danger); font-size: 11px; margin-top: 10px; min-height: 16px; }
+
+/* Table */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.admin-table th {
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+}
+.admin-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(30,120,200,0.1);
+  color: var(--text);
+  vertical-align: middle;
+}
+.admin-table tr:hover td { background: rgba(0,170,255,0.03); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #071422;
+  border: 1px solid var(--border-bright);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 10px 20px;
+  border-radius: 3px;
+  z-index: 999;
+  transition: transform 0.3s ease;
+  white-space: nowrap;
+  box-shadow: var(--glow);
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.error { border-color: rgba(255,68,68,0.5); color: var(--danger); }
+
+/* Setup banner */
+#setup-banner {
+  position: fixed;
+  top: 56px;
+  left: 0; right: 0;
+  background: rgba(255,170,0,0.12);
+  border-bottom: 1px solid rgba(255,170,0,0.4);
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--warn);
+  z-index: 50;
+  display: none;
+}
+
+/* Config screen */
+#config-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.config-box {
+  background: #071422;
+  border: 1px solid var(--border-bright);
+  border-radius: 4px;
+  padding: 40px;
+  width: 500px;
+  box-shadow: 0 0 80px rgba(0,170,255,0.15);
+}
+.config-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: var(--accent2);
+  text-align: center;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.config-sub {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+}
+.config-step {
+  background: rgba(0,170,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 16px;
+  margin-bottom: 14px;
+  font-size: 12px;
+}
+.config-step-num {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.config-note { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+.config-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+/* pulse animation for active conflict */
+@keyframes pulse-ring {
+  0% { r: 14; opacity: 0.8; }
+  100% { r: 22; opacity: 0; }
+}
+.conflict-pulse { animation: pulse-ring 1.5s ease-out infinite; }
+</style>
 </head>
 <body>
 
+<!-- STARFIELD -->
 <canvas id="starfield"></canvas>
 
-<div id="config-screen" style="display:none;"></div>
-<div id="setup-banner" style="display:none;"></div>
+<!-- CONFIG SCREEN (first run) -->
+<div id="config-screen">
+  <div class="config-box">
+    <div class="config-title">🌌 Galaxy Campaign</div>
+    <div class="config-sub">FIRST-TIME SETUP — SUPABASE CONFIGURATION</div>
 
+    <div class="config-step">
+      <div class="config-step-num">STEP 1 — CREATE SUPABASE PROJECT</div>
+      Go to <strong>supabase.com</strong> → New Project → copy your <strong>Project URL</strong> and <strong>anon public key</strong> from Project Settings → API.
+    </div>
+
+    <div class="config-step">
+      <div class="config-step-num">STEP 2 — RUN THIS SQL IN SUPABASE (SQL Editor)</div>
+      <pre id="sql-snippet" style="font-size:9px;color:#0af;overflow-x:auto;white-space:pre-wrap;margin-top:6px;line-height:1.6">CREATE TABLE factions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text, shortname text, color text, emoji text, credits int DEFAULT 1000, supplies int DEFAULT 100, fuel int DEFAULT 100, manpower int DEFAULT 500, description text, created_at timestamptz DEFAULT now());
+CREATE TABLE planets (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text, sector text, emoji text, x float, y float, controlling_faction text DEFAULT 'Neutral', credit_yield int DEFAULT 50, supply_yield int DEFAULT 10, fuel_yield int DEFAULT 10, strategic_value text DEFAULT 'Low', description text);
+CREATE TABLE planet_connections (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), planet_a text, planet_b text);
+CREATE TABLE units (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text, faction text, unit_type text, size text, status text DEFAULT 'Active', planet_id uuid REFERENCES planets(id), strength int DEFAULT 100, notes text);
+CREATE TABLE campaign_log (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), event_type text, description text, issued_by text DEFAULT 'Admin', created_at timestamptz DEFAULT now());
+CREATE TABLE settings (key text PRIMARY KEY, value text);
+INSERT INTO settings VALUES ('campaign_name','Star Wars Galaxy Campaign'),('campaign_era','Galactic Civil War'),('campaign_turn','1');
+-- NOTE: Admin password is set as ADMIN_PASSWORD_HASH env var in Cloudflare Pages (SHA-256 hash)
+ALTER TABLE factions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE planets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE planet_connections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE units ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaign_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read" ON factions FOR SELECT USING (true);
+CREATE POLICY "public read" ON planets FOR SELECT USING (true);
+CREATE POLICY "public read" ON planet_connections FOR SELECT USING (true);
+CREATE POLICY "public read" ON units FOR SELECT USING (true);
+CREATE POLICY "public read" ON campaign_log FOR SELECT USING (true);
+CREATE POLICY "public read" ON settings FOR SELECT USING (true);
+CREATE POLICY "anon write" ON factions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "anon write" ON planets FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "anon write" ON planet_connections FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "anon write" ON units FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "anon write" ON campaign_log FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "anon write" ON settings FOR ALL USING (true) WITH CHECK (true);</pre>
+      <button class="btn" onclick="copySQL()" style="margin-top:8px;font-size:9px">📋 COPY SQL</button>
+      <div class="config-note">Paste and run this in Supabase → SQL Editor → New Query</div>
+    </div>
+
+    <div class="config-step">
+      <div class="config-step-num">STEP 3 — ENTER YOUR CREDENTIALS</div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Supabase Project URL</label>
+        <input class="form-input" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Supabase Anon Key</label>
+        <input class="form-input" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
+      </div>
+      <div id="cfg-error" style="color:var(--danger);font-size:11px;min-height:16px;margin-top:6px"></div>
+    </div>
+
+    <div class="config-actions">
+      <button class="btn success" style="flex:1" onclick="saveConfig()">✓ CONNECT & LAUNCH</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP BANNER -->
+<div id="setup-banner">
+  ⚠ NO PLANETS ON MAP YET — Open Admin Panel → Planets → Add planets to populate the galaxy map
+</div>
+
+<!-- ADMIN LOGIN -->
 <div id="login-screen">
-    <div class="login-box">
-        <div class="login-icon">🔐</div>
-        <div class="login-title">Secure Decryption</div>
-        <div class="login-sub">Enter tactical override authorization code</div>
-        <div class="form-group">
-            <input class="form-input" id="admin-password" type="password" placeholder="PASSWORD" style="text-align:center" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-        <button class="btn" style="width:100%" onclick="doLogin()">AUTHORIZE INTERFACE</button>
-        <div class="login-error" id="login-error"></div>
-        <button class="btn" style="width:100%;margin-top:8px;border-color:transparent" onclick="closeLogin()">ABORT OVERRIDE</button>
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">Admin Access</div>
+    <div class="login-sub">Enter the campaign admin password</div>
+    <div class="form-group">
+      <input class="form-input" id="admin-password" type="password" placeholder="Password" style="text-align:center" onkeydown="if(event.key==='Enter')doLogin()" />
     </div>
+    <button class="btn" style="width:100%" onclick="doLogin()">ACCESS COMMAND</button>
+    <div class="login-error" id="login-error"></div>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="closeLogin()">Cancel</button>
+  </div>
 </div>
 
+<!-- ADMIN MODAL -->
 <div class="modal-overlay" id="admin-modal">
-    <div class="modal">
-        <div class="modal-header">
-            <span class="modal-title">⚙️ SECURE STRATEGIC CONTROL PANEL</span>
-            <button class="modal-close" onclick="closeAdmin()">✕</button>
-        </div>
-        <div class="modal-tabs">
-            <div class="modal-tab active" id="tab-campaign" onclick="switchTab('campaign')">Tactical Controls</div>
-            <div class="modal-tab" id="tab-log" onclick="switchTab('log')">Simulation Feed</div>
-        </div>
-        <div class="modal-body" id="admin-body"></div>
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⚙ COMMAND ADMINISTRATION</span>
+      <button class="modal-close" onclick="closeAdmin()">✕</button>
     </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab('factions')">Factions</div>
+      <div class="modal-tab" onclick="switchTab('planets')">Planets</div>
+      <div class="modal-tab" onclick="switchTab('connections')">Hyperlanes</div>
+      <div class="modal-tab" onclick="switchTab('units')">Units</div>
+      <div class="modal-tab" onclick="switchTab('campaign')">Campaign</div>
+      <div class="modal-tab" onclick="switchTab('log')">Event Log</div>
+    </div>
+    <div class="modal-body" id="admin-body">
+    </div>
+  </div>
 </div>
 
+<!-- PLANET CAPTURE MODAL -->
+<div class="modal-overlay" id="capture-modal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <span class="modal-title">⚔ CAPTURE PLANET</span>
+      <button class="modal-close" onclick="closeCaptureModal()">✕</button>
+    </div>
+    <div class="modal-body" id="capture-body"></div>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until config done) -->
 <div id="app" style="display:none">
-    <header>
-        <div>
-            <div class="header-title" id="header-campaign-name">Grand GAR Command Deck</div>
-            <div class="header-sub" id="header-era">Clone Wars Theater</div>
-        </div>
-        <div class="turn-badge" id="header-turn">PHASE 1</div>
-        <div class="header-right">
-            <button class="btn" id="admin-toggle-btn" onclick="openAdmin()">⚙ TERMINAL OVERRIDE</button>
-        </div>
-    </header>
-
-    <div id="faction-panel">
-        <div class="panel-label">Parent Treasury Pool</div>
-        <div id="faction-list"></div>
-        
-        <div class="logistics-terminal" style="max-height: 420px; overflow-y: auto; padding-right: 4px;">
-            <div class="logistics-title" style="position: sticky; top: 0; background: #040b16; padding-bottom: 6px; z-index: 2;">⚙️ Requisition Manifest</div>
-            
-            <div style="font-size: 10px; color: var(--accent); font-family: var(--font-display); margin: 4px 0; letter-spacing: 1px;">// LAND ARMOR DIVISION</div>
-            <div class="shop-item" onclick="purchaseAsset('BARC Speeder', 50)"><span>🏍️ BARC Speeder</span><span class="shop-cost">50c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('ITT Transport', 150)"><span>🛻 ITT Transport</span><span class="shop-cost">150c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('TX-130 Fighter Tank', 250)"><span>🛡️ TX-130 Fighter Tank</span><span class="shop-cost">250c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('AT-TE Walker', 750)"><span>🦀 AT-TE Walker</span><span class="shop-cost">750c</span></div>
-            
-            <div style="font-size: 10px; color: var(--accent); font-family: var(--font-display); margin: 10px 0 4px 0; letter-spacing: 1px;">// AIR & NAVAL SQUADRONS</div>
-            <div class="shop-item" onclick="purchaseAsset('LAAT/i Gunship', 350)"><span>🛸 LAAT/i Gunship</span><span class="shop-cost">350c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('LAAT/c Carrier', 500)"><span>⚓ LAAT/c Carrier</span><span class="shop-cost">500c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('ARC-170 Fighter', 250)"><span>⚡ ARC-170 Fighter</span><span class="shop-cost">250c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('BTL-B Y-Wing', 500)"><span>💣 BTL-B Y-Wing</span><span class="shop-cost">500c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('Nimbus V-Wing', 300)"><span>🔺 Nimbus V-Wing</span><span class="shop-cost">300c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('Z-95 Headhunter', 200)"><span>🚀 Z-95 Headhunter</span><span class="shop-cost">200c</span></div>
-        </div>
+  <header>
+    <div>
+      <div class="header-title" id="header-campaign-name">Galaxy Campaign</div>
+      <div class="header-sub" id="header-era">Galactic Civil War</div>
     </div>
-
-    <div id="map-container">
-        <svg id="map-svg" xmlns="http://www.w3.org/2000/svg" style="width: 2500px; height: 2500px;">
-            <g id="grid-backdrop"></g>
-            <g id="map-g">
-                <g id="connections-layer"></g>
-                <g id="planets-layer"></g>
-            </g>
-        </svg>
-        <div id="map-controls">
-            <button class="map-btn" onclick="zoom(1.25)">+</button>
-            <button class="map-btn" onclick="zoom(0.8)">−</button>
-            <button class="map-btn" onclick="resetView()">⊙</button>
-        </div>
-        <div id="map-legend">
-            <div class="legend-title">Threat Index Matrix</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#344152"></div> Neutral Systems</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#00aaff"></div> Galactic Republic</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div> Confederacy (CIS)</div>
-        </div>
+    <div class="turn-badge" id="header-turn">TURN 1</div>
+    <div class="header-right">
+      <button class="btn" onclick="openAdmin()">⚙ ADMIN</button>
     </div>
+  </header>
 
-    <div id="detail-panel">
-        <div id="detail-empty">
-            <div class="detail-icon">🌌</div>
-            <div class="detail-hint">Awaiting Coordinate Target</div>
-            <div style="font-size:12px;color:var(--text-dim);margin-top:4px">Select an active hyperlane sector node</div>
-        </div>
-        <div id="detail-content">
-            <div class="detail-header">
-                <div class="detail-planet-emoji" id="d-emoji">🪐</div>
-                <div class="detail-planet-name" id="d-name">Planet</div>
-                <div class="detail-sector" id="d-sector">Sector Array</div>
-                <div class="detail-faction-badge" id="d-faction-badge">Sovereignty</div>
-                <div class="hq-container-badges" id="d-hq-zone"></div>
-                
-                <div class="liberation-container">
-                    <div class="liberation-meta">
-                        <span style="color:#0af">REPUBLIC LIBERATION INDEX</span>
-                        <span id="d-liberation-txt" style="color:#0ff;font-weight:bold">0%</span>
-                    </div>
-                    <div class="liberation-bar-outer">
-                        <div class="liberation-bar-inner" id="d-liberation-bar"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="display:flex; background:rgba(0,0,0,0.4); border-bottom:1px solid var(--border)">
-                <div id="tab-btn-garrison" onclick="setDetailTab('garrison')" style="padding:10px; flex:1; text-align:center; font-family:var(--font-display); font-size:10px; cursor:pointer; color:var(--text); border-bottom:2px solid var(--accent)">GARRISON INTEL</div>
-                <div id="tab-btn-assets" onclick="setDetailTab('assets')" style="padding:10px; flex:1; text-align:center; font-family:var(--font-display); font-size:10px; cursor:pointer; color:var(--text-dim)">53rd LOG ASSETS</div>
-            </div>
+  <!-- LEFT: Factions -->
+  <div id="faction-panel">
+    <div class="panel-label">Faction Status</div>
+    <div id="faction-list"></div>
+  </div>
 
-            <div class="detail-section" id="section-intel-matrix">
-                <div class="detail-section-title">System Intel Matrix</div>
-                <div class="detail-row"><span class="detail-key">Strategic Threat Index</span><span class="detail-val" id="d-sv">-</span></div>
-                <div class="detail-row"><span class="detail-key">Parent Credit Revenue</span><span class="detail-val yield" id="d-credits">—</span></div>
-                <div style="margin-top:12px;font-size:13px;color:var(--text-dim);line-height:1.6" id="d-desc"></div>
-            </div>
-
-            <div class="detail-section" id="detail-tab-garrison-view">
-                <div class="detail-section-title">Garrisoned Forces Array</div>
-                <div id="d-units" class="units-list"></div>
-            </div>
-
-            <div class="detail-section" id="detail-tab-assets-view" style="display:none;">
-                <div class="detail-section-title">53rd Battalion Registered Fleet Cache</div>
-                <div id="d-53rd-cached-assets" class="units-list"></div>
-            </div>
-
-            <div style="padding:16px; margin-top: auto;" id="d-admin-actions"></div>
-        </div>
+  <!-- CENTER: Map -->
+  <div id="map-container">
+    <svg id="map-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="glow-filter">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-strong">
+          <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <g id="map-g">
+        <g id="connections-layer"></g>
+        <g id="planets-layer"></g>
+      </g>
+    </svg>
+    <div id="map-controls">
+      <button class="map-btn" onclick="zoomIn()">+</button>
+      <button class="map-btn" onclick="zoomOut()">−</button>
+      <button class="map-btn" onclick="resetView()" title="Reset view">⊙</button>
     </div>
+    <div id="map-legend">
+      <div class="legend-title">Strategic Value</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#777"></div> Low</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fa0"></div> Medium</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f80"></div> High</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f44"></div> Critical</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Detail -->
+  <div id="detail-panel">
+    <div id="detail-empty">
+      <div class="detail-icon">🌌</div>
+      <div class="detail-hint">Select a planet</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">Click any node on the map</div>
+    </div>
+    <div id="detail-content">
+      <div class="detail-header">
+        <div class="detail-planet-emoji" id="d-emoji">🪐</div>
+        <div class="detail-planet-name" id="d-name">Planet</div>
+        <div class="detail-sector" id="d-sector">Sector</div>
+        <div class="detail-faction-badge" id="d-faction-badge">Neutral</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">System Intel</div>
+        <div class="detail-row"><span class="detail-key">Strategic Value</span><span class="detail-val" id="d-sv"></span></div>
+        <div class="detail-row"><span class="detail-key">Credit Yield</span><span class="detail-val" id="d-credits">—</span></div>
+        <div class="detail-row"><span class="detail-key">Supply Yield</span><span class="detail-val" id="d-supplies">—</span></div>
+        <div class="detail-row"><span class="detail-key">Fuel Yield</span><span class="detail-val" id="d-fuel">—</span></div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text-dim);line-height:1.5" id="d-desc"></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Stationed Units</div>
+        <div id="d-units" class="units-list"></div>
+      </div>
+      <div style="padding:14px 16px" id="d-admin-actions"></div>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-    let supabaseClient = null;
-    let DB = { factions: [], planets: [], connections: [], units: [], settings: {}, logs: [] };
-    let selectedPlanetId = null;
-    let isAdmin = false;
-    let activeTab = 'campaign';
-    let currentDetailTab = 'garrison';
-    let mapState = { x: 0, y: 0, scale: 0.4, dragging: false, lastX: 0, lastY: 0 };
-
-    window.onload = function() {
-        buildGridLines();
-        checkConfig();
-    };
-
-    function buildGridLines() {
-        const g = document.getElementById('grid-backdrop');
-        let lines = [];
-        for(let i=0; i<=2500; i+=250) {
-            lines.push(`<line x1="${i}" y1="0" x2="${i}" y2="2500" stroke="rgba(0,170,255,0.03)" stroke-width="1"/>`);
-            lines.push(`<line x1="0" y1="${i}" x2="2500" y2="${i}" stroke="rgba(0,170,255,0.03)" stroke-width="1"/>`);
-        }
-        g.innerHTML = lines.join('');
-    }
-
-    function showToast(msg, isError = false) {
-        const t = document.getElementById('toast'); t.textContent = msg;
-        t.className = isError ? 'show error' : 'show';
-        setTimeout(() => t.classList.remove('show'), 3000);
-    }
-
-    async function checkConfig() {
-        const url = "https://yjvgwniprmgnwvgavqpj.supabase.co";
-        const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
-        initApp(url, key);
-    }
-
-    async function initApp(url, key) {
-        supabaseClient = window.supabase.createClient(url, key);
-        document.getElementById('app').style.display = 'grid';
-        await loadAll(); 
-        setupMapInteraction(); 
-        setupRealtime();
-    }
-
-    async function loadAll() {
-        try {
-            const [f, p, c, u, s, l] = await Promise.all([
-                supabaseClient.from('factions').select('*').order('name'),
-                supabaseClient.from('planets').select('*').order('name'),
-                supabaseClient.from('planet_connections').select('*'),
-                supabaseClient.from('units').select('*').order('name'),
-                supabaseClient.from('settings').select('*'),
-                supabaseClient.from('campaign_log').select('*').order('created_at', {ascending: false}).limit(25)
-            ]);
-            DB.factions = f.data || []; DB.planets = p.data || []; DB.connections = c.data || []; DB.units = u.data || [];
-            DB.settings = {}; if(s.data) s.data.forEach(r => DB.settings[r.key] = r.value);
-            DB.logs = l.data || [];
-            
-            if (DB.factions.length === 0 && DB.planets.length === 0) {
-                await seedLoreDatabase();
-            } else {
-                renderAll();
-            }
-        } catch (e) { showToast("Data acquisition stream fault", true); }
-    }
-
-    async function seedLoreDatabase() {
-        showToast("PRE-POPULATING AUTHENTIC MACRO SECTOR ATLASED ARRAY...");
-        
-        const initialFactions = [
-            { name: "Galactic Republic", shortname: "Republic", color: "#00aaff", emoji: "🦅", credits: 6000 },
-            { name: "Confederacy of Independent Systems", shortname: "CIS", color: "#ff4444", emoji: "🐙", credits: 6000 }
-        ];
-        await supabaseClient.from('factions').insert(initialFactions);
-
-        const initialPlanets = [
-            { name: "Coruscant", sector: "Corusca (L-9)", emoji: "🏙️", x: 1250, y: 1250, controlling_faction: "Galactic Republic", credit_yield: 500, strategic_value: "Critical", liberation_pct: 100, description: "The ecumenopolis capital center of coordinates grid. Heart of the Republic defense arrays." },
-            { name: "Anaxes", sector: "Azure (L-9)", emoji: "⚓", x: 1280, y: 1160, controlling_faction: "Galactic Republic", credit_yield: 300, strategic_value: "High", liberation_pct: 100, description: "The Defender of the Core. Heavily protected fortress sector hosting major fleet shipyards." },
-            { name: "Corellia", sector: "Corellian (M-11)", emoji: "🏭", x: 1190, y: 1320, controlling_faction: "Galactic Republic", credit_yield: 400, strategic_value: "Critical", liberation_pct: 100, description: "Industrial powerhouse world famous for producing the finest capital ships and fast freighters." },
-            { name: "Cato Neimoidia", sector: "Quellor (N-11)", emoji: "🛕", x: 1380, y: 1380, controlling_faction: "Confederacy of Independent Systems", credit_yield: 350, strategic_value: "High", liberation_pct: 0, description: "Wealthy purse world of the Trade Federation. Suspended bridge cities over foggy canyons." },
-            { name: "Kuat", sector: "Kuat (M-10)", emoji: "⭕", x: 1320, y: 1220, controlling_faction: "Galactic Republic", credit_yield: 450, strategic_value: "Critical", liberation_pct: 100, description: "Kuat Drive Yards location zone. Vital industrial anchor producing the Republic fleet's Star Destroyers." },
-            { name: "Christophsis", sector: "Savareen (M-16)", emoji: "💎", x: 920, y: 1550, controlling_faction: "Neutral", credit_yield: 220, strategic_value: "High", liberation_pct: 0, description: "Crystalline planet rich in raw minerals. A highly contested strategic bridgehead into the Outer Rim." },
-            { name: "Teth", sector: "Brak (U-12)", emoji: "🌿", x: 1020, y: 1850, controlling_faction: "Neutral", credit_yield: 110, strategic_value: "Medium", liberation_pct: 0, description: "Jungle world surrounded by massive cliffs. Holds an ancient monastery used as a pirate smuggling den." },
-            { name: "Malastare", sector: "Dustig (K-16)", emoji: "🏁", x: 740, y: 1620, controlling_faction: "Galactic Republic", credit_yield: 280, strategic_value: "High", liberation_pct: 100, description: "Methane-rich world governed by the Gran. Home of fast podracing circuits and critical fuel reserves." },
-            { name: "Bothawui", sector: "Bothan (R-14)", emoji: "🐾", x: 1820, y: 1580, controlling_faction: "Galactic Republic", credit_yield: 200, strategic_value: "Medium", liberation_pct: 100, description: "Homeworld of the Bothans. Holds the primary hub architecture for the Republic's shadow spy networks." },
-            { name: "Naboo", sector: "Chommell (O-17)", emoji: "🏰", x: 1650, y: 1920, controlling_faction: "Galactic Republic", credit_yield: 240, strategic_value: "Medium", liberation_pct: 100, description: "Picturesque planet of lakes and plains. Home to a sophisticated human society and the subterranean Gungans." },
-            { name: "Kashyyyk", sector: "Mytaranor (P-9)", emoji: "🌲", x: 1780, y: 1050, controlling_faction: "Galactic Republic", credit_yield: 210, strategic_value: "High", liberation_pct: 100, description: "Wookiee homeworld wrapped in towering Wroshyr forests. Anchors navigation along the eastern trade routes." },
-            { name: "Ryloth", sector: "Gaulus (R-16)", emoji: "🌵", x: 1950, y: 1820, controlling_faction: "Neutral", credit_yield: 130, strategic_value: "Medium", liberation_pct: 0, description: "Twi'lek homeworld locked in harsh tidal rotations. Under constant pressure by Separatist droid blockades." },
-            { name: "Geonosis", sector: "Arkanis (R-16)", emoji: "🏜️", x: 1920, y: 1720, controlling_faction: "Confederacy of Independent Systems", credit_yield: 380, strategic_value: "Critical", liberation_pct: 0, description: "Site of the first battle of the Clone Wars. Massive underground foundries mass-producing battle droids." },
-            { name: "Tatooine", sector: "Arkanis (R-16)", emoji: "☀️", x: 1980, y: 1680, controlling_faction: "Neutral", credit_yield: 70, strategic_value: "Low", liberation_pct: 0, description: "Harsh desert planet under the iron grip of the Hutt Cartel. A haven for smugglers and outer-rim scumbags." },
-            { name: "Kamino", sector: "Wild Space (S-15)", emoji: "🌊", x: 2150, y: 1950, controlling_faction: "Galactic Republic", credit_yield: 320, strategic_value: "Critical", liberation_pct: 100, description: "Storm-drenched ocean world outside the main map lines. Birthplace and training hub of the clone army." },
-            { name: "Umbara", sector: "Ghost Nebula (P-15)", emoji: "🏮", x: 1520, y: 1640, controlling_faction: "Confederacy of Independent Systems", credit_yield: 250, strategic_value: "High", liberation_pct: 0, description: "The Shadow World. Gloomy perpetual nebula darkness shielding highly advanced, lethal local military technology." },
-            { name: "Muunilinst", sector: "Algara (K-3)", emoji: "🏦", x: 1450, y: 450, controlling_faction: "Confederacy of Independent Systems", credit_yield: 600, strategic_value: "Critical", liberation_pct: 0, description: "The Banking World. Financial capital of the Banking Clan, directly funding the Separatist military complex." },
-            { name: "Felucia", sector: "Tharin (U-6)", emoji: "🍄", x: 2240, y: 920, controlling_faction: "Neutral", credit_yield: 90, strategic_value: "Medium", liberation_pct: 0, description: "Fungal jungle world full of giant plants and dangerous wildlife. The setting of brutal attrition warfare." },
-            { name: "Saleucami", sector: "Su Mar (O-12)", emoji: "🌋", x: 1680, y: 1480, controlling_faction: "Neutral", credit_yield: 140, strategic_value: "Medium", liberation_pct: 0, description: "Geothermal caldera worlds serving as a vital staging post along outer hyperspace lanes." },
-            { name: "Raxus Prime", sector: "Tion (S-6)", emoji: "🏭", x: 2350, y: 720, controlling_faction: "Confederacy of Independent Systems", credit_yield: 300, strategic_value: "High", liberation_pct: 0, description: "A planet covered entirely in toxic trash and industrial waste, serving as the official political capital of the CIS." }
-        ];
-        const { data: planetsData } = await supabaseClient.from('planets').insert(initialPlanets).select();
-
-        const initialConnections = [
-            { planet_a: "Coruscant", planet_b: "Anaxes" },
-            { planet_a: "Anaxes", planet_b: "Muunilinst" },
-            { planet_a: "Coruscant", planet_b: "Kuat" },
-            { planet_a: "Kuat", planet_b: "Corellia" },
-            { planet_a: "Corellia", planet_b: "Cato Neimoidia" },
-            { planet_a: "Cato Neimoidia", planet_b: "Saleucami" },
-            { planet_a: "Saleucami", planet_b: "Bothawui" },
-            { planet_a: "Bothawui", planet_b: "Kashyyyk" },
-            { planet_a: "Kashyyyk", planet_b: "Felucia" },
-            { planet_a: "Felucia", planet_b: "Raxus Prime" },
-            { planet_a: "Corellia", planet_b: "Christophsis" },
-            { planet_a: "Christophsis", planet_b: "Malastare" },
-            { planet_a: "Malastare", planet_b: "Teth" },
-            { planet_a: "Teth", planet_b: "Naboo" },
-            { planet_a: "Naboo", planet_b: "Ryloth" },
-            { planet_a: "Ryloth", planet_b: "Tatooine" },
-            { planet_a: "Tatooine", planet_b: "Geonosis" },
-            { planet_a: "Geonosis", planet_b: "Kamino" },
-            { planet_a: "Coruscant", planet_b: "Umbara" },
-            { planet_a: "Umbara", planet_b: "Naboo" }
-        ];
-        await supabaseClient.from('planet_connections').insert(initialConnections);
-
-        if (planetsData && planetsData.length) {
-            const coruscantNode = planetsData.find(p => p.name === "Coruscant");
-            if (coruscantNode) {
-                await Promise.all([
-                    supabaseClient.from('settings').upsert({ key: 'loc_53rd', value: String(coruscantNode.id) }),
-                    supabaseClient.from('settings').upsert({ key: 'loc_501st', value: String(coruscantNode.id) }),
-                    supabaseClient.from('settings').upsert({ key: 'loc_212th', value: String(coruscantNode.id) }),
-                    supabaseClient.from('settings').upsert({ key: 'loc_104th', value: String(coruscantNode.id) })
-                ]);
-            }
-        }
-
-        await writeLog("Galaxy Configured", "Autonomous data array injector populated the system with 20 authentic sector star maps.");
-        setTimeout(() => { window.location.reload(); }, 1500);
-    }
-
-    async function purchaseAsset(assetName, cost) {
-        if(!isAdmin) { showToast("ACCESS ERROR: Tactical override code required.", true); return; }
-        const republicFaction = DB.factions.find(f => f.name === "Galactic Republic");
-        if(!republicFaction) { showToast("Republic profile missing.", true); return; }
-        if(republicFaction.credits < cost) { showToast(`REQUISITION INSUFFICIENT: Pool missing ${cost - republicFaction.credits}c.`, true); return; }
-        if(!selectedPlanetId) { showToast("TARGET ERROR: Select destination system hub node first.", true); return; }
-
-        const nextCredits = republicFaction.credits - cost;
-        const { error: factionErr } = await supabaseClient.from('factions').update({ credits: nextCredits }).eq('id', republicFaction.id);
-        if(factionErr) { showToast(factionErr.message, true); return; }
-
-        const p = DB.planets.find(pl=>pl.id===selectedPlanetId);
-        await supabaseClient.from('units').insert([{
-            name: `53rd ${assetName}`, faction: "Galactic Republic", unit_type: "Purchased Logistics Asset", size: "Standard Item Cache", status: "Active", planet_id: selectedPlanetId
-        }]);
-
-        await writeLog("Asset Requisitioned", `Acquired ${assetName} (-${cost}c). Routed down to ${p ? p.name : 'Target world'}.`);
-        showToast(`ACQUIRED: ${assetName} processed successfully!`);
-        loadAll();
-    }
-
-    function setDetailTab(tabKey) {
-        currentDetailTab = tabKey;
-        document.getElementById('tab-btn-garrison').style.borderBottomColor = tabKey === 'garrison' ? 'var(--accent)' : 'transparent';
-        document.getElementById('tab-btn-garrison').style.color = tabKey === 'garrison' ? 'var(--text)' : 'var(--text-dim)';
-        document.getElementById('tab-btn-assets').style.borderBottomColor = tabKey === 'assets' ? 'var(--accent)' : 'transparent';
-        document.getElementById('tab-btn-assets').style.color = tabKey === 'assets' ? 'var(--text)' : 'var(--text-dim)';
-        document.getElementById('detail-tab-garrison-view').style.display = tabKey === 'garrison' ? 'block' : 'none';
-        document.getElementById('detail-tab-assets-view').style.display = tabKey === 'assets' ? 'block' : 'none';
-    }
-
-    function renderAll() {
-        updateHeader(); renderFactionPanel(); renderMap();
-        if (selectedPlanetId) showPlanetDetail(selectedPlanetId);
-        if (document.getElementById('admin-modal').classList.contains('open')) renderAdminBody();
-        const adminBtn = document.getElementById('admin-toggle-btn');
-        adminBtn.textContent = isAdmin ? ' HQ CONNECTED' : '⚙ TERMINAL OVERRIDE';
-        adminBtn.style.borderColor = isAdmin ? 'var(--success)' : 'var(--border-bright)';
-    }
-
-    function setupRealtime() {
-        supabaseClient.channel('matrix-changes').on('postgres_changes', { event: '*', schema: 'public' }, () => { loadAll(); }).subscribe();
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        updateHeader();
+// ══════════════════════════════════════════════
+// STARFIELD
+// ══════════════════════════════════════════════
+(function(){
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    stars = Array.from({length: 200}, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.2,
+      o: Math.random() * 0.7 + 0.1,
+      speed: Math.random() * 0.3 + 0.05
+    }));
+  }
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(180,210,255,${s.o})`;
+      ctx.fill();
+      s.o += s.speed * 0.02;
+      if(s.o > 0.8 || s.o < 0.1) s.speed *= -1;
     });
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
 
-    function updateHeader() {
-        document.getElementById('header-campaign-name').textContent = DB.settings.campaign_name || 'Grand GAR Command Deck';
-        document.getElementById('header-era').textContent = DB.settings.campaign_era || 'Clone Wars Theater';
-        document.getElementById('header-turn').textContent = 'PHASE ' + (DB.settings.campaign_turn || '1');
-    }
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let supabase = null;
+let DB = { factions:[], planets:[], connections:[], units:[], settings:{}, logs:[] };
+let selectedPlanet = null;
+let isAdmin = false;
+let activeTab = 'factions';
 
-    function renderFactionPanel() {
-        const container = document.getElementById('faction-list');
-        if(!DB.factions.length) { container.innerHTML = '<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px">No parent profiles active.</div>'; return; }
-        const maxCredits = Math.max(...DB.factions.map(f=>f.credits), 1);
-        container.innerHTML = DB.factions.map(f => {
-            const territories = DB.planets.filter(p=>p.controlling_faction===f.name).length;
-            return `
-            <div class="faction-card">
-                <div class="faction-header">
-                    <div class="faction-dot" style="background:${f.color};color:${f.color}"></div>
-                    <div class="faction-name">${f.emoji || ''} ${f.shortname || f.name}</div>
-                </div>
-                <div class="resource-row"><span class="resource-label">🪙 Treasury Pool</span><span class="resource-val">${(f.credits || 0).toLocaleString()} c</span></div>
-                <div class="resource-bar-wrap"><div class="resource-bar" style="width:${Math.min(100, ((f.credits || 0)/maxCredits)*100)}%;background:${f.color}"></div></div>
-                <div class="terr-count">🗺️ Managed Worlds: <span>${territories}</span></div>
-            </div>`;
-        }).join('');
-    }
+// Map pan/zoom
+let mapState = { x:0, y:0, scale:1, dragging:false, lastX:0, lastY:0 };
 
-    function getFactionColor(factionName) {
-        if(!factionName || factionName === 'Neutral') return '#344152';
-        const f = DB.factions.find(fac=>fac.name===factionName); return f ? f.color : '#344152';
-    }
-    function getSVSize(sv) { return { 'Low': 7, 'Medium': 10, 'High': 13, 'Critical': 16 }[sv] || 8; }
+// ══════════════════════════════════════════════
+// SECURE PROXY API — No keys in browser
+// All Supabase traffic goes through /api/*
+// Keys live only in Cloudflare env vars
+// ══════════════════════════════════════════════
 
-    function renderMap() {
-        const connectionsLayer = document.getElementById('connections-layer');
-        const planetsLayer = document.getElementById('planets-layer');
-        
-        connectionsLayer.innerHTML = DB.connections.map(c => {
-            const a = DB.planets.find(p=>p.name===c.planet_a); const b = DB.planets.find(p=>p.name===c.planet_b);
-            if(!a || !b) return '';
-            
-            let strokeColor = "rgba(0,170,255,0.15)"; let isContestedPath = false;
-            if (a.controlling_faction === b.controlling_faction && a.controlling_faction !== 'Neutral') {
-                strokeColor = getFactionColor(a.controlling_faction) + "55"; 
-            } else if (
-                (a.controlling_faction.includes('Republic') && b.controlling_faction.includes('Confederacy')) ||
-                (b.controlling_faction.includes('Republic') && a.controlling_faction.includes('Confederacy')) ||
-                (a.controlling_faction !== 'Neutral' && b.controlling_faction !== 'Neutral' && a.controlling_faction !== b.controlling_faction)
-            ) {
-                strokeColor = "rgba(255,160,0,0.6)"; isContestedPath = true;
-            }
-            return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${strokeColor}" stroke-width="${isContestedPath ? '2.5' : '1.5'}" stroke-dasharray="${isContestedPath ? 'none' : '5,5'}"/>`;
-        }).join('');
+// Thin Supabase REST wrapper that routes through /api proxy
+const supabase = {
+  _base: '/api/rest/v1',
 
-        planetsLayer.innerHTML = DB.planets.map(p => {
-            const color = getFactionColor(p.controlling_faction); const r = getSVSize(p.strategic_value);
-            const isSelected = selectedPlanetId === p.id;
-            
-            let trackerRingsHtml = '';
-            if(DB.settings.loc_53rd === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="22" fill="none" class="hq-ring-53rd" filter="url(#glow-filter)"/>`;
-            if(DB.settings.loc_501st === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="25" fill="none" class="hq-ring-501st" filter="url(#glow-filter)"/>`;
-            if(DB.settings.loc_212th === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="28" fill="none" class="hq-ring-212th" filter="url(#glow-filter)"/>`;
-            if(DB.settings.loc_104th === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="31" fill="none" class="hq-ring-104th" filter="url(#glow-filter)"/>`;
+  from(table) {
+    return new SupabaseProxyQuery(this._base, table);
+  },
 
-            const standingUnits = DB.units.filter(u=>u.planet_id===p.id && u.status !== 'Destroyed');
-            const uniqueFactions = [...new Set(standingUnits.map(u => u.faction))].filter(f => f !== p.controlling_faction);
-            const isUnderConflict = uniqueFactions.length > 0 && p.controlling_faction !== 'Neutral';
-
-            return `
-            <g class="planet-node" style="cursor:pointer" onclick="onPlanetClick('${p.id}')">
-                ${trackerRingsHtml}
-                ${isUnderConflict ? `<circle cx="${p.x}" cy="${p.y}" r="18" fill="none" class="conflict-pulse" filter="url(#glow-filter)"/>` : ''}
-                ${isSelected ? `<circle cx="${p.x}" cy="${p.y}" r="${r+7}" fill="none" stroke="var(--accent2)" stroke-width="1.5" opacity="0.9"/>` : ''}
-                <circle cx="${p.x}" cy="${p.y}" r="${r+3}" fill="${color}" opacity="0.2"/>
-                <circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${color}" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-                <text x="${p.x}" y="${p.y + r + 15}" text-anchor="middle" fill="${isSelected ? 'var(--accent2)' : 'var(--text)'}" font-family="var(--font-display)" font-size="10px" style="text-shadow: 0 2px 4px rgba(0,0,0,0.95)">${p.emoji || '🪐'} ${p.name}</text>
-            </g>`;
-        }).join('');
-        updateMapTransform();
-    }
-
-    function setupMapInteraction() {
-        const el = document.getElementById('map-container');
-        el.addEventListener('mousedown', e => {
-            if(e.target.closest('.map-btn') || e.target.closest('#map-legend')) return;
-            mapState.dragging = true; mapState.lastX = e.clientX; mapState.lastY = e.clientY;
-        });
-        window.addEventListener('mousemove', e => {
-            if(!mapState.dragging) return;
-            mapState.x += e.clientX - mapState.lastX; mapState.y += e.clientY - mapState.lastY;
-            mapState.lastX = e.clientX; mapState.lastY = e.clientY; updateMapTransform();
-        });
-        window.addEventListener('mouseup', () => mapState.dragging = false);
-        el.addEventListener('wheel', e => { e.preventDefault(); zoom(e.deltaY < 0 ? 1.15 : 0.85); }, { passive: false });
-    }
-    function zoom(factor) { mapState.scale = Math.max(0.1, Math.min(4, mapState.scale * factor)); updateMapTransform(); }
-    function resetView() { mapState = { x: 0, y: 0, scale: 0.4, dragging: false, lastX: 0, lastY: 0 }; updateMapTransform(); }
-    function updateMapTransform() { document.getElementById('map-g').setAttribute('transform', `translate(${mapState.x}, ${mapState.y}) scale(${mapState.scale})`); }
-    function onPlanetClick(id) { selectedPlanetId = id; renderMap(); showPlanetDetail(id); }
-
-    function showPlanetDetail(id) {
-        const p = DB.planets.find(pl=>pl.id===id); if(!p) return;
-        document.getElementById('detail-empty').style.display = 'none';
-        const content = document.getElementById('detail-content'); content.classList.add('visible');
-
-        document.getElementById('d-emoji').textContent = p.emoji || '🪐';
-        document.getElementById('d-name').textContent = p.name;
-        document.getElementById('d-sector').textContent = (p.sector || 'Unscouted Zone') + ' Sector';
-        
-        const badge = document.getElementById('d-faction-badge');
-        badge.textContent = p.controlling_faction; badge.style.color = getFactionColor(p.controlling_faction);
-
-        const hqZone = document.getElementById('d-hq-zone'); hqZone.innerHTML = '';
-        const hqPlanetId = DB.settings.loc_53rd;
-        if(hqPlanetId === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#0af;color:#0ff">🛡️ 53rd Battalion Base</div>`;
-        if(DB.settings.loc_501st === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#2a6eff;color:#85aeff">⚡ 501st Legion</div>`;
-        if(DB.settings.loc_212th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#ff9f1a;color:#ffeaa7">🔶 212th Attack Bn</div>`;
-        if(DB.settings.loc_104th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#a4b0be;color:#f1f2f6">🐺 104th Wolfpack</div>`;
-
-        const libPct = p.liberation_pct || 0;
-        document.getElementById('d-liberation-txt').textContent = libPct + '%';
-        document.getElementById('d-liberation-bar').style.width = libPct + '%';
-
-        const sv = document.getElementById('d-sv'); sv.textContent = p.strategic_value; sv.className = 'detail-val sv-' + p.strategic_value;
-        
-        let computedYield = p.credit_yield || 0;
-        if(p.controlling_faction === 'Neutral') computedYield = Math.round(computedYield * (libPct / 100));
-        document.getElementById('d-credits').textContent = '+' + computedYield + ' c';
-        
-        document.getElementById('d-desc').textContent = p.description || 'No database logs found for this sector.';
-
-        const allUnits = DB.units.filter(u => u.planet_id === p.id && u.status !== 'Destroyed');
-        const garrisonForces = allUnits.filter(u => u.unit_type !== 'Purchased Logistics Asset');
-        const logisticsAssets = allUnits.filter(u => u.unit_type === 'Purchased Logistics Asset');
-
-        const list = document.getElementById('d-units');
-        const isPlayerAligned = p.controlling_faction.includes('Republic') || p.controlling_faction.includes('53rd');
-
-        if (!isAdmin && !isPlayerAligned && p.controlling_faction !== 'Neutral') {
-            let sizeRating = "Minor Presence Detected";
-            if (garrisonForces.length >= 5) sizeRating = "Massive Armored Fleet Array";
-            else if (garrisonForces.length >= 3) sizeRating = "Medium Combat Garrison";
-            else if (garrisonForces.length === 0) sizeRating = "Negligible Force Footprint";
-
-            list.innerHTML = `
-                <div class="garrison-intel-card">
-                    <div class="garrison-intel-title">⚠️ ENCRYPTED CIS SIGNALS</div>
-                    <div class="garrison-intel-val">${sizeRating}</div>
-                </div>`;
-        } else {
-            if(!garrisonForces.length) {
-                list.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">No combat garrison footprints active.</div>';
-            } else {
-                list.innerHTML = garrisonForces.map(u => `
-                    <div class="unit-item">
-                        <div style="display:flex;justify-content:space-between">
-                            <span class="unit-name">${u.name}</span>
-                        </div>
-                    </div>
-                `).join('');
-            }
+  channel(name) {
+    // Realtime still needs a direct Supabase connection.
+    // We use a lightweight EventSource-style polling fallback here.
+    // For true realtime, enable Supabase Realtime and pass only the
+    // SUPABASE_URL (not the key) as a public env var via a /api/config endpoint.
+    return {
+      on() { return this; },
+      subscribe() {
+        // Polling fallback: refresh every 15s
+        if (!window._realtimePoller) {
+          window._realtimePoller = setInterval(() => loadAll(), 15000);
         }
+        return this;
+      }
+    };
+  }
+};
 
-        const assetContainer = document.getElementById('d-53rd-cached-assets');
-        if (!logisticsAssets.length) {
-            assetContainer.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">No log pool assets stationed here.</div>';
-        } else {
-            assetContainer.innerHTML = logisticsAssets.map(u => `
-                <div class="unit-item" style="border-left: 2px dashed var(--success)">
-                    <div style="display:flex;justify-content:space-between">
-                        <span class="unit-name" style="color:var(--success)">${u.name}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
+class SupabaseProxyQuery {
+  constructor(base, table) {
+    this._base = base;
+    this._table = table;
+    this._filters = [];
+    this._order = null;
+    this._limit = null;
+    this._select = '*';
+  }
 
-        const actionArea = document.getElementById('d-admin-actions');
-        if(isAdmin) {
-            if (p.id === hqPlanetId) {
-                actionArea.innerHTML = `
-                    <div style="background:rgba(0,10,25,0.6); border:1px solid var(--border); padding:10px; border-radius:3px;">
-                        <div style="font-family:var(--font-display); font-size:9px; color:var(--warn); margin-bottom:8px; letter-spacing:1px; text-align:center;">// 53rd LIVE ENGAGEMENT TERMINAL</div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-                            <button class="btn success" style="font-size:9px; padding:8px 4px;" onclick="process53rdBattleResult('${p.id}', true)">🟢 MISSION VICTORY</button>
-                            <button class="btn danger" style="font-size:9px; padding:8px 4px;" onclick="process53rdBattleResult('${p.id}', false)">🔴 MISSION DEFEAT</button>
-                        </div>
-                    </div>`;
-            } else {
-                actionArea.innerHTML = `<button class="btn success" style="width:100%" onclick="move53rdBattalion('${p.id}')">🔷 DEPLOY 53rd SECTOR FLEET HERE</button>`;
-            }
-        } else { actionArea.innerHTML = ''; }
+  select(cols = '*') { this._select = cols; return this; }
+  order(col, opts = {}) { this._order = `${col}.${opts.ascending === false ? 'desc' : 'asc'}`; return this; }
+  limit(n) { this._limit = n; return this; }
+  eq(col, val) { this._filters.push(`${col}=eq.${encodeURIComponent(val)}`); return this; }
+
+  _buildUrl(method) {
+    let url = `${this._base}/${this._table}?select=${this._select}`;
+    if (this._filters.length) url += '&' + this._filters.join('&');
+    if (this._order) url += `&order=${this._order}`;
+    if (this._limit) url += `&limit=${this._limit}`;
+    return url;
+  }
+
+  async _fetch(method, body) {
+    const url = this._buildUrl();
+    const headers = { 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+    if (method === 'GET') headers['Accept'] = 'application/json';
+    try {
+      const res = await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!res.ok) return { data: null, error: { message: data?.message || `HTTP ${res.status}` } };
+      return { data: Array.isArray(data) ? data : (data ? [data] : []), error: null };
+    } catch (e) {
+      return { data: null, error: { message: e.message } };
     }
+  }
 
-    async function process53rdBattleResult(planetId, isWin) {
-        const p = DB.planets.find(pl => pl.id === planetId); if(!p) return;
-        let currentLib = p.liberation_pct || 0;
-        let libShift = Math.floor(Math.random() * 10) + 20; 
-        let nextLib = isWin ? Math.min(100, currentLib + libShift) : Math.max(0, currentLib - Math.floor(libShift / 1.5));
-        
-        let updateData = { liberation_pct: nextLib };
-        if(nextLib >= 100) updateData.controlling_faction = "Galactic Republic";
-        else if(nextLib <= 0) updateData.controlling_faction = "Confederacy of Independent Systems";
+  // For upsert: POST with Prefer: resolution=merge-duplicates
+  async upsert(rows) {
+    const url = `${this._base}/${this._table}`;
+    const body = Array.isArray(rows) ? rows : [rows];
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=representation'
+        },
+        body: JSON.stringify(body)
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!res.ok) return { data: null, error: { message: data?.message || `HTTP ${res.status}` } };
+      return { data, error: null };
+    } catch(e) { return { data: null, error: { message: e.message } }; }
+  }
 
-        await supabaseClient.from('planets').update(updateData).eq('id', planetId);
-        
-        if(isWin) {
-            await writeLog('53rd Victory', `The 53rd Assault Battalion won a massive operations breakthrough on ${p.name}! Sector security rose +${libShift}%.`);
-            showToast("VICTORY FILED IN CENTRAL COMMAND MATRICES");
-        } else {
-            await writeLog('53rd Fallback', `The 53rd Battalion met overwhelming droid resistance on ${p.name} and established defensive positions.`);
-            showToast("TACTICAL FALLBACK FILED", true);
-        }
-        loadAll();
+  then(resolve) { return this._fetch('GET').then(resolve); }
+
+  async insert(rows) {
+    const url = `${this._base}/${this._table}`;
+    const body = Array.isArray(rows) ? rows : [rows];
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+        body: JSON.stringify(body)
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!res.ok) return { data: null, error: { message: data?.message || `HTTP ${res.status}` } };
+      return { data, error: null };
+    } catch(e) { return { data: null, error: { message: e.message } }; }
+  }
+
+  update(updates) {
+    this._pendingUpdate = updates;
+    return {
+      eq: (col, val) => {
+        this._filters.push(`${col}=eq.${encodeURIComponent(val)}`);
+        return this._doUpdate();
+      }
+    };
+  }
+
+  async _doUpdate() {
+    const url = `${this._base}/${this._table}?` + this._filters.join('&');
+    try {
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+        body: JSON.stringify(this._pendingUpdate)
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!res.ok) return { data: null, error: { message: data?.message || `HTTP ${res.status}` } };
+      return { data, error: null };
+    } catch(e) { return { data: null, error: { message: e.message } }; }
+  }
+
+  delete() {
+    return {
+      eq: (col, val) => {
+        const url = `${this._base}/${this._table}?${col}=eq.${encodeURIComponent(val)}`;
+        return fetch(url, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
+          .then(r => ({ data: null, error: r.ok ? null : { message: `HTTP ${r.status}` } }))
+          .catch(e => ({ data: null, error: { message: e.message } }));
+      }
+    };
+  }
+}
+
+// ══════════════════════════════════════════════
+// INIT — No config screen needed, keys are server-side
+// ══════════════════════════════════════════════
+async function checkConfig() {
+  // Hide the old config screen (not needed — keys are in Cloudflare env vars)
+  const cfg = document.getElementById('config-screen');
+  if (cfg) cfg.style.display = 'none';
+
+  document.getElementById('app').style.display = 'grid';
+  await loadAll();
+  setupMapInteraction();
+  setupRealtime();
+}
+
+// ══════════════════════════════════════════════
+// DATA LOADING
+// ══════════════════════════════════════════════
+async function loadAll() {
+  try {
+    const [f, p, c, u, s, l] = await Promise.all([
+      supabase.from('factions').select('*').order('name')._fetch('GET'),
+      supabase.from('planets').select('*').order('name')._fetch('GET'),
+      supabase.from('planet_connections').select('*')._fetch('GET'),
+      supabase.from('units').select('*').order('name')._fetch('GET'),
+      supabase.from('settings').select('*')._fetch('GET'),
+      supabase.from('campaign_log').select('*').order('created_at',{ascending:false}).limit(50)._fetch('GET')
+    ]);
+    DB.factions = f.data || [];
+    DB.planets = p.data || [];
+    DB.connections = c.data || [];
+    DB.units = u.data || [];
+    DB.settings = {};
+    (s.data||[]).forEach(r => DB.settings[r.key] = r.value);
+    DB.logs = l.data || [];
+    renderAll();
+  } catch(e) {
+    showToast('Data load error — check Cloudflare env vars', 'error');
+    console.error(e);
+  }
+}
+
+function renderAll() {
+  updateHeader();
+  renderFactionPanel();
+  renderMap();
+  if(selectedPlanet) showPlanetDetail(selectedPlanet.id);
+  checkSetupBanner();
+}
+
+function checkSetupBanner() {
+  const banner = document.getElementById('setup-banner');
+  banner.style.display = DB.planets.length === 0 ? 'block' : 'none';
+}
+
+// ══════════════════════════════════════════════
+// REALTIME — 15s polling (keys stay server-side)
+// ══════════════════════════════════════════════
+function setupRealtime() {
+  if (!window._realtimePoller) {
+    window._realtimePoller = setInterval(() => loadAll(), 15000);
+  }
+}
+
+// ══════════════════════════════════════════════
+// HEADER
+// ══════════════════════════════════════════════
+function updateHeader() {
+  document.getElementById('header-campaign-name').textContent = DB.settings.campaign_name || 'Galaxy Campaign';
+  document.getElementById('header-era').textContent = DB.settings.campaign_era || 'Galactic Civil War';
+  document.getElementById('header-turn').textContent = 'TURN ' + (DB.settings.campaign_turn || '1');
+}
+
+// ══════════════════════════════════════════════
+// FACTION PANEL
+// ══════════════════════════════════════════════
+function renderFactionPanel() {
+  const container = document.getElementById('faction-list');
+  if(!DB.factions.length) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;text-align:center;padding:20px">No factions yet.<br>Open Admin → Factions</div>';
+    return;
+  }
+  const maxCredits = Math.max(...DB.factions.map(f=>f.credits),1);
+  container.innerHTML = DB.factions.map(f => {
+    const territories = DB.planets.filter(p=>p.controlling_faction===f.name).length;
+    const units = DB.units.filter(u=>u.faction===f.name).length;
+    return `
+    <div class="faction-card">
+      <div class="faction-header">
+        <div class="faction-dot" style="background:${f.color};color:${f.color}"></div>
+        <div class="faction-name">${f.emoji||''} ${f.shortname||f.name}</div>
+      </div>
+      <div class="resource-row"><span class="resource-label">🪙 Credits</span><span class="resource-val">${(f.credits||0).toLocaleString()}</span></div>
+      <div class="resource-bar-wrap"><div class="resource-bar" style="width:${Math.min(100,(f.credits/maxCredits)*100)}%;background:${f.color}"></div></div>
+      <div class="resource-row"><span class="resource-label">📦 Supplies</span><span class="resource-val">${f.supplies||0}</span></div>
+      <div class="resource-row"><span class="resource-label">⛽ Fuel</span><span class="resource-val">${f.fuel||0}</span></div>
+      <div class="resource-row"><span class="resource-label">👥 Manpower</span><span class="resource-val">${f.manpower||0}</span></div>
+      <div class="terr-count">🗺 <span>${territories}</span> systems &nbsp;|&nbsp; 🪖 <span>${units}</span> units</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// MAP
+// ══════════════════════════════════════════════
+function getFactionColor(factionName) {
+  if(!factionName || factionName === 'Neutral') return '#444466';
+  const f = DB.factions.find(f=>f.name===factionName);
+  return f ? f.color : '#444466';
+}
+
+function getSVSize(sv) {
+  return {Low:10, Medium:12, High:14, Critical:16}[sv]||10;
+}
+
+function renderMap() {
+  const connectionsLayer = document.getElementById('connections-layer');
+  const planetsLayer = document.getElementById('planets-layer');
+  const planetMap = {};
+  DB.planets.forEach(p => planetMap[p.id] = p);
+
+  // Draw connections
+  connectionsLayer.innerHTML = DB.connections.map(c => {
+    const a = DB.planets.find(p=>p.name===c.planet_a);
+    const b = DB.planets.find(p=>p.name===c.planet_b);
+    if(!a||!b) return '';
+    return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"
+      stroke="rgba(0,170,255,0.15)" stroke-width="1.5"
+      stroke-dasharray="4,6"/>`;
+  }).join('');
+
+  // Draw planets
+  planetsLayer.innerHTML = DB.planets.map(p => {
+    const color = getFactionColor(p.controlling_faction);
+    const r = getSVSize(p.strategic_value);
+    const isSelected = selectedPlanet && selectedPlanet.id === p.id;
+    const unitCount = DB.units.filter(u=>u.planet_id===p.id).length;
+
+    return `
+    <g class="planet-node" data-id="${p.id}" onclick="onPlanetClick('${p.id}')" style="cursor:pointer">
+      ${isSelected ? `<circle cx="${p.x}" cy="${p.y}" r="${r+8}" fill="none" stroke="${color}" stroke-width="1" opacity="0.5"/>` : ''}
+      <circle cx="${p.x}" cy="${p.y}" r="${r+4}" fill="${color}" opacity="0.12"/>
+      <circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${color}" opacity="0.85" filter="url(#glow-filter)"
+        stroke="${isSelected?'white':color}" stroke-width="${isSelected?2:1}"/>
+      <text x="${p.x}" y="${p.y+r+14}" text-anchor="middle" fill="${color}"
+        font-size="10" font-family="Orbitron,monospace" letter-spacing="0.5">${p.name}</text>
+      ${p.emoji ? `<text x="${p.x}" y="${p.y+4}" text-anchor="middle" font-size="${r*1.1}" dominant-baseline="middle" style="pointer-events:none">${p.emoji}</text>` : ''}
+      ${unitCount > 0 ? `<circle cx="${p.x+r}" cy="${p.y-r}" r="5" fill="#fa0"/>
+        <text x="${p.x+r}" y="${p.y-r+4}" text-anchor="middle" fill="#000" font-size="7" font-weight="bold">${unitCount}</text>` : ''}
+    </g>`;
+  }).join('');
+}
+
+function onPlanetClick(id) {
+  const planet = DB.planets.find(p=>p.id===id);
+  if(!planet) return;
+  selectedPlanet = planet;
+  renderMap();
+  showPlanetDetail(id);
+}
+
+function showPlanetDetail(id) {
+  const planet = DB.planets.find(p=>p.id===id);
+  if(!planet) return;
+
+  const faction = DB.factions.find(f=>f.name===planet.controlling_faction);
+  const color = getFactionColor(planet.controlling_faction);
+  const units = DB.units.filter(u=>u.planet_id===id);
+
+  document.getElementById('detail-empty').style.display = 'none';
+  const dc = document.getElementById('detail-content');
+  dc.classList.add('visible');
+
+  document.getElementById('d-emoji').textContent = planet.emoji || '🪐';
+  document.getElementById('d-name').textContent = planet.name;
+  document.getElementById('d-sector').textContent = planet.sector || 'Unknown Sector';
+
+  const badge = document.getElementById('d-faction-badge');
+  badge.textContent = (faction?.emoji||'') + ' ' + (planet.controlling_faction||'Neutral');
+  badge.style.color = color;
+  badge.style.borderColor = color;
+
+  const svEl = document.getElementById('d-sv');
+  svEl.innerHTML = `<span class="sv-badge sv-${planet.strategic_value||'Low'}">${planet.strategic_value||'Low'}</span>`;
+
+  document.getElementById('d-credits').textContent = `+${planet.credit_yield||0}/turn`;
+  document.getElementById('d-supplies').textContent = `+${planet.supply_yield||0}/turn`;
+  document.getElementById('d-fuel').textContent = `+${planet.fuel_yield||0}/turn`;
+  document.getElementById('d-desc').textContent = planet.description || '';
+
+  // Units
+  const uContainer = document.getElementById('d-units');
+  if(!units.length) {
+    uContainer.innerHTML = '<div style="color:var(--text-dim);font-size:11px">No units stationed</div>';
+  } else {
+    uContainer.innerHTML = units.map(u=>`
+      <div class="unit-item">
+        <div class="unit-name">${u.name}</div>
+        <div class="unit-meta">${u.size||''} ${u.unit_type||''} • ${u.faction}</div>
+        <div class="unit-meta">Strength: ${u.strength||100}%</div>
+        <span class="unit-status status-${u.status||'Active'}">${u.status||'Active'}</span>
+      </div>
+    `).join('');
+  }
+
+  // Admin actions
+  const adminActions = document.getElementById('d-admin-actions');
+  if(isAdmin) {
+    adminActions.innerHTML = `
+      <button class="btn warn" style="width:100%;margin-bottom:8px" onclick="openCaptureModal('${id}')">⚔ CHANGE CONTROL</button>
+      <button class="btn" style="width:100%" onclick="quickEditPlanet('${id}')">✏ EDIT PLANET</button>
+    `;
+  } else {
+    adminActions.innerHTML = '';
+  }
+}
+
+// ══════════════════════════════════════════════
+// MAP INTERACTION (Pan + Zoom)
+// ══════════════════════════════════════════════
+function setupMapInteraction() {
+  const container = document.getElementById('map-container');
+  const g = document.getElementById('map-g');
+
+  // Center map initially
+  const rect = container.getBoundingClientRect();
+  mapState.x = rect.width / 2;
+  mapState.y = rect.height / 2;
+  applyMapTransform();
+
+  container.addEventListener('mousedown', e => {
+    if(e.target.closest('.planet-node')) return;
+    mapState.dragging = true;
+    mapState.lastX = e.clientX;
+    mapState.lastY = e.clientY;
+  });
+  window.addEventListener('mousemove', e => {
+    if(!mapState.dragging) return;
+    mapState.x += e.clientX - mapState.lastX;
+    mapState.y += e.clientY - mapState.lastY;
+    mapState.lastX = e.clientX;
+    mapState.lastY = e.clientY;
+    applyMapTransform();
+  });
+  window.addEventListener('mouseup', () => mapState.dragging = false);
+  container.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    mapState.scale = Math.max(0.3, Math.min(4, mapState.scale * delta));
+    applyMapTransform();
+  }, {passive:false});
+}
+
+function applyMapTransform() {
+  document.getElementById('map-g').setAttribute('transform',
+    `translate(${mapState.x},${mapState.y}) scale(${mapState.scale})`);
+}
+
+function zoomIn() { mapState.scale = Math.min(4, mapState.scale * 1.2); applyMapTransform(); }
+function zoomOut() { mapState.scale = Math.max(0.3, mapState.scale / 1.2); applyMapTransform(); }
+function resetView() {
+  const rect = document.getElementById('map-container').getBoundingClientRect();
+  mapState.x = rect.width/2; mapState.y = rect.height/2; mapState.scale = 1;
+  applyMapTransform();
+}
+
+// ══════════════════════════════════════════════
+// ADMIN LOGIN
+// ══════════════════════════════════════════════
+function openAdmin() {
+  if(isAdmin) { openAdminModal(); return; }
+  document.getElementById('login-screen').classList.add('open');
+  setTimeout(()=>document.getElementById('admin-password').focus(), 100);
+}
+
+async function doLogin() {
+  const pw = document.getElementById('admin-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = 'Verifying...';
+  try {
+    // Password is checked server-side via SHA-256 hash — never compared in browser
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const result = await res.json();
+    if (result.ok) {
+      isAdmin = true;
+      document.getElementById('login-screen').classList.remove('open');
+      document.getElementById('admin-password').value = '';
+      errEl.textContent = '';
+      openAdminModal();
+      renderAll();
+      showToast('ADMIN ACCESS GRANTED');
+    } else {
+      errEl.textContent = 'Incorrect password';
     }
+  } catch(e) {
+    errEl.textContent = 'Server error — check Cloudflare deployment';
+  }
+}
 
-    async function move53rdBattalion(planetId) {
-        const p = DB.planets.find(pl=>pl.id===planetId);
-        await supabaseClient.from('settings').upsert({ key: 'loc_53rd', value: String(planetId) });
-        await writeLog('53rd Movement', `The 53rd Assault Battalion re-routed flight paths and dropped anchors at ${p ? p.name : 'Target'}.`);
-        showToast('53rd COORDINATES REDEPLOYED');
-        loadAll();
-    }
+function closeLogin() {
+  document.getElementById('login-screen').classList.remove('open');
+  document.getElementById('admin-password').value = '';
+  document.getElementById('login-error').textContent = '';
+}
 
-    function openAdmin() {
-        if(!isAdmin) { document.getElementById('login-screen').style.display = 'flex'; document.getElementById('admin-password').focus(); }
-        else { document.getElementById('admin-modal').classList.add('open'); switchTab('campaign'); }
-    }
-    function closeLogin() { document.getElementById('login-screen').style.display = 'none'; }
-    function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
+// ══════════════════════════════════════════════
+// ADMIN MODAL
+// ══════════════════════════════════════════════
+function openAdminModal() {
+  document.getElementById('admin-modal').classList.add('open');
+  switchTab(activeTab);
+}
 
-    function doLogin() {
-        const pass = document.getElementById('admin-password').value;
-        if(pass === (DB.settings.admin_password || 'changeme')) {
-            isAdmin = true; document.getElementById('login-error').textContent = ''; document.getElementById('admin-password').value = ''; closeLogin(); openAdmin();
-        } else { document.getElementById('login-error').textContent = 'DECRYPTION KEY INCORRECT'; }
-    }
+function closeAdmin() {
+  document.getElementById('admin-modal').classList.remove('open');
+}
 
-    function switchTab(tab) { activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); renderAdminBody(); }
-    
-    function renderAdminBody() {
-        const body = document.getElementById('admin-body');
-        if(activeTab === 'campaign') {
-            body.innerHTML = `
-            <div class="config-step">
-                <div class="config-step-num">AUTONOMOUS SANDBOX CHRONOMETER</div>
-                <div class="form-group">
-                    <label class="form-label">Simulate Global Warzone Timeline</label>
-                    <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
-                        <h2 style="font-family:var(--font-display);color:var(--warn);font-size:28px" id="turn-display">${DB.settings.campaign_turn || 1}</h2>
-                        <button class="btn success" style="flex:1;padding:12px" onclick="modifyTurn(1)">⏩ ADVANCE SANDBOX PHASE CYCLE</button>
-                    </div>
-                </div>
-            </div>`;
-        }
-        if(activeTab === 'log') {
-            body.innerHTML = `
-            <div class="panel-label">Logistics Simulation Feed</div>
-            <div style="display:flex;flex-direction:column;gap:8px;max-height:350px;overflow-y:auto">
-                ${DB.logs.map(l => `<div class="unit-item" style="font-size:12px"><span style="color:var(--warn)">[${l.event_type.toUpperCase()}]</span> ${l.description}</div>`).join('')}
-            </div>`;
-        }
-    }
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.modal-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent.toLowerCase() === tab.toLowerCase() ||
+      (tab==='connections' && t.textContent==='Hyperlanes'));
+  });
+  const body = document.getElementById('admin-body');
+  const renders = {
+    factions: renderFactionsTab,
+    planets: renderPlanetsTab,
+    connections: renderConnectionsTab,
+    units: renderUnitsTab,
+    campaign: renderCampaignTab,
+    log: renderLogTab
+  };
+  (renders[tab] || (() => {}))();
+}
 
-    async function modifyTurn(dir) {
-        if (dir !== 1) return;
-        let currentTurn = parseInt(DB.settings.campaign_turn || 1); let nextTurn = currentTurn + 1;
-        let rep = DB.factions.find(f => f.name === "Galactic Republic"); let cis = DB.factions.find(f => f.name === "Confederacy of Independent Systems");
-        if (!rep || !cis) return;
+// ── FACTIONS TAB ──
+function renderFactionsTab() {
+  const body = document.getElementById('admin-body');
+  body.innerHTML = `
+    <div style="margin-bottom:16px">
+      <button class="btn success" onclick="showAddFactionForm()">+ ADD FACTION</button>
+    </div>
+    <div id="faction-form-area"></div>
+    <table class="admin-table">
+      <thead><tr><th>Faction</th><th>Credits</th><th>Supplies</th><th>Fuel</th><th>Manpower</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${DB.factions.map(f=>`
+          <tr>
+            <td><span style="color:${f.color}">${f.emoji||''}</span> <strong>${f.name}</strong> <span style="color:var(--text-dim)">[${f.shortname}]</span></td>
+            <td>${(f.credits||0).toLocaleString()}</td>
+            <td>${f.supplies||0}</td>
+            <td>${f.fuel||0}</td>
+            <td>${f.manpower||0}</td>
+            <td>
+              <button class="btn" style="padding:3px 8px;font-size:8px" onclick="editFactionResources('${f.id}')">RESOURCES</button>
+              <button class="btn danger" style="padding:3px 8px;font-size:8px;margin-left:4px" onclick="deleteFaction('${f.id}','${f.name}')">DEL</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
 
-        showToast("COMPUTING EXPANDED SECTOR FRONT ENCOUNTERSFront...");
-        let simulationLogs = [];
+function showAddFactionForm() {
+  document.getElementById('faction-form-area').innerHTML = `
+    <div style="background:rgba(0,170,255,0.05);border:1px solid var(--border);border-radius:3px;padding:16px;margin-bottom:16px">
+      <div style="font-family:var(--font-display);font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:14px">NEW FACTION</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="nf-name" placeholder="Galactic Empire"/></div>
+        <div class="form-group"><label class="form-label">Short Name</label><input class="form-input" id="nf-short" placeholder="IMP" maxlength="6"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Color</label><input class="form-input" id="nf-color" type="color" value="#00aaff"/></div>
+        <div class="form-group"><label class="form-label">Emoji</label><input class="form-input" id="nf-emoji" placeholder="⚫" maxlength="4"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Starting Credits</label><input class="form-input" id="nf-credits" type="number" value="1000"/></div>
+        <div class="form-group"><label class="form-label">Manpower</label><input class="form-input" id="nf-manpower" type="number" value="500"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Supplies</label><input class="form-input" id="nf-supplies" type="number" value="100"/></div>
+        <div class="form-group"><label class="form-label">Fuel</label><input class="form-input" id="nf-fuel" type="number" value="100"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="nf-desc" placeholder="Short faction description..."></textarea></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn success" onclick="addFaction()">✓ CREATE FACTION</button>
+        <button class="btn" onclick="document.getElementById('faction-form-area').innerHTML=''">Cancel</button>
+      </div>
+    </div>
+  `;
+}
 
-        let repGain = 0; let cisGain = 0;
-        DB.planets.forEach(p => {
-            let yieldVal = p.credit_yield || 0;
-            if (p.controlling_faction === "Galactic Republic") repGain += yieldVal;
-            else if (p.controlling_faction === "Confederacy of Independent Systems") cisGain += yieldVal;
-            else {
-                let repShare = Math.round(yieldVal * ((p.liberation_pct || 0) / 100));
-                repGain += repShare; cisGain += (yieldVal - repShare);
-            }
-        });
+async function addFaction() {
+  const name = document.getElementById('nf-name').value.trim();
+  const shortname = document.getElementById('nf-short').value.trim().toUpperCase();
+  if(!name||!shortname) { showToast('Name and shortname required','error'); return; }
+  const {error} = await supabase.from('factions').insert({
+    name, shortname,
+    color: document.getElementById('nf-color').value,
+    emoji: document.getElementById('nf-emoji').value,
+    credits: parseInt(document.getElementById('nf-credits').value)||1000,
+    supplies: parseInt(document.getElementById('nf-supplies').value)||100,
+    fuel: parseInt(document.getElementById('nf-fuel').value)||100,
+    manpower: parseInt(document.getElementById('nf-manpower').value)||500,
+    description: document.getElementById('nf-desc').value
+  });
+  if(error) { showToast('Error: '+error.message,'error'); return; }
+  await logEvent('FACTION_ADD', `Faction added: ${name}`);
+  showToast('FACTION CREATED');
+  await loadAll();
+  renderFactionsTab();
+}
 
-        let nextRepCredits = (rep.credits || 0) + repGain; let nextCisCredits = (cis.credits || 0) + cisGain;
+async function deleteFaction(id, name) {
+  if(!confirm(`Delete faction "${name}"? This cannot be undone.`)) return;
+  await supabase.from('factions').delete().eq('id',id);
+  await logEvent('FACTION_DELETE', `Faction deleted: ${name}`);
+  showToast('FACTION DELETED');
+  await loadAll(); renderFactionsTab();
+}
 
-        if (nextCisCredits >= 600) {
-            let eligiblePlanets = DB.planets.filter(p => p.controlling_faction.includes("Confederacy") && p.id !== DB.settings.loc_53rd);
-            if (eligiblePlanets.length) {
-                let targetP = eligiblePlanets[Math.floor(Math.random() * eligiblePlanets.length)];
-                nextCisCredits -= 400;
-                await supabaseClient.from('units').insert([{ name: "CIS Droid Garrison Fleet", faction: "Confederacy of Independent Systems", planet_id: targetP.id, unit_type: "Combat Garrison", size: "Heavy Flotilla" }]);
-                simulationLogs.push("CIS reinforced production shield parameters at the " + targetP.name + " front.");
-            }
-        }
+async function editFactionResources(id) {
+  const f = DB.factions.find(x=>x.id===id);
+  if(!f) return;
+  document.getElementById('faction-form-area').innerHTML = `
+    <div style="background:rgba(0,170,255,0.05);border:1px solid var(--border);border-radius:3px;padding:16px;margin-bottom:16px">
+      <div style="font-family:var(--font-display);font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:14px">EDIT RESOURCES — ${f.name}</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Credits</label><input class="form-input" id="ef-credits" type="number" value="${f.credits}"/></div>
+        <div class="form-group"><label class="form-label">Manpower</label><input class="form-input" id="ef-manpower" type="number" value="${f.manpower}"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Supplies</label><input class="form-input" id="ef-supplies" type="number" value="${f.supplies}"/></div>
+        <div class="form-group"><label class="form-label">Fuel</label><input class="form-input" id="ef-fuel" type="number" value="${f.fuel}"/></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn success" onclick="saveFactionResources('${id}')">✓ SAVE</button>
+        <button class="btn" onclick="document.getElementById('faction-form-area').innerHTML=''">Cancel</button>
+      </div>
+    </div>
+  `;
+}
 
-        let legions = ["501st", "212th", "104th"];
-        let legionNamesMap = { "501st": "501st Legion", "212th": "212th Attack Battalion", "104th": "104th Wolfpack Battalion" };
-        let updatedPlanetMap = new Map();
-        DB.planets.forEach(p => updatedPlanetMap.set(p.id, { ...p }));
+async function saveFactionResources(id) {
+  const {error} = await supabase.from('factions').update({
+    credits: parseInt(document.getElementById('ef-credits').value)||0,
+    supplies: parseInt(document.getElementById('ef-supplies').value)||0,
+    fuel: parseInt(document.getElementById('ef-fuel').value)||0,
+    manpower: parseInt(document.getElementById('ef-manpower').value)||0
+  }).eq('id',id);
+  if(error) { showToast('Error: '+error.message,'error'); return; }
+  showToast('RESOURCES UPDATED');
+  await loadAll(); renderFactionsTab();
+}
 
-        for (let leg of legions) {
-            let currentPlanetId = DB.settings['loc_' + leg]; let p = updatedPlanetMap.get(currentPlanetId);
-            if (!p || currentPlanetId === DB.settings.loc_53rd) continue;
+// ── PLANETS TAB ──
+function renderPlanetsTab() {
+  const body = document.getElementById('admin-body');
+  const factionOptions = ['Neutral', ...DB.factions.map(f=>f.name)].map(n=>`<option value="${n}">${n}</option>`).join('');
+  body.innerHTML = `
+    <div style="margin-bottom:16px">
+      <button class="btn success" onclick="showAddPlanetForm()">+ ADD PLANET</button>
+    </div>
+    <div id="planet-form-area"></div>
+    <table class="admin-table">
+      <thead><tr><th>Planet</th><th>Sector</th><th>Controller</th><th>Yields</th><th>Pos</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${DB.planets.map(p=>`
+          <tr>
+            <td>${p.emoji||'🪐'} <strong>${p.name}</strong></td>
+            <td style="color:var(--text-dim)">${p.sector||'—'}</td>
+            <td style="color:${getFactionColor(p.controlling_faction)}">${p.controlling_faction||'Neutral'}</td>
+            <td style="font-size:10px">🪙${p.credit_yield} 📦${p.supply_yield} ⛽${p.fuel_yield}</td>
+            <td style="font-size:10px;color:var(--text-dim)">${Math.round(p.x)},${Math.round(p.y)}</td>
+            <td>
+              <button class="btn" style="padding:3px 8px;font-size:8px" onclick="editPlanetForm('${p.id}')">EDIT</button>
+              <button class="btn danger" style="padding:3px 8px;font-size:8px;margin-left:4px" onclick="deletePlanet('${p.id}','${p.name}')">DEL</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
 
-            if (p.liberation_pct < 100) {
-                let winChance = 0.50;
-                if (p.strategic_value === "Low") winChance = 0.75;
-                else if (p.strategic_value === "High") winChance = 0.40;
-                else if (p.strategic_value === "Critical") winChance = 0.25;
+function showAddPlanetForm(existingId) {
+  const p = existingId ? DB.planets.find(x=>x.id===existingId) : null;
+  const factionOptions = ['Neutral', ...DB.factions.map(f=>f.name)]
+    .map(n=>`<option value="${n}" ${p?.controlling_faction===n?'selected':''}>${n}</option>`).join('');
+  const svOptions = ['Low','Medium','High','Critical']
+    .map(v=>`<option value="${v}" ${(p?.strategic_value||'Low')===v?'selected':''}>${v}</option>`).join('');
 
-                let isWin = Math.random() < winChance; let libShift = Math.floor(Math.random() * 12) + 8; 
+  document.getElementById('planet-form-area').innerHTML = `
+    <div style="background:rgba(0,170,255,0.05);border:1px solid var(--border);border-radius:3px;padding:16px;margin-bottom:16px">
+      <div style="font-family:var(--font-display);font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:14px">${p?'EDIT PLANET':'NEW PLANET'}</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Planet Name</label><input class="form-input" id="pp-name" value="${p?.name||''}" placeholder="Coruscant"/></div>
+        <div class="form-group"><label class="form-label">Sector</label><input class="form-input" id="pp-sector" value="${p?.sector||''}" placeholder="Core Worlds"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Emoji</label><input class="form-input" id="pp-emoji" value="${p?.emoji||'🪐'}" maxlength="4"/></div>
+        <div class="form-group"><label class="form-label">Strategic Value</label><select class="form-select" id="pp-sv">${svOptions}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Controlling Faction</label><select class="form-select" id="pp-faction">${factionOptions}</select></div>
+        <div class="form-group"><label class="form-label">Credit Yield/Turn</label><input class="form-input" id="pp-credits" type="number" value="${p?.credit_yield||50}"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Supply Yield/Turn</label><input class="form-input" id="pp-supplies" type="number" value="${p?.supply_yield||10}"/></div>
+        <div class="form-group"><label class="form-label">Fuel Yield/Turn</label><input class="form-input" id="pp-fuel" type="number" value="${p?.fuel_yield||10}"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Map X Position</label><input class="form-input" id="pp-x" type="number" value="${p?.x||Math.round(Math.random()*400-200)}" placeholder="e.g. 100"/></div>
+        <div class="form-group"><label class="form-label">Map Y Position</label><input class="form-input" id="pp-y" type="number" value="${p?.y||Math.round(Math.random()*300-150)}" placeholder="e.g. -50"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="pp-desc">${p?.description||''}</textarea></div>
+      <div class="config-note" style="margin-bottom:12px">💡 X/Y are relative to center (0,0). Spread planets out across ~-400 to +400 range. Pan &amp; zoom the map to see where they land.</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn success" onclick="${p?`updatePlanet('${p.id}')`:'addPlanet()'}">${p?'✓ SAVE CHANGES':'✓ ADD PLANET'}</button>
+        <button class="btn" onclick="document.getElementById('planet-form-area').innerHTML=''">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('planet-form-area').scrollIntoView({behavior:'smooth'});
+}
 
-                if (isWin) {
-                    p.liberation_pct = Math.min(100, (p.liberation_pct || 0) + libShift);
-                    simulationLogs.push(`The ${legionNamesMap[leg]} broke droid perimeter walls on ${p.name} (+${libShift}%).`);
-                } else {
-                    p.liberation_pct = Math.max(0, (p.liberation_pct || 0) - Math.floor(libShift / 2));
-                    simulationLogs.push(`The ${legionNamesMap[leg]} reported structural attrition maneuvers against heavy shielding at ${p.name}.`);
-                }
+function editPlanetForm(id) { showAddPlanetForm(id); }
 
-                if (p.liberation_pct >= 100) { p.controlling_faction = "Galactic Republic"; }
-                else if (p.liberation_pct <= 0) { p.controlling_faction = "Confederacy of Independent Systems"; }
-            }
-        }
+async function addPlanet() {
+  const name = document.getElementById('pp-name').value.trim();
+  if(!name) { showToast('Planet name required','error'); return; }
+  const {error} = await supabase.from('planets').insert({
+    name, sector: document.getElementById('pp-sector').value,
+    emoji: document.getElementById('pp-emoji').value||'🪐',
+    strategic_value: document.getElementById('pp-sv').value,
+    controlling_faction: document.getElementById('pp-faction').value,
+    credit_yield: parseInt(document.getElementById('pp-credits').value)||50,
+    supply_yield: parseInt(document.getElementById('pp-supplies').value)||10,
+    fuel_yield: parseInt(document.getElementById('pp-fuel').value)||10,
+    x: parseFloat(document.getElementById('pp-x').value)||0,
+    y: parseFloat(document.getElementById('pp-y').value)||0,
+    description: document.getElementById('pp-desc').value
+  });
+  if(error) { showToast('Error: '+error.message,'error'); return; }
+  await logEvent('PLANET_ADD', `Planet added: ${name}`);
+  showToast('PLANET ADDED');
+  await loadAll(); renderPlanetsTab();
+}
 
-        DB.planets.forEach(p => {
-            if (p.id === DB.settings.loc_53rd || p.id === DB.settings.loc_501st || p.id === DB.settings.loc_212th || p.id === DB.settings.loc_104th) return;
-            let currentPlan = updatedPlanetMap.get(p.id);
-            if (currentPlan && currentPlan.liberation_pct > 0 && currentPlan.liberation_pct < 100) {
-                currentPlan.liberation_pct = Math.max(0, currentPlan.liberation_pct - (Math.floor(Math.random() * 5) + 2));
-                if(currentPlan.liberation_pct <= 0) currentPlan.controlling_faction = "Confederacy of Independent Systems";
-            }
-        });
+async function updatePlanet(id) {
+  const name = document.getElementById('pp-name').value.trim();
+  const {error} = await supabase.from('planets').update({
+    name, sector: document.getElementById('pp-sector').value,
+    emoji: document.getElementById('pp-emoji').value||'🪐',
+    strategic_value: document.getElementById('pp-sv').value,
+    controlling_faction: document.getElementById('pp-faction').value,
+    credit_yield: parseInt(document.getElementById('pp-credits').value)||50,
+    supply_yield: parseInt(document.getElementById('pp-supplies').value)||10,
+    fuel_yield: parseInt(document.getElementById('pp-fuel').value)||10,
+    x: parseFloat(document.getElementById('pp-x').value)||0,
+    y: parseFloat(document.getElementById('pp-y').value)||0,
+    description: document.getElementById('pp-desc').value
+  }).eq('id',id);
+  if(error) { showToast('Error: '+error.message,'error'); return; }
+  showToast('PLANET UPDATED');
+  await loadAll(); renderPlanetsTab();
+}
 
-        for (let [pid, pData] of updatedPlanetMap.entries()) {
-            await supabaseClient.from('planets').update({ liberation_pct: pData.liberation_pct, controlling_faction: pData.controlling_faction }).eq('id', pid);
-        }
+async function deletePlanet(id, name) {
+  if(!confirm(`Delete planet "${name}"?`)) return;
+  await supabase.from('planets').delete().eq('id',id);
+  await supabase.from('units').delete().eq('planet_id',id);
+  await logEvent('PLANET_DELETE', `Planet deleted: ${name}`);
+  showToast('PLANET DELETED');
+  await loadAll(); renderPlanetsTab();
+}
 
-        for (let leg of legions) {
-            let currentPlanetId = DB.settings['loc_' + leg]; let currentPlan = updatedPlanetMap.get(currentPlanetId);
-            if (!currentPlan) continue;
+function quickEditPlanet(id) {
+  closeAdmin();
+  openAdminModal();
+  switchTab('planets');
+  setTimeout(()=>editPlanetForm(id), 100);
+}
 
-            if (currentPlan.liberation_pct >= 100) {
-                let routes = DB.connections.filter(c => c.planet_a === currentPlan.name || c.planet_b === currentPlan.name);
-                let neighborNames = routes.map(c => c.planet_a === currentPlan.name ? c.planet_b : c.planet_a);
-                let options = DB.planets.filter(p => neighborNames.includes(p.name) && p.id !== DB.settings.loc_53rd && p.liberation_pct < 100);
-                
-                if (options.length) {
-                    options.sort((x, y) => getSVSize(y.strategic_value) - getSVSize(x.strategic_value));
-                    let nextDest = options[0];
-                    await supabaseClient.from('settings').upsert({ key: 'loc_' + leg, value: String(nextDest.id) });
-                    simulationLogs.push(`The ${legionNamesMap[leg]} completed orbital tracking sweeps and jumped vectors toward ${nextDest.name}.`);
-                }
-            }
-        }
+// ── HYPERLANES (Connections) TAB ──
+function renderConnectionsTab() {
+  const body = document.getElementById('admin-body');
+  const planetOptions = DB.planets.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  body.innerHTML = `
+    <div style="background:rgba(0,170,255,0.05);border:1px solid var(--border);border-radius:3px;padding:16px;margin-bottom:16px">
+      <div style="font-family:var(--font-display);font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:14px">ADD HYPERLANE CONNECTION</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">System A</label><select class="form-select" id="cn-a">${planetOptions}</select></div>
+        <div class="form-group"><label class="form-label">System B</label><select class="form-select" id="cn-b">${planetOptions}</select></div>
+      </div>
+      <button class="btn success" onclick="addConnection()">+ ADD CONNECTION</button>
+    </div>
+    <table class="admin-table">
+      <thead><tr><th>System A</th><th>System B</th><th>Action</th></tr></thead>
+      <tbody>
+        ${DB.connections.map(c=>`
+          <tr>
+            <td>${c.planet_a}</td>
+            <td>${c.planet_b}</td>
+            <td><button class="btn danger" style="padding:3px 8px;font-size:8px" onclick="deleteConnection('${c.id}')">REMOVE</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
 
-        await supabaseClient.from('factions').update({ credits: nextRepCredits }).eq('name', 'Galactic Republic');
-        await supabaseClient.from('factions').update({ credits: nextCisCredits }).eq('name', 'Confederacy of Independent Systems');
-        await supabaseClient.from('settings').upsert({ key: 'campaign_turn', value: String(nextTurn) });
+async function addConnection() {
+  const a = document.getElementById('cn-a').value;
+  const b = document.getElementById('cn-b').value;
+  if(a===b) { showToast('Select two different systems','error'); return; }
+  const exists = DB.connections.find(c=>(c.planet_a===a&&c.planet_b===b)||(c.planet_a===b&&c.planet_b===a));
+  if(exists) { showToast('Connection already exists','error'); return; }
+  await supabase.from('planet_connections').insert({planet_a:a, planet_b:b});
+  showToast('HYPERLANE ADDED');
+  await loadAll(); renderConnectionsTab();
+}
 
-        for (let simLog of simulationLogs) { await writeLog("Campaign Sim", simLog); }
-        loadAll();
-    }
+async function deleteConnection(id) {
+  await supabase.from('planet_connections').delete().eq('id',id);
+  showToast('CONNECTION REMOVED');
+  await loadAll(); renderConnectionsTab();
+}
+
+// ── UNITS TAB ──
+function renderUnitsTab() {
+  const body = document.getElementById('admin-body');
+  const factionOptions = DB.factions.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+  const planetOptions = DB.planets.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  body.innerHTML = `
+    <div style="margin-bottom:16px">
+      <button class="btn success" onclick="showAddUnitForm()">+ DEPLOY UNIT</button>
+    </div>
+    <div id="unit-form-area"></div>
+    <table class="admin-table">
+      <thead><tr><th>Unit</th><th>Faction</th><th>Location</th><th>Status</th><th>Strength</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${DB.units.map(u=>{
+          const planet = DB.planets.find(p=>p.id===u.planet_id);
+          return `<tr>
+            <td><strong>${u.name}</strong><br><span style="color:var(--text-dim);font-size:10px">${u.size||''} ${u.unit_type||''}</span></td>
+            <td>${u.faction}</td>
+            <td>${planet?.name||'Unknown'}</td>
+            <td><span class="unit-status status-${u.status}">${u.status}</span></td>
+            <td>${u.strength||100}%</td>
+            <td>
+              <button class="btn" style="padding:3px 8px;font-size:8px" onclick="editUnitForm('${u.id}')">EDIT</button>
+              <button class="btn danger" style="padding:3px 8px;font-size:8px;margin-left:4px" onclick="deleteUnit('${u.id}','${u.name}')">DEL</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function showAddUnitForm(existingId) {
+  const u = existingId ? DB.units.find(x=>x.id===existingId) : null;
+  const factionOptions = DB.factions.map(f=>`<option value="${f.name}" ${u?.faction===f.name?'selected':''}>${f.name}</option>`).join('');
+  const planetOptions = DB.planets.map(p=>`<option value="${p.id}" ${u?.planet_id===p.id?'selected':''}>${p.name}</option>`).join('');
+  const statusOptions = ['Active','Engaged','Reserve','Retreating','Destroyed'].map(s=>`<option value="${s}" ${(u?.status||'Active')===s?'selected':''}>${s}</option>`).join('');
+  const typeOptions = ['Infantry','Armor','Artillery','Air','Naval','Special Forces','Support','HQ'].map(t=>`<option value="${t}" ${u?.unit_type===t?'selected':''}>${t}</option>`).join('');
+  const sizeOptions = ['Fireteam','Squad','Platoon','Company','Battalion','Regiment'].map(s=>`<option value="${s}" ${u?.size===s?'selected':''}>${s}</option>`).join('');
+
+  document.getElementById('unit-form-area').innerHTML = `
+    <div style="background:rgba(0,170,255,0.05);border:1px solid var(--border);border-radius:3px;padding:16px;margin-bottom:16px">
+      <div style="font-family:var(--font-display);font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:14px">${u?'EDIT UNIT':'DEPLOY UNIT'}</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Unit Name</label><input class="form-input" id="uu-name" value="${u?.name||''}" placeholder="187th Legion"/></div>
+        <div class="form-group"><label class="form-label">Faction</label><select class="form-select" id="uu-faction">${factionOptions}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Unit Type</label><select class="form-select" id="uu-type">${typeOptions}</select></div>
+        <div class="form-group"><label class="form-label">Size</label><select class="form-select" id="uu-size">${sizeOptions}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Location (Planet)</label><select class="form-select" id="uu-planet">${planetOptions}</select></div>
+        <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="uu-status">${statusOptions}</select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Strength (0-100)</label><input class="form-input" id="uu-strength" type="number" min="0" max="100" value="${u?.strength||100}"/></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="uu-notes">${u?.notes||''}</textarea></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn success" onclick="${u?`updateUnit('${u.id}')`:'addUnit()'}">${u?'✓ SAVE':'✓ DEPLOY'}</button>
+        <button class="btn" onclick="document.getElementById('unit-form-area').innerHTML=''">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
+function editUnitForm(id) { showAddUnitForm(id); }
+
+async function addUnit() {
+  const name = document.getElementById('uu-name').value.trim();
+  if(!name) { showToast('Unit name required','error'); return; }
+  const {error} = await supabase.from('units').insert({
+    name, faction: document.getElementById('uu-faction').value,
+    unit_type: document.getElementById('uu-type').value,
+    size: document.getElementById('uu-size').value,
+    planet_id: document.getElementById('uu-planet').value || null,
+    status: document.getElementById('uu-status').value,
+    strength: parseInt(document.getElementById('uu-strength').value)||100,
+    notes: document.getElementById('uu-notes').value
+  });
+  if(error) { showToast('Error: '+error.message,'error'); return; }
+  await logEvent('UNIT_DEPLOY', `Unit deployed: ${name}`);
+  showToast('UNIT DEPLOYED');
+  await loadAll(); renderUnitsTab();
+}
+
+async function updateUnit(id) {
+  const {error} = await supabase.from('units').update({
+    name: document.getElementById('uu-name').value,
+    faction: document.getElementById('uu-faction').value,
+    unit_type: document.getElementById('uu-type').value,
+    size: document.getElementById('uu-size').value,
+    planet_id: document.getElementById('uu-planet').value || null,
+    status: document.getElementById('uu-status').value,
+    strength: parseInt(document.getElementById('uu-strength').value)||100,
+    notes: document.getElementById('uu-notes').value
+  }).eq('id',id);
+  if(error) { showToast('Error: '+error.message,'error'); return; }
+  showToast('UNIT UPDATED');
+  await loadAll(); renderUnitsTab();
+}
+
+async function deleteUnit(id, name) {
+  if(!confirm(`Disband unit "${name}"?`)) return;
+  await supabase.from('units').delete().eq('id',id);
+  await logEvent('UNIT_DISBAND', `Unit disbanded: ${name}`);
+  showToast('UNIT DISBANDED');
+  await loadAll(); renderUnitsTab();
+}
+
+// ── CAMPAIGN TAB ──
+function renderCampaignTab() {
+  const body = document.getElementById('admin-body');
+  body.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div style="background:rgba(0,170,255,0.05);border:1px solid var(--border);border-radius:3px;padding:16px">
+        <div style="font-family:var(--font-display);font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:14px">CAMPAIGN SETTINGS</div>
+        <div class="form-group"><label class="form-label">Campaign Name</label>
+          <input class="form-input" id="cs-name" value="${DB.settings.campaign_name||''}"/></div>
+        <div class="form-group"><label class="form-label">Era / Setting</label>
+          <input class="form-input" id="cs-era" value="${DB.settings.campaign_era||''}"/></div>
+        <div class="form-group"><label class="form-label">Admin Password</label>
+          <input class="form-input" id="cs-pw" type="password" placeholder="Leave blank to keep current"/></div>
+        <button class="btn success" onclick="saveCampaignSettings()">✓ SAVE SETTINGS</button>
+      </div>
+
+      <div style="background:rgba(0,170,255,0.05);border:1px solid var(--border);border-radius:3px;padding:16px">
+        <div style="font-family:var(--font-display);font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:14px">TURN MANAGEMENT — Current: Turn ${DB.settings.campaign_turn||1}</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn warn" onclick="advanceTurn()">⏭ ADVANCE TURN</button>
+          <button class="btn success" onclick="collectIncome()">💰 COLLECT TERRITORY INCOME</button>
+        </div>
+        <div class="config-note" style="margin-top:10px">Collecting income adds credit/supply/fuel yields from all controlled territories to their faction totals.</div>
+      </div>
+
+      <div style="background:rgba(0,170,255,0.05);border:1px solid var(--border);border-radius:3px;padding:16px">
+        <div style="font-family:var(--font-display);font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:14px">RECONNECT DATABASE</div>
+        <button class="btn danger" onclick="clearConfig()">🔌 CLEAR CONNECTION & RECONFIGURE</button>
+        <div class="config-note" style="margin-top:8px">Use this to switch to a different Supabase project.</div>
+      </div>
+    </div>
+  `;
+}
+
+async function saveCampaignSettings() {
+  const name = document.getElementById('cs-name').value;
+  const era = document.getElementById('cs-era').value;
+  const pw = document.getElementById('cs-pw').value;
+  await supabase.from('settings').upsert([
+    {key:'campaign_name', value:name},
+    {key:'campaign_era', value:era},
+  ]);
+  // Password lives in Cloudflare env var ADMIN_PASSWORD_HASH, not the DB
+  if(pw) showToast('To change password: update ADMIN_PASSWORD_HASH in Cloudflare Pages dashboard');
+  showToast('SETTINGS SAVED');
+  await loadAll(); renderCampaignTab();
+}
+
+async function advanceTurn() {
+  const current = parseInt(DB.settings.campaign_turn||'1');
+  const next = current + 1;
+  await supabase.from('settings').upsert([{key:'campaign_turn', value:String(next)}]);
+  await logEvent('TURN', `Campaign advanced to Turn ${next}`);
+  showToast(`TURN ${next} BEGINS`);
+  await loadAll(); renderCampaignTab();
+}
+
+async function collectIncome() {
+  let summary = [];
+  for(const planet of DB.planets) {
+    if(!planet.controlling_faction || planet.controlling_faction === 'Neutral') continue;
+    const faction = DB.factions.find(f=>f.name===planet.controlling_faction);
+    if(!faction) continue;
+    await supabase.from('factions').update({
+      credits: (faction.credits||0) + (planet.credit_yield||0),
+      supplies: (faction.supplies||0) + (planet.supply_yield||0),
+      fuel: (faction.fuel||0) + (planet.fuel_yield||0)
+    }).eq('id', faction.id);
+    summary.push(`${faction.name}: +${planet.credit_yield}cr +${planet.supply_yield}sup +${planet.fuel_yield}fuel`);
+  }
+  await logEvent('INCOME', `Territory income collected. ${summary.length} planets processed.`);
+  showToast('INCOME COLLECTED');
+  await loadAll(); renderCampaignTab();
+}
+
+function clearConfig() {
+  if(!confirm('Clear Supabase connection? You will need to re-enter your credentials.')) return;
+  localStorage.removeItem('sw_supabase_url');
+  localStorage.removeItem('sw_supabase_key');
+  location.reload();
+}
+
+// ── LOG TAB ──
+function renderLogTab() {
+  const body = document.getElementById('admin-body');
+  body.innerHTML = `
+    <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:11px;color:var(--text-dim)">Last 50 events</span>
+      <button class="btn" onclick="addManualLog()">+ LOG EVENT</button>
+    </div>
+    <div id="log-form-area"></div>
+    <table class="admin-table">
+      <thead><tr><th>Time</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        ${DB.logs.map(l=>`
+          <tr>
+            <td style="color:var(--text-dim);font-size:10px;white-space:nowrap">${l.created_at?.slice(0,16)||'—'}</td>
+            <td><span style="font-family:var(--font-display);font-size:9px;color:var(--accent)">${l.event_type}</span></td>
+            <td style="font-size:12px">${l.description}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function addManualLog() {
+  document.getElementById('log-form-area').innerHTML = `
+    <div style="background:rgba(0,170,255,0.05);border:1px solid var(--border);border-radius:3px;padding:14px;margin-bottom:14px">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Event Type</label><input class="form-input" id="ml-type" placeholder="BATTLE, TREATY, etc."/></div>
+        <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="ml-desc" placeholder="What happened..."/></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn success" onclick="submitManualLog()">✓ LOG</button>
+        <button class="btn" onclick="document.getElementById('log-form-area').innerHTML=''">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
+async function submitManualLog() {
+  const type = document.getElementById('ml-type').value.toUpperCase();
+  const desc = document.getElementById('ml-desc').value;
+  if(!type||!desc) return;
+  await logEvent(type, desc, 'Admin');
+  showToast('EVENT LOGGED');
+  await loadAll(); renderLogTab();
+}
+
+// ══════════════════════════════════════════════
+// CAPTURE MODAL
+// ══════════════════════════════════════════════
+function openCaptureModal(planetId) {
+  const planet = DB.planets.find(p=>p.id===planetId);
+  if(!planet) return;
+  const factionOptions = ['Neutral', ...DB.factions.map(f=>f.name)]
+    .map(n=>`<option value="${n}" ${planet.controlling_faction===n?'selected':''}>${n}</option>`).join('');
+
+  document.getElementById('capture-body').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:24px">${planet.emoji||'🪐'}</div>
+      <div style="font-family:var(--font-display);font-size:13px;color:var(--text-bright);margin:8px 0">${planet.name}</div>
+      <div style="font-size:11px;color:var(--text-dim)">Currently controlled by: <strong style="color:${getFactionColor(planet.controlling_faction)}">${planet.controlling_faction}</strong></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">New Controlling Faction</label>
+      <select class="form-select" id="cap-faction">${factionOptions}</select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Battle Notes (optional)</label>
+      <textarea class="form-textarea" id="cap-notes" placeholder="How was this planet taken?"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn warn" style="flex:1" onclick="doCapture('${planetId}','${planet.name}','${planet.controlling_faction}')">⚔ CONFIRM CAPTURE</button>
+      <button class="btn" onclick="closeCaptureModal()">Cancel</button>
+    </div>
+  `;
+  document.getElementById('capture-modal').classList.add('open');
+}
+
+function closeCaptureModal() {
+  document.getElementById('capture-modal').classList.remove('open');
+}
+
+async function doCapture(planetId, planetName, oldFaction) {
+  const newFaction = document.getElementById('cap-faction').value;
+  const notes = document.getElementById('cap-notes').value;
+  const {error} = await supabase.from('planets').update({controlling_faction: newFaction}).eq('id', planetId);
+  if(error) { showToast('Error: '+error.message,'error'); return; }
+  await logEvent('CAPTURE', `${planetName} captured by ${newFaction} from ${oldFaction}. ${notes}`);
+  showToast(`${planetName.toUpperCase()} CAPTURED`);
+  closeCaptureModal();
+  await loadAll();
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+async function logEvent(type, description, issuedBy='Admin') {
+  await supabase.from('campaign_log').insert({event_type:type, description, issued_by:issuedBy});
+}
+
+let toastTimeout;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' '+type : '');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(()=>t.className='', 2500);
+}
+
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
+checkConfig();
 </script>
 </body>
 </html>
