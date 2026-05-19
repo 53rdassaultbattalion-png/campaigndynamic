@@ -4,12 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>53rd Tactical Command</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>53rd Tactical Command</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -39,1082 +33,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 .btn.ok:hover{background:rgba(0,255,136,0.08);}
 .btn.red{border-color:rgba(255,51,51,0.4);color:var(--danger);}
 .btn.red:hover{background:rgba(255,51,51,0.08);}
-.btn.toggle-on {background:rgba(0,238,255,0.15);border-color:var(--accent2);color:var(--text-bright);}
-
-#left{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
-.panel-section{border-bottom:1px solid var(--border);padding:12px 14px;flex-shrink:0;}
-.panel-section.scrollable{overflow-y:auto;flex:1;}
-.sec-label{font-family:var(--fd);font-size:9px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;}
-
-.faction-card{background:rgba(255,255,255,0.015);border:1px solid var(--border);border-radius:3px;padding:10px 12px;margin-bottom:8px;}
-.faction-card:last-child{margin-bottom:0;}
-.fc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-.fc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.fc-name{font-family:var(--fd);font-size:10px;letter-spacing:1px;color:var(--text-bright);text-transform:uppercase;}
-.fc-creds{font-family:var(--fd);font-size:14px;color:var(--accent2);font-weight:700;text-shadow:0 0 8px rgba(0,238,255,0.3);}
-.fc-bar-wrap{width:100%;height:2px;background:rgba(255,255,255,0.05);border-radius:1px;margin:4px 0 6px;}
-.fc-bar{height:100%;border-radius:1px;transition:width 0.4s;}
-.fc-terr{font-size:11px;color:var(--text-dim);}
-.fc-terr span{color:var(--text);font-weight:600;}
-
-.accord{border:1px solid var(--border);border-radius:3px;margin-bottom:8px;overflow:hidden;}
-.accord-hd{font-family:var(--fd);font-size:9px;letter-spacing:2px;padding:10px 12px;background:rgba(0,160,255,0.03);color:var(--accent2);display:flex;justify-content:space-between;align-items:center;cursor:pointer;text-transform:uppercase;}
-.accord-hd:hover{background:rgba(0,160,255,0.08);}
-.accord-body{padding:8px;display:none;}
-.accord-body.open{display:block;}
-.sub-accord{border:1px solid rgba(0,160,255,0.06);border-radius:2px;margin-bottom:6px;}
-.sub-hd{font-family:var(--fd);font-size:8px;letter-spacing:1px;padding:7px 10px;color:var(--text);display:flex;justify-content:space-between;align-items:center;cursor:pointer;text-transform:uppercase;}
-.sub-hd:hover{color:var(--accent);}
-.sub-body{padding:6px;display:none;}
-.sub-body.open{display:block;}
-.shop-row{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;border:1px solid rgba(0,160,255,0.07);border-radius:2px;margin-bottom:4px;font-size:12px;cursor:pointer;transition:all 0.15s;background:rgba(255,255,255,0.01);}
-.shop-row:hover{background:rgba(0,160,255,0.07);border-color:var(--accent);}
-.shop-cost{color:var(--warn);font-family:var(--fd);font-size:10px;font-weight:700;}
-.shop-strike{text-decoration:line-through;color:var(--text-dim);font-size:9px;margin-right:3px;}
-.tech-card{background:rgba(0,4,14,0.6);border:1px solid var(--border);padding:9px 10px;border-radius:2px;margin-bottom:6px;}
-.tech-card.on{border-color:rgba(0,255,136,0.2);background:rgba(0,255,136,0.02);}
-.tech-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:4px;}
-.tech-name{font-family:var(--fd);font-size:10px;color:var(--text-bright);text-transform:uppercase;letter-spacing:0.5px;line-height:1.2;}
-.tech-desc{font-size:11px;color:var(--text-dim);line-height:1.4;}
-.tech-badge{font-family:var(--fd);font-size:7px;padding:2px 6px;border-radius:2px;flex-shrink:0;}
-.tech-badge.active{background:rgba(0,255,136,0.1);color:var(--success);border:1px solid rgba(0,255,136,0.3);}
-.tech-badge.locked{background:rgba(255,170,0,0.08);color:var(--warn);border:1px solid rgba(255,170,0,0.2);}
-
-#map-wrap{position:relative;overflow:hidden;background:#00010a;}
-#galactic-canvas{display:block;width:100%;height:100%;}
-#map-controls{position:absolute;bottom:16px;left:16px;display:flex;gap:6px;}
-.map-btn{width:30px;height:30px;background:var(--panel);border:1px solid var(--border);color:var(--accent);font-size:14px;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
-.map-btn:hover{border-color:var(--border-bright);color:var(--text-bright);}
-#map-legend{position:absolute;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:3px;font-size:11px;}
-.leg-title{font-family:var(--fd);font-size:8px;letter-spacing:2px;color:var(--text-dim);margin-bottom:7px;text-transform:uppercase;}
-.leg-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;color:var(--text);}
-.leg-dot{width:7px;height:7px;border-radius:50%;}
-
-#right{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
-#detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-dim);padding:20px;text-align:center;}
-.d-icon{font-size:40px;opacity:0.15;animation:bob 4s ease-in-out infinite;}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-.d-hint{font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
-#detail-content{display:none;flex-direction:column;flex:1;overflow:hidden;}
-#detail-content.vis{display:flex;}
-
-.d-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.d-sector-tag{font-family:var(--fd);font-size:9px;letter-spacing:3px;color:var(--accent2);background:rgba(0,180,255,0.08);padding:3px 8px;border-left:2px solid var(--accent);margin-bottom:10px;text-transform:uppercase;display:inline-block;}
-.sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:5px;margin-bottom:12px;}
-.sg-node{display:flex;flex-direction:column;align-items:center;padding:5px 3px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.04);border-radius:2px;cursor:pointer;transition:all 0.15s;text-align:center;}
-.sg-node:hover{background:rgba(0,160,255,0.07);border-color:var(--accent);}
-.sg-node.cur{border-color:var(--accent2);background:rgba(0,40,80,0.3);}
-.sg-name{font-size:9px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
-.sg-dot{width:4px;height:4px;border-radius:50%;margin-top:3px;}
-.planet-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
-.d-name{font-family:var(--fd);font-size:15px;letter-spacing:2px;color:var(--text-bright);text-transform:uppercase;}
-.d-faction-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:2px;border:1px solid currentColor;font-family:var(--fd);font-size:9px;letter-spacing:1px;background:rgba(255,255,255,0.02);margin-top:6px;}
-.hq-badges{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
-.hq-badge{display:inline-flex;align-items:center;font-family:var(--fd);font-size:8px;letter-spacing:1px;padding:3px 8px;border-radius:2px;border:1px solid;width:fit-content;}
-.lib-box{margin-top:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,160,255,0.08);padding:8px 10px;border-radius:2px;}
-.lib-meta{display:flex;justify-content:space-between;font-family:var(--fd);font-size:8px;letter-spacing:1px;margin-bottom:4px;}
-.lib-outer{width:100%;height:5px;background:rgba(255,51,51,0.25);border-radius:1px;overflow:hidden;}
-.lib-inner{height:100%;background:var(--accent);border-radius:1px;transition:width 0.5s cubic-bezier(.1,.8,.2,1);box-shadow:0 0 8px var(--accent);}
-.d-scroll{overflow-y:auto;flex:1;}
-.d-section{padding:12px 16px;border-bottom:1px solid var(--border);}
-.d-sec-title{font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase;}
-.d-row{display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px;}
-.d-key{color:var(--text-dim);}
-.d-val{color:var(--text-bright);font-weight:600;}
-.d-val.green{font-family:var(--fd);color:var(--success);}
-.d-actions{padding:12px 16px;margin-top:auto;display:flex;flex-direction:column;gap:6px;flex-shrink:0;border-top:1px solid var(--border);}
-
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
-.overlay.open{display:flex;}
-.modal{background:#020c1a;border:1px solid var(--border-bright);border-radius:4px;width:480px;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,160,255,0.15);}
-.modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.modal-title{font-family:var(--fd);font-size:11px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;}
-.modal-x{background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;line-height:1;}
-.modal-tabs{display:flex;padding:0 20px;border-bottom:1px solid var(--border);background:#010810;flex-shrink:0;}
-.mtab{font-family:var(--fd);font-size:9px;letter-spacing:2px;padding:12px 16px;cursor:pointer;color:var(--text-dim);border-bottom:2px solid transparent;text-transform:uppercase;}
-.mtab.on{color:var(--accent);border-bottom-color:var(--accent);}
-.modal-body{overflow-y:auto;padding:20px;flex:1;}
-.modal-ft{padding:10px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;flex-shrink:0;}
-
-#login-screen{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
-#login-screen.open{open:flex;}
-.login-box{background:#020c1a;border:1px solid var(--border-bright);border-radius:4px;padding:32px;width:340px;box-shadow:0 0 40px rgba(0,160,255,0.2);text-align:center;}
-.login-title{font-family:var(--fd);font-size:13px;letter-spacing:3px;color:var(--accent);margin-bottom:4px;text-transform:uppercase;}
-.login-sub{font-size:11px;color:var(--text-dim);margin-bottom:20px;}
-.form-group{margin-bottom:14px;text-align:left;}
-.form-label{font-size:11px;color:var(--text-dim);display:block;margin-bottom:4px;}
-.form-input{width:100%;background:rgba(0,0,0,0.5);border:1px solid var(--border);color:var(--text-bright);padding:9px 12px;border-radius:2px;font-size:13px;outline:none;}
-.form-input:focus{border-color:var(--accent);}
-.login-err{color:var(--danger);font-size:11px;margin-top:10px;min-height:16px;font-family:var(--fd);}
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#020c1a;border:1px solid var(--border-bright);color:var(--accent);font-family:var(--fd);font-size:10px;letter-spacing:2px;padding:10px 20px;border-radius:3px;z-index:9000;transition:transform 0.3s cubic-bezier(.175,.885,.32,1.275);white-space:nowrap;}
-#toast.show{transform:translateX(-50%) translateY(0);}
-#toast.err{border-color:rgba(255,51,51,0.5);color:var(--danger);}
-::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px;}
-</style>
-</head>
-<body>
-
-<div id="login-screen">
-  <div class="login-box">
-    <div style="font-size:36px;margin-bottom:12px">🔐</div>
-    <div class="login-title">Terminal Override</div>
-    <div class="login-sub">Commander authentication required</div>
-    <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="lg-email" type="email" value="admin@53rdassaultbattalion.com"></div>
-    <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="lg-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="btn" style="width:100%" onclick="doLogin()">AUTHORIZE</button>
-    <div class="login-err" id="lg-err"></div>
-    <button class="btn" style="width:100%;margin-top:6px;border-color:transparent;color:var(--text-dim)" onclick="closeLogin()">ABORT</button>
-  </div>
-</div>
-
-<div class="overlay" id="admin-modal">
-  <div class="modal">
-    <div class="modal-hd">
-      <span class="modal-title">⚙ Strategic Control Panel</span>
-      <button class="modal-x" onclick="closeAdmin()">✕</button>
-    </div>
-    <div class="modal-tabs">
-      <div class="mtab on" id="mtab-controls" onclick="switchMTab('controls')">Controls</div>
-      <div class="mtab" id="mtab-log" onclick="switchMTab('log')">Sim Feed</div>
-    </div>
-    <div class="modal-body" id="admin-body"></div>
-    <div class="modal-ft"><button class="btn red" onclick="doLogout()">DISCONNECT</button></div>
-  </div>
-</div>
-
-<div id="layout">
-  <header>
-    <div>
-      <div class="h-title" id="h-name">53rd Tactical Command</div>
-      <div class="h-sub" id="h-era">Clone Wars Theater</div>
-    </div>
-    <div class="h-phase" id="h-phase">PHASE 1</div>
-    <div class="h-right">
-      <button class="btn" id="admin-btn" onclick="openAdmin()">⚙ TERMINAL OVERRIDE</button>
-    </div>
-  </header>
-
-  <div id="left">
-    <div class="panel-section">
-      <div class="sec-label">Faction Treasury</div>
-      <div id="faction-list"></div>
-    </div>
-    <div class="panel-section scrollable">
-      <div class="accord">
-        <div class="accord-hd" onclick="togAccord('shop-body','shop-icon')">
-          <span>📦 Vehicle Requisition</span><span id="shop-icon">▼</span>
-        </div>
-        <div class="accord-body open" id="shop-body">
-          <div class="sub-accord">
-            <div class="sub-hd" onclick="togSub('land-body','land-icon')"><span>🚜 Land</span><span id="land-icon">▶</span></div>
-            <div class="sub-body" id="land-body">
-              <div class="shop-row" onclick="buyAsset('BARC Speeder',50,'ground')"><span>BARC Speeder</span><span class="shop-cost" id="c-barc">50c</span></div>
-              <div class="shop-row" onclick="buyAsset('ITT Transport',150,'ground')"><span>ITT Transport</span><span class="shop-cost" id="c-itt">150c</span></div>
-              <div class="shop-row" onclick="buyAsset('TX-130 Tank',250,'ground')"><span>TX-130 Tank</span><span class="shop-cost" id="c-tx130">250c</span></div>
-              <div class="shop-row" onclick="buyAsset('AT-TE Walker',750,'ground')"><span>AT-TE Walker</span><span class="shop-cost" id="c-atte">750c</span></div>
-            </div>
-          </div>
-          <div class="sub-accord">
-            <div class="sub-hd" onclick="togSub('air-body','air-icon')"><span>🛸 Air</span><span id="air-icon">▶</span></div>
-            <div class="sub-body" id="air-body">
-              <div class="shop-row" onclick="buyAsset('LAAT/i Gunship',350,'air')"><span>LAAT/i Gunship</span><span class="shop-cost" id="c-laati">350c</span></div>
-              <div class="shop-row" onclick="buyAsset('LAAT/c Carrier',500,'air')"><span>LAAT/c Carrier</span><span class="shop-cost" id="c-laatc">500c</span></div>
-              <div class="shop-row" onclick="buyAsset('ARC-170 Fighter',250,'air')"><span>ARC-170 Fighter</span><span class="shop-cost" id="c-arc170">250c</span></div>
-              <div class="shop-row" onclick="buyAsset('BTL-B Y-Wing',500,'air')"><span>BTL-B Y-Wing</span><span class="shop-cost" id="c-ywing">500c</span></div>
-              <div class="shop-row" onclick="buyAsset('Nimbus V-Wing',300,'air')"><span>Nimbus V-Wing</span><span class="shop-cost" id="c-vwing">300c</span></div>
-              <div class="shop-row" onclick="buyAsset('Z-95 Headhunter',200,'air')"><span>Z-95 Headhunter</span><span class="shop-cost" id="c-z95">200c</span></div>
-            </div>
-          </div>
-          <div class="sub-accord" id="special-tab" style="display:none">
-            <div class="sub-hd" onclick="togSub('special-body','special-icon')"><span>⭐ Special Projects</span><span id="special-icon">▶</span></div>
-            <div class="sub-body" id="special-body">
-              <div class="shop-row" id="av7-row" style="display:none" onclick="buyAsset('AV-7 Cannon',900,'special')"><span>📡 AV-7 Artillery</span><span class="shop-cost">900c</span></div>
-              <div class="shop-row" id="orbital-row" style="display:none" onclick="buyAsset('Orbital Strike Token',2500,'special')"><span>⚡ Orbital Strike</span><span class="shop-cost">2500c</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="accord">
-        <div class="accord-hd" onclick="togAccord('res-body','res-icon')">
-          <span>🧬 Kaminoan Research</span><span id="res-icon">▼</span>
-        </div>
-        <div class="accord-body open" id="res-body">
-          <div id="upgrades-list"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="map-wrap">
-    <div style="position:absolute;top:10px;left:10px;font-family:var(--fd);font-size:8px;color:var(--text-dim);pointer-events:none;z-index:10;letter-spacing:1px;" id="map-mode-indicator">SYS_LOC // THEATER_GRID_v4.5</div>
-    <canvas id="galactic-canvas"></canvas>
-    <div id="map-controls">
-      <button class="map-btn" onclick="resetCamera()">⊙</button>
-      <button class="map-btn" onclick="zoomIn()">+</button>
-      <button class="map-btn" onclick="zoomOut()">−</button>
-    </div>
-    <div id="map-legend">
-      <div class="leg-title">Threat Index</div>
-      <div class="leg-row"><div class="leg-dot" style="background:#445566"></div> Neutral</div>
-      <div class="leg-row"><div class="leg-dot" style="background:#00aaff;box-shadow:0 0 6px #00aaff"></div> Republic</div>
-      <div class="leg-row"><div class="leg-dot" style="background:#ff3333;box-shadow:0 0 6px #ff3333"></div> CIS</div>
-      <div class="leg-row"><div class="leg-dot" style="background:#ffaa00;box-shadow:0 0 8px #ffaa00"></div> Invasion</div>
-    </div>
-  </div>
-
-  <div id="right">
-    <div id="detail-empty">
-      <div class="d-icon">📡</div>
-      <div class="d-hint">Awaiting Target Lock</div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">Select a sector node on the galactic map</div>
-    </div>
-    <div id="detail-content">
-      <div class="d-header">
-        <div class="d-sector-tag" id="d-sector-tag">UNKNOWN SECTOR</div>
-        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sector Nodes</div>
-        <div class="sector-grid" id="d-sector-grid"></div>
-        <div class="planet-row">
-          <div>
-            <div class="d-name" id="d-name">Planet</div>
-            <div class="d-faction-badge" id="d-fac-badge">Faction</div>
-          </div>
-        </div>
-        <div class="hq-badges" id="d-hq-badges"></div>
-        <div class="lib-box">
-          <div class="lib-meta">
-            <span id="d-lib-label" style="color:var(--accent)">LIBERATION INDEX</span>
-            <span id="d-lib-pct" style="color:var(--accent2);font-weight:700">0%</span>
-          </div>
-          <div class="lib-outer"><div class="lib-inner" id="d-lib-bar"></div></div>
-        </div>
-      </div>
-      <div class="d-scroll">
-        <div class="d-section" id="ds-intel">
-          <div class="d-sec-title">System Intel</div>
-          <div class="d-row"><span class="d-key">Strategic Value</span><span class="d-val" id="d-sv">—</span></div>
-          <div class="d-row"><span class="d-key">Credit Yield / Phase</span><span class="d-val green" id="d-yield">—</span></div>
-          <div style="font-size:12px;color:var(--text-dim);line-height:1.6;margin-top:8px" id="d-desc"></div>
-        </div>
-        <div class="d-section">
-          <div class="d-sec-title">53rd Fleet Cache</div>
-          <div id="d-53rd-assets"></div>
-        </div>
-      </div>
-      <div class="d-actions" id="d-actions"></div>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<script>
-const SUPABASE_URL="https://yjvgwniprmgnwvgavqpj.supabase.co";
-const SUPABASE_KEY="sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
-
-let sb=null;
-let DB={factions:[],planets:[],connections:[],units:[],settings:{},logs:[],upgrades:[]};
-let selPlanet=null;
-let isAdmin=false;
-let isEditorMode=false; // Track drag/drop layout state
-let mTab='controls';
-
-// ── CANVAS STATE ──
-const canvas=document.getElementById('galactic-canvas');
-const ctx=canvas.getContext('2d');
-let cam={x:0,y:0,scale:0.8};
-let dragging=false,lastMouse=null,dragMoved=false;
-let draggedPlanet=null; // Tracks actively manipulated node
-let pulseT=0;
-let radarY=0;
-
-// ── CANON GRID CONFIGURATION (Reference Image Mapping) ──
-const GRID_COLUMNS = "ABCDEFGHIJKLMNOPQRS".split(""); // A to S Columns
-const GRID_ROWS = 20; // 1 to 20 Rows
-const CELL_SIZE = 150; // Size of each grid quadrant in world coordinates
-
-// Native fallback coordinates for legacy database rows without grid structures
-const PLANET_POSITIONS={
-  'Coruscant':    {wx:0,    wy:0},
-  'Kuat':         {wx:60,   wy:-50},
-  'Naboo':        {wx:-180, wy:120},
-  'Mandalore':    {wx:-220, wy:-180},
-  'Christophsis': {wx:200,  wy:-150},
-  'Rodia':        {wx:100,  wy:200},
-  'Ryloth':       {wx:-100, wy:320},
-  'Kamino':       {wx:320,  wy:280},
-  'Felucia':      {wx:380,  wy:-80},
-  'Geonosis':     {wx:440,  wy:160},
-  'Mustafar':     {wx:500,  wy:-220},
-};
-
-const SECTOR_COLORS={
-  'Core Worlds':      {rep:'rgba(0,120,255,0.06)',  cis:'rgba(255,40,40,0.06)',  neu:'rgba(60,80,100,0.04)'},
-  'Deep Core':        {rep:'rgba(0,120,255,0.08)',  cis:'rgba(255,40,40,0.08)',  neu:'rgba(60,80,100,0.05)'},
-  'Expansion Region': {rep:'rgba(0,160,220,0.05)',  cis:'rgba(220,50,50,0.05)',  neu:'rgba(50,70,90,0.04)'},
-  'Mid Rim':          {rep:'rgba(0,100,200,0.05)',  cis:'rgba(200,30,30,0.05)',  neu:'rgba(40,60,80,0.04)'},
-  'Outer Rim':        {rep:'rgba(0,80,180,0.05)',   cis:'rgba(180,20,20,0.05)',  neu:'rgba(30,50,70,0.03)'},
-};
-
-window.onload=async()=>{
-  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-  
-  sb.auth.onAuthStateChange((event, session) => {
-    isAdmin = !!session;
-    if(!isAdmin) isEditorMode = false;
-    renderAll();
-  });
-
-  await loadAll();
-  setupRealtime();
-  initCanvas();
-};
-
-async function loadAll(){
-  try{
-    const[f,p,c,u,s,l,upg]=await Promise.all([
-      sb.from('factions').select('*').order('name'),
-      sb.from('planets').select('*').order('name'),
-      sb.from('planet_connections').select('*'),
-      sb.from('units').select('*').order('name'),
-      sb.from('settings').select('*'),
-      sb.from('campaign_log').select('*').order('created_at',{ascending:false}).limit(30),
-      sb.from('upgrades').select('*')
-    ]);
-    if([f,p,c,u,s,l,upg].some(r=>r.error)) throw new Error("stream fault");
-    DB.factions=f.data||[];DB.planets=p.data||[];DB.connections=c.data||[];
-    DB.units=u.data||[];DB.settings={};
-    (s.data||[]).forEach(r=>DB.settings[r.key]=r.value);
-    DB.logs=l.data||[];DB.upgrades=upg.data||[];
-    renderAll();
-  }catch(e){toast("Data stream fault",true);console.error(e);}
-}
-
-function setupRealtime(){
-  sb.channel('changes').on('postgres_changes',{event:'*',schema:'public'},(payload)=>{
-    // Avoid resetting position inputs if the user is actively dragging nodes across the interface
-    if(draggedPlanet && payload.table === 'planets') return;
-    loadAll();
-  }).subscribe();
-}
-
-function isUnlocked(k){return(DB.upgrades.find(u=>u.upgrade_key===k)||{}).unlocked||false;}
-function getFinalCost(b,c){
-  if(c==='ground'&&isUnlocked('repulsor_foundry')) return Math.round(b*0.75);
-  if(c==='air'&&isUnlocked('staging_berths')) return Math.round(b*0.75);
-  return b;
-}
-async function writeLog(t,d){try{await sb.from('campaign_log').insert([{event_type:t,description:d}]);}catch{}}
-
-function renderAll(){
-  renderHeader();renderFactions();renderShopCosts();renderUpgrades();
-  if(selPlanet) showDetail(selPlanet);
-  if(document.getElementById('admin-modal').classList.contains('open')) renderAdminBody();
-  
-  const btn=document.getElementById('admin-btn');
-  btn.textContent=isAdmin?'✓ HQ CONNECTED':'⚙ TERMINAL OVERRIDE';
-  btn.style.borderColor=isAdmin?'rgba(0,255,136,0.4)':'';
-  btn.style.color=isAdmin?'var(--success)':'';
-
-  const ind = document.getElementById('map-mode-indicator');
-  if(isEditorMode) {
-    ind.textContent = "SYS_MODE // GRID_EDITOR_ACTIVE (DRAG NODES)";
-    ind.style.color = "var(--warn)";
-  } else {
-    ind.textContent = "SYS_LOC // THEATER_GRID_v4.5";
-    ind.style.color = "var(--text-dim)";
-  }
-}
-
-function renderHeader(){
-  document.getElementById('h-era').textContent=DB.settings.campaign_era||'Clone Wars Theater';
-  document.getElementById('h-phase').textContent='PHASE '+(DB.settings.campaign_turn||1);
-}
-
-function renderFactions(){
-  const show=DB.factions.filter(f=>f.name!=='Neutral');
-  const max=Math.max(...show.map(f=>f.credits),1);
-  document.getElementById('faction-list').innerHTML=show.map(f=>{
-    const terr=DB.planets.filter(p=>p.controlling_faction===f.name).length;
-    return`<div class="faction-card">
-      <div class="fc-head">
-        <div class="fc-dot" style="background:${f.color};box-shadow:0 0 6px ${f.color}"></div>
-        <div class="fc-name">${f.emoji||''} ${f.shortname||f.name}</div>
-      </div>
-      <div class="fc-creds">${(f.credits||0).toLocaleString()} c</div>
-      <div class="fc-bar-wrap"><div class="fc-bar" style="width:${Math.min(100,((f.credits||0)/max)*100)}%;background:${f.color}"></div></div>
-      <div class="fc-terr">Worlds: <span>${terr}</span></div>
-    </div>`;
-  }).join('');
-}
-
-function renderShopCosts(){
-  const cfg=[
-    {id:'c-barc',base:50,cat:'ground'},{id:'c-itt',base:150,cat:'ground'},
-    {id:'c-tx130',base:250,cat:'ground'},{id:'c-atte',base:750,cat:'ground'},
-    {id:'c-laati',base:350,cat:'air'},{id:'c-laatc',base:500,cat:'air'},
-    {id:'c-arc170',base:250,cat:'air'},{id:'c-ywing',base:500,cat:'air'},
-    {id:'c-vwing',base:300,cat:'air'},{id:'c-z95',base:200,cat:'air'}
-  ];
-  cfg.forEach(c=>{
-    const el=document.getElementById(c.id);if(!el)return;
-    const fin=getFinalCost(c.base,c.cat);
-    el.innerHTML=fin!==c.base?`<span class="shop-strike">${c.base}c</span>${fin}c`:`${c.base}c`;
-  });
-  const hasH=isUnlocked('heavy_ordnance'),hasO=isUnlocked('dreadnought_supremacy');
-  document.getElementById('special-tab').style.display=(hasH||hasO)?'block':'none';
-  document.getElementById('av7-row').style.display=hasH?'flex':'none';
-  document.getElementById('orbital-row').style.display=hasO?'flex':'none';
-}
-
-function renderUpgrades(){
-  const rep=DB.factions.find(f=>f.name==="Galactic Republic");
-  const bal=rep?rep.credits:0;
-  const desc={
-    repulsor_foundry:'Permanent 25% discount on all land vehicles.',
-    staging_berths:'Permanent 25% discount on all air vehicles.',
-    heavy_ordnance:'Unlocks AV-7 Artillery. Reduces invasion probability by 50%.',
-    dreadnought_supremacy:'Unlocks Orbital Bombardment Strike (+30% liberation instantly).'
-  };
-  document.getElementById('upgrades-list').innerHTML=DB.upgrades.map(u=>`
-    <div class="tech-card ${u.unlocked?'on':''}">
-      <div class="tech-top">
-        <span class="tech-name">${u.name}</span>
-        <span class="tech-badge ${u.unlocked?'active':'locked'}">${u.unlocked?'ACTIVE':u.cost.toLocaleString()+'c'}</span>
-      </div>
-      <div class="tech-desc">${desc[u.upgrade_key]||''}</div>
-      ${(!u.unlocked&&isAdmin)?`<button class="btn ok" style="margin-top:6px;font-size:8px;padding:3px 7px" ${bal<u.cost?'disabled':''} onclick="buyUpgrade('${u.upgrade_key}',${u.cost})">BUY</button>`:''}
-    </div>`).join('');
-}
-
-// ── CANON CORE VECTOR TRANSLATOR SYSTEM ──
-function getPlanetPos(p){
-  if (!p.grid_zone) {
-    const pp = PLANET_POSITIONS[p.name] || {wx:0, wy:0};
-    return { sx: wx2s(pp.wx), sy: wy2s(pp.wy) };
-  }
-  const parts = p.grid_zone.split("-");
-  const colLetter = parts[0].toUpperCase();
-  const rowNum = parseInt(parts[1]);
-
-  const colIdx = GRID_COLUMNS.indexOf(colLetter);
-  const rowIdx = rowNum - 1;
-  if (colIdx === -1 || isNaN(rowIdx)) return { sx: wx2s(0), sy: wy2s(0) };
-
-  // Calculate grid cell center coordinate paths relative to standard Coruscant (K-9 Alignment)
-  const gridCenterX = (colIdx - GRID_COLUMNS.indexOf('K')) * CELL_SIZE;
-  const gridCenterY = (rowIdx - (9 - 1)) * CELL_SIZE;
-
-  const worldX = gridCenterX + ((p.offset_x || 0) * CELL_SIZE);
-  const worldY = gridCenterY + ((p.offset_y || 0) * CELL_SIZE);
-
-  return { sx: wx2s(worldX), sy: wy2s(worldY) };
-}
-
-// Reverse mapping math to safely calculate world configurations from viewport coordinates
-function screenToWorld(sx, sy) {
-  const worldX = (sx - cam.x) / cam.scale;
-  const worldY = (sy - cam.y) / cam.scale;
-  return { worldX, worldY };
-}
-
-function worldToGridOffset(wx, wy) {
-  const colCenterK = GRID_COLUMNS.indexOf('K');
-  const rowCenter9 = 8; 
-
-  const approxColIdx = Math.round(wx / CELL_SIZE) + colCenterK;
-  const approxRowIdx = Math.round(wy / CELL_SIZE) + rowCenter9;
-
-  const clampedCol = Math.max(0, Math.min(GRID_COLUMNS.length - 1, approxColIdx));
-  const clampedRow = Math.max(0, Math.min(GRID_ROWS - 1, approxRowIdx));
-
-  const gridCenterX = (clampedCol - colCenterK) * CELL_SIZE;
-  const gridCenterY = (clampedRow - rowCenter9) * CELL_SIZE;
-
-  // Percentage value bounds constrained strictly inside local box boundaries
-  let offsetX = (wx - gridCenterX) / CELL_SIZE;
-  let offsetY = (wy - gridCenterY) / CELL_SIZE;
-
-  offsetX = Math.max(-0.5, Math.min(0.5, offsetX));
-  bitOffsetY = Math.max(-0.5, Math.min(0.5, offsetY));
-
-  return {
-    grid_zone: `${GRID_COLUMNS[clampedCol]}-${clampedRow + 1}`,
-    offset_x: parseFloat(offsetX.toFixed(4)),
-    offset_y: parseFloat(offsetY.toFixed(4))
-  };
-}
-
-// ── CANVAS MAP CONTROLS & SECTOR INTERACTION ──
-function initCanvas(){
-  resizeCanvas();
-  window.addEventListener('resize',resizeCanvas);
-  
-  canvas.addEventListener('mousedown',e=>{
-    const rect=canvas.getBoundingClientRect();
-    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-    
-    // Editor Mode Node Targeting check
-    if(isEditorMode) {
-      let hit=null, best=9999;
-      DB.planets.forEach(p=>{
-        const{sx,sy}=getPlanetPos(p);
-        const d=Math.hypot(mx-sx,my-sy);
-        if(d < (getR(p.strategic_value)*cam.scale + 12) && d < best) {
-          best = d; hit = p;
-        }
-      });
-      if(hit) {
-        draggedPlanet = hit;
-        dragging = true; dragMoved = false;
-        return;
-      }
-    }
-    
-    dragging=true;dragMoved=false;lastMouse={x:e.clientX,y:e.clientY};
-  });
-  
-  canvas.addEventListener('mousemove',e=>{
-    const rect=canvas.getBoundingClientRect();
-    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-
-    if(isEditorMode && draggedPlanet) {
-      dragMoved = true;
-      const { worldX, worldY } = screenToWorld(mx, my);
-      const gridData = worldToGridOffset(worldX, worldY);
-      
-      draggedPlanet.grid_zone = gridData.grid_zone;
-      draggedPlanet.offset_x = gridData.offset_x;
-      draggedPlanet.offset_y = gridData.offset_y;
-      return;
-    }
-
-    if(!dragging||!lastMouse)return;
-    const dx=e.clientX-lastMouse.x,dy=e.clientY-lastMouse.y;
-    if(Math.abs(dx)>2||Math.abs(dy)>2) dragMoved=true;
-    cam.x+=dx;cam.y+=dy;lastMouse={x:e.clientX,y:e.clientY};
-  });
-  
-  canvas.addEventListener('mouseup',async(e)=>{
-    if(isEditorMode && draggedPlanet) {
-      if(dragMoved) {
-        // Push coordinate properties to cloud database upon link release
-        const pid = draggedPlanet.id;
-        const uz = draggedPlanet.grid_zone;
-        const ux = draggedPlanet.offset_x;
-        const uy = draggedPlanet.offset_y;
-        
-        toast(`COORD LOGGED: ${draggedPlanet.name} (${uz})`);
-        await sb.from('planets').update({ grid_zone: uz, offset_x: ux, offset_y: uy }).eq('id', pid);
-      } else {
-        selPlanet=draggedPlanet.id;
-        renderAll();
-      }
-      draggedPlanet = null; dragging = false;
-      return;
-    }
-
-    if (!dragMoved) onMapClick(e);
-    dragging=false;lastMouse=null;
-  });
-  
-  canvas.addEventListener('mouseleave',()=>{dragging=false;lastMouse=null;draggedPlanet=null;});
-  canvas.addEventListener('wheel',e=>{
-    e.preventDefault();
-    const f=e.deltaY<0?1.12:0.9;
-    cam.scale=Math.max(0.2,Math.min(4,cam.scale*f));
-  },{passive:false});
-  resetCamera();
-  requestAnimationFrame(loop);
-}
-
-function resizeCanvas(){
-  const w=document.getElementById('map-wrap');
-  canvas.width=w.clientWidth;canvas.height=w.clientHeight;
-}
-
-function resetCamera(){
-  cam.x=canvas.width/2;cam.y=canvas.height/2;cam.scale=0.6;
-}
-function zoomIn(){cam.scale=Math.min(4,cam.scale*1.2);}
-function zoomOut(){cam.scale=Math.max(0.2,cam.scale/1.2);}
-
-function wx2s(wx){return cam.x+wx*cam.scale;}
-function wy2s(wy){return cam.y+wy*cam.scale;}
-
-function onMapClick(e){
-  const rect=canvas.getBoundingClientRect();
-  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  let hit=null,best=9999;
-  DB.planets.forEach(p=>{
-    const{sx,sy}=getPlanetPos(p);
-    const d=Math.hypot(mx-sx,my-sy);
-    const r=getR(p.strategic_value)*cam.scale+10;
-    if(d<r&&d<best){best=d;hit=p;}
-  });
-  if(hit){selPlanet=hit.id;renderAll();}
-}
-
-function getR(sv){return{Low:5,Medium:7,High:10,Critical:14}[sv]||6;}
-function getFactionColor(n){
-  if(!n||n==='Neutral')return'#445566';
-  const f=DB.factions.find(f=>f.name===n);return f?f.color:'#445566';
-}
-
-const STARS=[];
-(function(){let x=99991;function r(){x=((x*1103515245)+12345)&0x7fffffff;return x/0x7fffffff;}
-for(let i=0;i<350;i++)STARS.push({rx:r(),ry:r(),s:r()*1.5+0.3,a:r()*0.5+0.1,twink:r()*Math.PI*2});})();
-
-function loop(){pulseT+=0.018;draw();requestAnimationFrame(loop);}
-
-function draw(){
-  const W=canvas.width,H=canvas.height;
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#00020d';ctx.fillRect(0,0,W,H);
-
-  const cx=wx2s(0),cy=wy2s(0);
-  const coreG=ctx.createRadialGradient(cx,cy,0,cx,cy,450*cam.scale);
-  coreG.addColorStop(0,'rgba(0,45,110,0.18)');
-  coreG.addColorStop(0.5,'rgba(0,15,45,0.06)');
-  coreG.addColorStop(1,'transparent');
-  ctx.fillStyle=coreG;ctx.fillRect(0,0,W,H);
-
-  STARS.forEach(s=>{
-    const px=(s.rx*W+cam.x*0.02)%W;
-    const py=(s.ry*H+cam.y*0.02)%H;
-    const twinkle=0.5+Math.sin(pulseT*0.8+s.twink)*0.3;
-    ctx.beginPath();ctx.arc(px,py,s.s,0,Math.PI*2);
-    ctx.fillStyle=`rgba(150,200,255,${s.a*twinkle})`;ctx.fill();
-  });
-
-  drawGrid(W,H);
-  drawSectorRegions();
-
-  DB.connections.forEach(c=>{
-    const pa=DB.planets.find(p=>p.name===c.planet_a);
-    const pb=DB.planets.find(p=>p.name===c.planet_b);
-    if(!pa||!pb)return;
-    const a=getPlanetPos(pa),b=getPlanetPos(pb);
-    drawLane(a,b,pa,pb);
-  });
-
-  DB.planets.forEach(p=>drawPlanet(p));
-
-  radarY=(radarY+1.2)%H;
-  ctx.strokeStyle='rgba(0,170,255,0.02)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(0,radarY);ctx.lineTo(W,radarY);ctx.stroke();
-}
-
-function drawGrid(W,H){
-  const sp=CELL_SIZE*cam.scale;
-  const ox=(cam.x%sp+sp)%sp;
-  const oy=(cam.y%sp+sp)%sp;
-  
-  ctx.save();
-  ctx.strokeStyle='rgba(0,160,255,0.03)';ctx.lineWidth=0.5;
-  ctx.font='9px Orbitron,monospace';
-  ctx.fillStyle='rgba(0,160,255,0.15)';
-
-  let colIdx=Math.floor(-cam.x/sp);
-  for(let x=ox;x<W;x+=sp){
-    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
-    const mapCol = colIdx + GRID_COLUMNS.indexOf('K');
-    if(mapCol>=0 && mapCol<GRID_COLUMNS.length){
-      ctx.fillText(GRID_COLUMNS[mapCol], x+6, 14);
-    }
-    colIdx++;
-  }
-
-  let rowIdx=Math.floor(-cam.y/sp);
-  for(let y=oy;y<H;y+=sp){
-    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
-    const mapRow = rowIdx + 9;
-    if(mapRow>0 && mapRow<=GRID_ROWS){
-      ctx.fillText(mapRow.toString(), 6, y-6);
-    }
-    rowIdx++;
-  }
-  ctx.restore();
-}
-
-function drawSectorRegions(){
-  const sectors={};
-  DB.planets.forEach(p=>{
-    const s=p.sector||'Unknown';
-    if(!sectors[s])sectors[s]=[];
-    sectors[s].push(p);
-  });
-
-  Object.entries(sectors).forEach(([sector,planets])=>{
-    if(planets.length<2)return;
-    const pts=planets.map(p=>{const pos=getPlanetPos(p);return[pos.sx,pos.sy];});
-    const hull=convexHull(pts);
-    if(hull.length<2)return;
-
-    const repC=planets.filter(p=>p.controlling_faction.includes('Republic')).length;
-    const cisC=planets.filter(p=>p.controlling_faction.includes('Confederacy')).length;
-    const sc=SECTOR_COLORS[sector]||SECTOR_COLORS['Outer Rim'];
-    const fillCol=repC>cisC?sc.rep:cisC>repC?sc.cis:sc.neu;
-
-    const centX=hull.reduce((a,b)=>a+b[0],0)/hull.length;
-    const centY=hull.reduce((a,b)=>a+b[1],0)/hull.length;
-    const pad=45*cam.scale;
-    const expanded=hull.map(([x,y])=>{
-      const dx=x-centX,dy=y-centY;
-      const d=Math.hypot(dx,dy)||1;
-      return[x+dx/d*pad,y+dy/d*pad];
-    });
-
-    ctx.beginPath();ctx.moveTo(expanded[0][0],expanded[0][1]);
-    for(let i=1;i<expanded.length;i++) ctx.lineTo(expanded[i][0],expanded[i][1]);
-    ctx.closePath();
-    ctx.fillStyle=fillCol;ctx.fill();
-    ctx.strokeStyle=fillCol.replace(/[\d.]+\)$/,'0.25)');
-    ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);
-
-    if(cam.scale>0.45){
-      ctx.font=`${Math.max(9,10*cam.scale)}px Orbitron,monospace`;ctx.textAlign='center';
-      ctx.fillStyle='rgba(168,200,232,0.2)';
-      ctx.fillText(sector.toUpperCase(),centX,centY);
-    }
-  });
-}
-
-function convexHull(pts){
-  if(pts.length<3)return pts;
-  let start=pts.reduce((a,b)=>b[0]<a[0]?b:a);
-  const hull=[];let cur=start;
-  do{
-    hull.push(cur);let next=pts[0];
-    for(let i=1;i<pts.length;i++){
-      const cross=(next[0]-cur[0])*(pts[i][1]-cur[1])-(next[1]-cur[1])*(pts[i][0]-cur[0]);
-      if(next===cur||cross>0) next=pts[i];
-    }
-    cur=next;
-  }while(cur!==start&&hull.length<pts.length+1);
-  return hull;
-}
-
-function drawLane(a,b,pa,pb){
-  let col='rgba(0,120,200,0.14)';
-  if(pa.under_invasion||pb.under_invasion)col='rgba(255,51,51,0.3)';
-  else if(pa.controlling_faction===pb.controlling_faction&&pa.controlling_faction!=='Neutral')
-    col=pa.controlling_faction.includes('Republic')?'rgba(0,170,255,0.22)':'rgba(255,51,51,0.22)';
-  ctx.save();
-  ctx.strokeStyle=col;ctx.lineWidth=1;
-  ctx.setLineDash([4*cam.scale,6*cam.scale]);
-  ctx.lineDashOffset=-pulseT*12;
-  ctx.beginPath();ctx.moveTo(a.sx,a.sy);ctx.lineTo(b.sx,b.sy);ctx.stroke();
-  ctx.restore();
-}
-
-function drawPlanet(p){
-  const{sx,sy}=getPlanetPos(p);
-  const r=getR(p.strategic_value)*cam.scale;
-  let col=getFactionColor(p.controlling_faction);
-  if(p.under_invasion)col='#ffaa00';
-  const isSel=selPlanet===p.id;
-  const is53rd=DB.settings.loc_53rd==p.id;
-
-  ctx.save();
-  if(isSel){
-    ctx.shadowBlur=12;ctx.shadowColor='var(--accent2)';
-    ctx.strokeStyle='rgba(0,238,255,0.8)';ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.arc(sx,sy,r*2.3,0,Math.PI*2);ctx.stroke();
-    ctx.shadowBlur=0;
-  }
-
-  if(p.under_invasion){
-    const pulse=1+Math.abs(Math.sin(pulseT*2.5))*0.4;
-    ctx.strokeStyle='rgba(255,51,51,0.25)';ctx.beginPath();
-    ctx.arc(sx,sy,r*3*pulse,0,Math.PI*2);ctx.stroke();
-  }
-
-  if(is53rd){
-    ctx.strokeStyle='rgba(0,255,136,0.35)';ctx.setLineDash([2,3]);
-    ctx.beginPath();ctx.arc(sx,sy,r*2.7,0,Math.PI*2);ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
-  ctx.fillStyle='#010915';ctx.fill();
-  
-  ctx.shadowBlur=5;ctx.shadowColor=col;
-  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
-  ctx.shadowBlur=0;
-
-  if(p.strategic_value==='High'||p.strategic_value==='Critical'){
-    ctx.strokeStyle=col+'40';ctx.lineWidth=0.5;
-    ctx.beginPath();
-    ctx.moveTo(sx-r-3,sy);ctx.lineTo(sx-r+1,sy);
-    ctx.moveTo(sx+r-1,sy);ctx.lineTo(sx+r+3,sy);
-    ctx.stroke();
-  }
-
-  const fs=Math.max(8,Math.min(11,9*cam.scale));
-  ctx.font=`600 ${fs}px Rajdhani,sans-serif`;ctx.textAlign='center';
-  ctx.fillStyle='rgba(0,0,0,0.8)';
-  ctx.fillText(p.name.toUpperCase(),sx+1,sy-r-4);
-  ctx.fillStyle=isSel?'var(--accent2)':p.under_invasion?'#ffcc00':'#e8f4ff';
-  ctx.fillText(p.name.toUpperCase(),sx,sy-r-5);
-
-  if(p.liberation_pct>0&&p.liberation_pct<100){
-    const barW=Math.max(18,r*2.5),barH=2;
-    const bx=sx-barW/2,by=sy+r+5;
-    ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fillRect(bx,by,barW,barH);
-    ctx.fillStyle=p.under_invasion?'var(--warn)':'var(--accent)';
-    ctx.fillRect(bx,by,barW*(p.liberation_pct/100),barH);
-  }
-  ctx.restore();
-}
-
-// ── DETAIL SIDEBAR HANDLERS ──
-function showDetail(id){
-  const p=DB.planets.find(pl=>pl.id===id);if(!p)return;
-  document.getElementById('detail-empty').style.display='none';
-  document.getElementById('detail-content').classList.add('vis');
-
-  document.getElementById('d-sector-tag').textContent=(p.sector||'Unknown');
-
-  const sp=DB.planets.filter(s=>s.sector===p.sector);
-  document.getElementById('d-sector-grid').innerHTML=sp.map(s=>{
-    let sc='var(--text-dim)';
-    if(s.under_invasion)sc='var(--danger)';
-    else if(s.controlling_faction.includes('Republic'))sc='var(--accent)';
-    else if(s.controlling_faction.includes('Confederacy'))sc='var(--danger)';
-    return`<div class="sg-node ${s.id===p.id?'cur':''}" onclick="selPlanet=${s.id};renderAll()">
-      <div class="sg-name">${s.name}</div>
-      <div class="sg-dot" style="background:${sc};box-shadow:0 0 3px ${sc}"></div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('d-name').textContent=p.name;
-  const badge=document.getElementById('d-fac-badge');
-  badge.textContent=p.under_invasion?'⚠ CIS INVASION BOUND':p.controlling_faction;
-  badge.style.color=p.under_invasion?'var(--danger)':getFactionColor(p.controlling_faction);
-
-  const hq=document.getElementById('d-hq-badges');hq.innerHTML='';
-  if(p.under_invasion)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,51,51,0.1);border-color:var(--danger);color:#ff6b6b">🚨 SECTOR SIEGE ACTIVE</div>`;
-  if(DB.settings.loc_53rd==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(0,170,255,0.08);border-color:var(--accent);color:var(--accent2)">🛡️ 53rd Battalion Base</div>`;
-  if(p.grid_zone) hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,255,255,0.02);border-color:var(--text-dim);color:var(--text)">📍 Grid Coordinates: ${p.grid_zone}</div>`;
-
-  const lib=p.liberation_pct||0;
-  document.getElementById('d-lib-label').textContent=p.under_invasion?'DEFENSE INDEX':'LIBERATION INDEX';
-  document.getElementById('d-lib-pct').textContent=lib+'%';
-  const bar=document.getElementById('d-lib-bar');
-  bar.style.width=lib+'%';
-  bar.style.background=p.under_invasion?'var(--warn)':'var(--accent)';
-
-  document.getElementById('d-sv').textContent=p.strategic_value;
-  let yld=p.credit_yield||0;
-  if(p.controlling_faction==='Neutral')yld=Math.round(yld*(lib/100));
-  if(p.under_invasion)yld=Math.round(yld*0.5);
-  document.getElementById('d-yield').textContent='+'+yld+' c';
-  document.getElementById('d-desc').textContent=p.description||'No telemetry recorded inside database archives.';
-
-  const assets=DB.units.filter(u=>u.planet_id===p.id&&u.unit_type==='Purchased Logistics Asset'&&u.status!=='Destroyed');
-  const aEl=document.getElementById('d-53rd-assets');
-  aEl.innerHTML=assets.length?assets.map(u=>`<div style="background:rgba(0,255,136,0.03);border:1px solid rgba(0,255,136,0.15);border-left:2px solid var(--success);border-radius:2px;padding:7px 10px;font-size:12px;margin-bottom:5px;color:var(--success)">${u.name}</div>`).join(''):`<div style="color:var(--text-dim);font-size:11px">No fleet cache registered.</div>`;
-
-  const act=document.getElementById('d-actions');act.innerHTML='';
-  if(isAdmin){
-    if(isUnlocked('dreadnought_supremacy')&&!p.controlling_faction.includes('Republic'))
-      act.innerHTML+=`<button class="btn red" style="width:100%" onclick="doOrbitalStrike('${p.id}')">⚡ ORBITAL BOMBARDMENT (2,500c)</button>`;
-    if(DB.settings.loc_53rd==p.id){
-      act.innerHTML+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        <button class="btn ok" style="font-size:9px" onclick="battleResult('${p.id}',true)">🟢 VICTORY</button>
-        <button class="btn red" style="font-size:9px" onclick="battleResult('${p.id}',false)">🔴 DEFEAT</button>
-      </div>`;
-    }else{
-      act.innerHTML+=`<button class="btn ok" style="width:100%" onclick="move53rd('${p.id}')">🔷 DEPLOY 53rd HERE</button>`;
-    }
-  }
-}
-
-// ── LOGISTICS PURCHASING ENGINE ──
-async function buyAsset(name,base,cat){
-  if(!isAdmin){toast("Admin credentials required",true);return;}
-  const rep=DB.factions.find(f=>f.name==="Galactic Republic");if(!rep)return;
-  const cost=getFinalCost(base,cat);
-  if(rep.credits<cost){toast(`Insufficient funds — need ${cost-rep.credits}c more`,true);return;}
-  if(!selPlanet){toast("Select a destination planet first",true);return;}
-  await sb.from('factions').update({credits:rep.credits-cost}).eq('id',rep.id);
-  await sb.from('units').insert([{name:`53rd ${name}`,faction:"Galactic Republic",unit_type:"Purchased Logistics Asset",size:"Standard",status:"Active",planet_id:selPlanet}]);
-  await writeLog("Asset Acquired",`Requisitioned ${name} (-${cost}c).`);
-  toast(`ACQUIRED: ${name}`);loadAll();
-}
-
-async function buyUpgrade(key,cost){
-  if(!isAdmin)return;
-  const rep=DB.factions.find(f=>f.name==="Galactic Republic");
-  if(!rep||rep.credits<cost){toast("Insufficient treasury funds",true);return;}
-  await sb.from('factions').update({credits:rep.credits-cost}).eq('id',rep.id);
-  await sb.from('upgrades').update({unlocked:true}).eq('upgrade_key',key);
-  const u=DB.upgrades.find(u=>u.upgrade_key===key);
-  await writeLog("Upgrade Unlocked",`Purchased: ${u?u.name:key} (-${cost}c).`);
-  toast("UPGRADE ACTIVE");loadAll();
-}
-
-async function doOrbitalStrike(pid){
-  if(!isAdmin)return;
-  const rep=DB.factions.find(f=>f.name==="Galactic Republic");
-  if(!rep||rep.credits<2500){toast("Insufficient credits",true);return;}
-  const p=DB.planets.find(pl=>pl.id==pid);if(!p)return;
-  const nextLib=Math.min(100,(p.liberation_pct||0)+30);
-  const upd={liberation_pct:nextLib};
-  if(nextLib>=100){upd.controlling_faction="Galactic Republic";upd.under_invasion=false;}
-  await sb.from('factions').update({credits:rep.credits-2500}).eq('id',rep.id);
-  await sb.from('planets').update(upd).eq('id',pid);
-  await writeLog("Orbital Strike",`Bombardment on ${p.name} — liberation +30%.`);
-  toast("ORBITAL STRIKE CONCLUDED");loadAll();
-}
-
-async function battleResult(pid,win){
-  const p=DB.planets.find(pl=>pl.id==pid);if(!p)return;
-  if(p.under_invasion){
-    if(win){
-      await sb.from('planets').update({under_invasion:false,liberation_pct:100}).eq('id',pid);
-      await writeLog('Invasion Repelled',`53rd secured ${p.name}.`);
-    }else{
-      await sb.from('planets').update({under_invasion:false,controlling_faction:"Confederacy of Independent Systems",liberation_pct:0}).eq('id',pid);
-      await writeLog('Planet Fallen',`${p.name} lost to CIS.`);
-    }
-  }else{
-    const shift=Math.floor(Math.random()*10)+20;
-    const cur=p.liberation_pct||0;
-    const next=win?Math.min(100,cur+shift):Math.max(0,cur-Math.floor(shift/1.5));
-    const upd={liberation_pct:next};
-    if(next>=100)upd.controlling_faction="Galactic Republic";
-    else if(next<=0)upd.controlling_faction="Confederacy of Independent Systems";
-    await sb.from('planets').update(upd).eq('id',pid);
-    await writeLog(win?'Victory':'Defeat',`Operations updated on ${p.name}.`);
-  }
-  loadAll();
-}
-
-async function move53rd(pid){
-  await sb.from('settings').upsert({key:'loc_53rd',value:String(pid)});
-  toast('53rd FLEET VECTORS UPDATED');loadAll();
-}
-
-// ── OVERRIDE INTERFACE MANAGEMENT ──
-function openAdmin(){
-  if(!isAdmin){document.getElementById('login-screen').classList.add('open');setTimeout(()=>document.getElementById('lg-pass').focus(),100);}
-  else{document.getElementById('admin-modal').classList.add('open');renderAdminBody();}
-}
-function closeAdmin(){document.getElementById('admin-modal').classList.remove('open');}
-function closeLogin(){document.getElementById('login-screen').classList.remove('open');}
-
-async function doLogin(){
-  const email=document.getElementById('lg-email').value;
-  const pass=document.getElementById('lg-pass').value;
-  document.getElementById('lg-err').textContent='';
-  try{
-    const{error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error)throw error;
-    closeLogin();openAdmin();
-  }catch(e){document.getElementById('lg-err').textContent='AUTHORIZATION REFUSED';}
-}
-
-async function doLogout(){await sb.auth.signOut();closeAdmin();loadAll();}
-
-function switchMTab(t){
-  mTab=t;
-  ['controls','log'].forEach(k=>document.getElementById('mtab-'+k).className='mtab'+(k===t?' on':''));
-  renderAdminBody();
-}
-
-function renderAdminBody(){
-  const el=document.getElementById('admin-body');
-  if(mTab==='controls'){
-    el.innerHTML=`
-      <div style="background:rgba(255,255,255,0.01);border:1px solid var(--border);padding:14px;border-radius:3px;margin-bottom:12px">
-        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Interactive Grid Customization</div>
-        <button class="btn ${isEditorMode?'toggle-on':''}" style="width:100%;margin-bottom:14px;" onclick="toggleEditorMode()">
-          ${isEditorMode?'🛑 CLOSE GRID EDITOR':'🛠️ OPEN DRAG-AND-DROP EDITOR'}
-        </button>
-        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Campaign Phase</div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <span style="font-family:var(--fd);color:var(--warn);font-size:22px;font-weight:700">${DB.settings.campaign_turn||1}</span>
-          <button class="btn ok" style="flex:1" onclick="advanceTurn()">⏩ ADVANCE PHASE</button>
-        </div>
-      </div>
-      <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Enabling editor coordinates permits real-time drag repositioning on the galaxy matrix. Changes save instantly upon releasing nodes.</div>`;
-  } else {
-    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:5px">${
-      DB.logs.map(l=>`<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:2px;padding:8px 10px"><span style="color:var(--warn);font-family:var(--fd);font-size:9px">[${l.event_type}]</span> <span style="font-size:12px">${l.description}</span></div>`).join('')
-    }</div>`;
-  }
-}
-
-function toggleEditorMode() {
-  isEditorMode = !isEditorMode;
-  closeAdmin();
-  renderAll();
-  toast(isEditorMode ? "MAP EDITOR OPEN — DRAG PLANETS" : "MAP EDITOR CLOSED");
-}
-
-async function advanceTurn(){
-  const turn=parseInt(DB.settings.campaign_turn||1)+1;
-  const rep=DB.factions.find(f=>f.name==="Galactic Republic");
-  const cis=DB.factions.find(f=>f.name==="Confederacy of Independent Systems");
-  if(!rep||!cis)return;
-  let rg=0,cg=0;
-  DB.planets.forEach(p=>{
-    if(p.controlling_faction.includes('Republic'))rg+=p.credit_yield||0;
-    else if(p.controlling_faction.includes('Confederacy'))cg+=p.credit_yield||0;
-  });
-  await sb.from('factions').update({credits:rep.credits+rg}).eq('name','Galactic Republic');
-  await sb.from('factions').update({credits:cis.credits+cg}).eq('name','Confederacy of Independent Systems');
-  await sb.from('settings').upsert({key:'campaign_turn',value:String(turn)});
-  await writeLog("Phase Advanced",`Phase ${turn} begins. Republic +${rg}c, CIS +${cg}c.`);
-  loadAll();
-}
-
-function togAccord(b,i){
-  const el=document.getElementById(b),ic=document.getElementById(i);
-  const o=el.classList.toggle('open');if(ic)ic.textContent=o?'▼':'▶';
-}
-function togSub(b,i){
-  const el=document.getElementById(b),ic=document.getElementById(i);
-  const o=el.classList.toggle('open');if(ic)ic.textContent=o?'▼':'▶';
-}
-
-function toast(msg,err=false){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className=err?'show err':'show';
-  setTimeout(()=>t.className='',3000);
-}
-</script>
-</body>
-</html>@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root {
-  --bg:#00050f; --panel:rgba(0,8,20,0.96); --border:rgba(0,160,255,0.12);
-  --border-bright:rgba(0,200,255,0.35); --text:#a8c8e8; --text-dim:#3a5a7a;
-  --text-bright:#e8f4ff; --accent:#00aaff; --accent2:#00eeff;
-  --warn:#ffaa00; --danger:#ff3333; --success:#00ff88;
-  --fd:'Orbitron',monospace; --fb:'Rajdhani',sans-serif;
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);}
-#layout{display:grid;grid-template-columns:300px 1fr 320px;grid-template-rows:56px 1fr;height:100vh;}
-
-header{grid-column:1/-1;background:linear-gradient(90deg,#000510,#001428 50%,#000510);border-bottom:1px solid var(--border-bright);display:flex;align-items:center;padding:0 20px;gap:16px;position:relative;z-index:100;box-shadow:0 2px 30px rgba(0,0,0,0.8);}
-header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent2) 30%,var(--accent2) 70%,transparent);opacity:0.6;}
-.h-title{font-family:var(--fd);font-size:15px;font-weight:900;letter-spacing:4px;color:var(--accent2);text-transform:uppercase;text-shadow:0 0 20px rgba(0,238,255,0.4);}
-.h-sub{font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-top:1px;}
-.h-phase{font-family:var(--fd);font-size:11px;letter-spacing:2px;color:var(--warn);border:1px solid rgba(255,170,0,0.3);padding:4px 12px;background:rgba(255,170,0,0.04);border-radius:2px;}
-.h-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-
-.btn{font-family:var(--fd);font-size:10px;letter-spacing:1.5px;padding:6px 14px;border-radius:2px;border:1px solid var(--border-bright);background:transparent;color:var(--accent);cursor:pointer;transition:all 0.2s;text-transform:uppercase;white-space:nowrap;}
-.btn:hover{background:rgba(0,160,255,0.12);box-shadow:0 0 12px rgba(0,160,255,0.25);color:var(--text-bright);}
-.btn:disabled{opacity:0.35;cursor:not-allowed;}
-.btn.ok{border-color:rgba(0,255,136,0.4);color:var(--success);}
-.btn.ok:hover{background:rgba(0,255,136,0.08);}
-.btn.red{border-color:rgba(255,51,51,0.4);color:var(--danger);}
-.btn.red:hover{background:rgba(255,51,51,0.08);}
+.btn.toggle-on{background:rgba(255,170,0,0.12);border-color:var(--warn);color:var(--warn);}
 
 #left{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
 .panel-section{border-bottom:1px solid var(--border);padding:12px 14px;flex-shrink:0;}
@@ -1232,7 +151,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 <div id="login-screen">
   <div class="login-box">
     <div style="font-size:36px;margin-bottom:12px">🔐</div>
-    <div class="login-title">Terminal Override</div>
+    <div class="login-title">Secure Override</div>
     <div class="login-sub">Commander authentication required</div>
     <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="lg-email" type="email" value="admin@53rdassaultbattalion.com"></div>
     <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="lg-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -1261,7 +180,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 <div id="layout">
   <header>
     <div>
-      <div class="h-title" id="h-name">53rd Tactical Command</div>
+      <div class="h-title" id="h-name">53rd Command</div>
       <div class="h-sub" id="h-era">Clone Wars Theater</div>
     </div>
     <div class="h-phase" id="h-phase">PHASE 1</div>
@@ -1387,10 +306,16 @@ const SUPABASE_URL="https://yjvgwniprmgnwvgavqpj.supabase.co";
 const SUPABASE_KEY="sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
 
 let sb=null;
-let DB={factions:[],planets:[],connections:[],units:[],settings:{},logs:[],upgrades:[]};
+let DB={factions:[],planets:[],connections:[],units:[],settings:{},logs:[],upgrades:[],sector_bounds:[]};
 let selPlanet=null;
 let isAdmin=false;
 let mTab='controls';
+
+// ── EDITOR & SECTOR STATE ──
+let isEditorMode=false;
+let draggedPlanet=null;
+let activeSectorEdit=null;
+let sectorPointsDraft=[];
 
 // ── CANVAS STATE ──
 const canvas=document.getElementById('galactic-canvas');
@@ -1399,38 +324,13 @@ let cam={x:0,y:0,scale:1};
 let dragging=false,lastMouse=null,dragMoved=false;
 let pulseT=0;
 
-// ── SECTOR COLOUR PALETTE ──
-const SECTOR_COLORS={
-  'Core':           {rep:'rgba(0,120,255,0.13)',  cis:'rgba(255,40,40,0.13)',  neu:'rgba(60,80,100,0.10)'},
-  'Expansion':      {rep:'rgba(0,160,220,0.12)',  cis:'rgba(220,50,50,0.12)',  neu:'rgba(50,70,90,0.09)'},
-  'Mid Rim':        {rep:'rgba(0,100,200,0.11)',  cis:'rgba(200,30,30,0.11)',  neu:'rgba(40,60,80,0.09)'},
-  'Outer Rim':      {rep:'rgba(0,80,180,0.10)',   cis:'rgba(180,20,20,0.10)',  neu:'rgba(30,50,70,0.08)'},
-};
-
-// Planet layout arranged around core galaxy center
-const PLANET_POSITIONS={
-  'Coruscant':    {wx:0,    wy:0},
-  'Kuat':         {wx:60,   wy:-50},
-  'Naboo':        {wx:-180, wy:120},
-  'Mandalore':    {wx:-220, wy:-180},
-  'Christophsis': {wx:200,  wy:-150},
-  'Rodia':        {wx:100,  wy:200},
-  'Ryloth':       {wx:-100, wy:320},
-  'Kamino':       {wx:320,  wy:280},
-  'Felucia':      {wx:380,  wy:-80},
-  'Geonosis':     {wx:440,  wy:160},
-  'Mustafar':     {wx:500,  wy:-220},
-};
+const CELL_SIZE=50;
+const GRID_COLUMNS=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
 
 window.onload=async()=>{
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-  
-  // Notice 1 Fixed: Explicit listener for session tracking and auto-recovery across reloads
-  sb.auth.onAuthStateChange((event, session) => {
-    isAdmin = !!session;
-    renderAll();
-  });
-
+  const {data:{session}}=await sb.auth.getSession();
+  if(session) isAdmin=true;
   await loadAll();
   setupRealtime();
   initCanvas();
@@ -1438,20 +338,22 @@ window.onload=async()=>{
 
 async function loadAll(){
   try{
-    const[f,p,c,u,s,l,upg]=await Promise.all([
+    const[f,p,c,u,s,l,upg,bnd]=await Promise.all([
       sb.from('factions').select('*').order('name'),
       sb.from('planets').select('*').order('name'),
       sb.from('planet_connections').select('*'),
       sb.from('units').select('*').order('name'),
       sb.from('settings').select('*'),
       sb.from('campaign_log').select('*').order('created_at',{ascending:false}).limit(30),
-      sb.from('upgrades').select('*')
+      sb.from('upgrades').select('*'),
+      sb.from('sector_bounds').select('*')
     ]);
-    if([f,p,c,u,s,l,upg].some(r=>r.error)) throw new Error("stream fault");
+    if([f,p,c,u,s,l,upg,bnd].some(r=>r.error)) throw new Error("stream fault");
     DB.factions=f.data||[];DB.planets=p.data||[];DB.connections=c.data||[];
     DB.units=u.data||[];DB.settings={};
     (s.data||[]).forEach(r=>DB.settings[r.key]=r.value);
     DB.logs=l.data||[];DB.upgrades=upg.data||[];
+    DB.sector_bounds=bnd.data||[];
     renderAll();
   }catch(e){toast("Data stream fault",true);console.error(e);}
 }
@@ -1472,8 +374,6 @@ function renderAll(){
   renderHeader();renderFactions();renderShopCosts();renderUpgrades();
   if(selPlanet) showDetail(selPlanet);
   if(document.getElementById('admin-modal').classList.contains('open')) renderAdminBody();
-  
-  // Terminal Override header styling matching configuration requests
   const btn=document.getElementById('admin-btn');
   btn.textContent=isAdmin?'✓ HQ CONNECTED':'⚙ TERMINAL OVERRIDE';
   btn.style.borderColor=isAdmin?'rgba(0,255,136,0.4)':'';
@@ -1541,22 +441,68 @@ function renderUpgrades(){
     </div>`).join('');
 }
 
-// ── CANVAS MAP ──
+// ════════════════════════════════════════════
+// CANVAS GRAPHICS CONTROLLER & UTILITIES
+// ════════════════════════════════════════════
 function initCanvas(){
   resizeCanvas();
   window.addEventListener('resize',resizeCanvas);
-  canvas.addEventListener('mousedown',e=>{dragging=true;dragMoved=false;lastMouse={x:e.clientX,y:e.clientY};});
+  
+  canvas.addEventListener('mousedown',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    
+    if(isEditorMode && !activeSectorEdit) {
+      DB.planets.forEach(p => {
+        const {sx,sy} = getPlanetPos(p);
+        if(Math.hypot(mx-sx, my-sy) < getR(p.strategic_value)*cam.scale+12) {
+          draggedPlanet = p;
+        }
+      });
+      if(draggedPlanet) return;
+    }
+    
+    dragging=true;dragMoved=false;lastMouse={x:e.clientX,y:e.clientY};
+  });
+  
   canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+
+    if(draggedPlanet) {
+      const {worldX, worldY} = screenToWorld(mx, my);
+      const gridData = worldToGridOffset(worldX, worldY);
+      draggedPlanet.grid_zone = gridData.grid_zone;
+      draggedPlanet.offset_x = gridData.offset_x;
+      draggedPlanet.offset_y = gridData.offset_y;
+      return;
+    }
+    
     if(!dragging||!lastMouse)return;
     const dx=e.clientX-lastMouse.x,dy=e.clientY-lastMouse.y;
     if(Math.abs(dx)>2||Math.abs(dy)>2) dragMoved=true;
     cam.x+=dx;cam.y+=dy;lastMouse={x:e.clientX,y:e.clientY};
   });
-  canvas.addEventListener('mouseup',e=>{
+  
+  canvas.addEventListener('mouseup',async e=>{
+    if(draggedPlanet) {
+      try {
+        await sb.from('planets').update({
+          grid_zone: draggedPlanet.grid_zone,
+          offset_x: draggedPlanet.offset_x,
+          offset_y: draggedPlanet.offset_y
+        }).eq('id', draggedPlanet.id);
+        toast(`PINNED COORDINATES: ${draggedPlanet.name.toUpperCase()}`);
+      } catch(err) { console.error(err); }
+      draggedPlanet = null;
+      return;
+    }
+
     if(!dragMoved) onMapClick(e);
     dragging=false;lastMouse=null;
   });
-  canvas.addEventListener('mouseleave',()=>{dragging=false;lastMouse=null;});
+  
+  canvas.addEventListener('mouseleave',()=>{dragging=false;lastMouse=null;draggedPlanet=null;});
   canvas.addEventListener('wheel',e=>{
     e.preventDefault();
     const f=e.deltaY<0?1.12:0.9;
@@ -1571,24 +517,62 @@ function resizeCanvas(){
   canvas.width=w.clientWidth;canvas.height=w.clientHeight;
 }
 
-function resetCamera(){
-  cam.x=canvas.width/2;cam.y=canvas.height/2;cam.scale=1;
-}
+function resetCamera(){cam.x=canvas.width/2;cam.y=canvas.height/2;cam.scale=1;}
 function zoomIn(){cam.scale=Math.min(4,cam.scale*1.2);}
 function zoomOut(){cam.scale=Math.max(0.3,cam.scale/1.2);}
 
 function wx2s(wx){return cam.x+wx*cam.scale;}
 function wy2s(wy){return cam.y+wy*cam.scale;}
 
+function screenToWorld(sx,sy){
+  return {
+    worldX: (sx - cam.x)/cam.scale,
+    worldY: (sy - cam.y)/cam.scale
+  };
+}
+
+function worldToGridOffset(wx,wy) {
+  const colIdx = Math.round(wx / CELL_SIZE) + GRID_COLUMNS.indexOf('K');
+  const rowIdx = Math.round(wy / CELL_SIZE) + 8;
+  const clampedCol = Math.max(0, Math.min(GRID_COLUMNS.length-1, colIdx));
+  const clampedRow = Math.max(1, Math.min(24, rowIdx+1));
+  
+  const snapX = (clampedCol - GRID_COLUMNS.indexOf('K')) * CELL_SIZE;
+  const snapY = (clampedRow - 1 - 8) * CELL_SIZE;
+  
+  return {
+    grid_zone: `${GRID_COLUMNS[clampedCol]}-${clampedRow}`,
+    offset_x: parseFloat(((wx - snapX)/CELL_SIZE).toFixed(2)),
+    offset_y: parseFloat(((wy - snapY)/CELL_SIZE).toFixed(2))
+  };
+}
+
 function getPlanetPos(p){
-  const pp=PLANET_POSITIONS[p.name];
-  if(pp) return{sx:wx2s(pp.wx),sy:wy2s(pp.wy)};
-  return{sx:wx2s((p.x-650)*0.6),sy:wy2s((p.y-650)*0.6)};
+  if(p.grid_zone) {
+    const parts = p.grid_zone.split("-");
+    const colIdx = GRID_COLUMNS.indexOf(parts[0].toUpperCase());
+    const rowIdx = parseInt(parts[1]) - 1;
+    const baseWwX = (colIdx - GRID_COLUMNS.indexOf('K')) * CELL_SIZE;
+    const baseWwY = (rowIdx - 8) * CELL_SIZE;
+    const finalWx = baseWwX + (p.offset_x || 0) * CELL_SIZE;
+    const finalWy = baseWwY + (p.offset_y || 0) * CELL_SIZE;
+    return {sx:wx2s(finalWx), sy:wy2s(finalWy)};
+  }
+  return{sx:wx2s(0),sy:wy2s(0)};
 }
 
 function onMapClick(e){
   const rect=canvas.getBoundingClientRect();
   const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  
+  if (isEditorMode && activeSectorEdit) {
+    const {worldX, worldY} = screenToWorld(mx, my);
+    const gridData = worldToGridOffset(worldX, worldY);
+    sectorPointsDraft.push(gridData.grid_zone);
+    toast(`ANCHOR ADDED: ${gridData.grid_zone}`);
+    return;
+  }
+
   let hit=null,best=9999;
   DB.planets.forEach(p=>{
     const{sx,sy}=getPlanetPos(p);
@@ -1642,8 +626,7 @@ function draw(){
     const pa=DB.planets.find(p=>p.name===c.planet_a);
     const pb=DB.planets.find(p=>p.name===c.planet_b);
     if(!pa||!pb)return;
-    const a=getPlanetPos(pa),b=getPlanetPos(pb);
-    drawLane(a,b,pa,pb);
+    drawLane(getPlanetPos(pa),getPlanetPos(pb),pa,pb);
   });
 
   DB.planets.forEach(p=>drawPlanet(p));
@@ -1663,65 +646,86 @@ function drawGrid(W,H){
   for(let y=oy;y<H;y+=sp){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
 }
 
-function drawSectorRegions(){
-  const sectors={};
-  DB.planets.forEach(p=>{
-    const s=p.sector||'Unknown';
-    if(!sectors[s])sectors[s]=[];
-    sectors[s].push(p);
-  });
+function drawSectorRegions() {
+  if (!DB.sector_bounds || DB.sector_bounds.length === 0) return;
 
-  Object.entries(sectors).forEach(([sector,planets])=>{
-    if(planets.length<2)return;
-    const pts=planets.map(p=>{const pos=getPlanetPos(p);return[pos.sx,pos.sy];});
-    const hull=convexHull(pts);
-    if(hull.length<2)return;
+  DB.sector_bounds.forEach(sbRow => {
+    const pts = sbRow.boundary_points;
+    if (!pts || pts.length < 3) return;
 
-    const repC=planets.filter(p=>p.controlling_faction.includes('Republic')).length;
-    const cisC=planets.filter(p=>p.controlling_faction.includes('Confederacy')).length;
-    const sc=SECTOR_COLORS[sector]||SECTOR_COLORS['Outer Rim'];
-    const fillCol=repC>cisC?sc.rep:cisC>repC?sc.cis:sc.neu;
-
-    const centX=hull.reduce((a,b)=>a+b[0],0)/hull.length;
-    const centY=hull.reduce((a,b)=>a+b[1],0)/hull.length;
-    const pad=40*cam.scale;
-    const expanded=hull.map(([x,y])=>{
-      const dx=x-centX,dy=y-centY;
-      const d=Math.hypot(dx,dy)||1;
-      return[x+dx/d*pad,y+dy/d*pad];
+    const canvasPoints = pts.map(gridStr => {
+      const parts = gridStr.split("-");
+      const colIdx = GRID_COLUMNS.indexOf(parts[0].toUpperCase());
+      const rowIdx = parseInt(parts[1]) - 1;
+      const wx = (colIdx - GRID_COLUMNS.indexOf('K')) * CELL_SIZE;
+      const wy = (rowIdx - 8) * CELL_SIZE;
+      return { sx: wx2s(wx), sy: wy2s(wy) };
     });
 
-    ctx.beginPath();
-    ctx.moveTo(expanded[0][0],expanded[0][1]);
-    for(let i=1;i<expanded.length;i++) ctx.lineTo(expanded[i][0],expanded[i][1]);
-    ctx.closePath();
-    ctx.fillStyle=fillCol;ctx.fill();
-    ctx.strokeStyle=fillCol.replace(/[\d.]+\)$/,'0.35)');
-    ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);
+    const sectorPlanets = DB.planets.filter(p => p.sector === sbRow.sector_name);
+    const repC = sectorPlanets.filter(p => p.controlling_faction.includes('Republic')).length;
+    const cisC = sectorPlanets.filter(p => p.controlling_faction.includes('Confederacy')).length;
+    
+    let baseColor = 'rgba(60, 80, 100, 0.03)';
+    let strokeColor = 'rgba(0, 160, 255, 0.15)';
+    
+    if (repC > cisC) {
+      baseColor = 'rgba(0, 120, 255, 0.05)';
+      strokeColor = 'rgba(0, 170, 255, 0.3)';
+    } else if (cisC > repC) {
+      baseColor = 'rgba(255, 40, 40, 0.05)';
+      strokeColor = 'rgba(255, 51, 51, 0.3)';
+    }
 
-    if(cam.scale>0.5){
-      ctx.font=`${Math.max(9,10*cam.scale)}px Orbitron,monospace`;
-      ctx.textAlign='center';
-      ctx.fillStyle='rgba(150,200,255,0.25)';
-      ctx.fillText(sector.toUpperCase()+' SECTOR',centX,centY-8);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(canvasPoints[0].sx, canvasPoints[0].sy);
+    for (let i = 1; i < canvasPoints.length; i++) {
+      ctx.lineTo(canvasPoints[i].sx, canvasPoints[i].sy);
+    }
+    ctx.closePath();
+
+    ctx.fillStyle = baseColor;
+    ctx.fill();
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    if (cam.scale > 0.4) {
+      const centX = canvasPoints.reduce((sum, p) => sum + p.sx, 0) / canvasPoints.length;
+      const centY = canvasPoints.reduce((sum, p) => sum + p.sy, 0) / canvasPoints.length;
+      ctx.font = `${Math.max(10, 11 * cam.scale)}px Orbitron, monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(168, 200, 232, 0.3)';
+      ctx.fillText(sbRow.sector_name.toUpperCase(), centX, centY);
     }
   });
-}
 
-function convexHull(pts){
-  if(pts.length<3)return pts;
-  let start=pts.reduce((a,b)=>b[0]<a[0]?b:a);
-  const hull=[];let cur=start;
-  do{
-    hull.push(cur);
-    let next=pts[0];
-    for(let i=1;i<pts.length;i++){
-      const cross=(next[0]-cur[0])*(pts[i][1]-cur[1])-(next[1]-cur[1])*(pts[i][0]-cur[0]);
-      if(next===cur||cross>0) next=pts[i];
-    }
-    cur=next;
-  }while(cur!==start&&hull.length<pts.length+1);
-  return hull;
+  if (isEditorMode && activeSectorEdit && sectorPointsDraft.length > 0) {
+    ctx.save();
+    ctx.strokeStyle = 'var(--warn)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    
+    sectorPointsDraft.forEach((gridStr, index) => {
+      const parts = gridStr.split("-");
+      const colIdx = GRID_COLUMNS.indexOf(parts[0].toUpperCase());
+      const rowIdx = parseInt(parts[1]) - 1;
+      const wx = (colIdx - GRID_COLUMNS.indexOf('K')) * CELL_SIZE;
+      const wy = (rowIdx - 8) * CELL_SIZE;
+      const sx = wx2s(wx), sy = wy2s(wy);
+      
+      if (index === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+      
+      ctx.fillStyle = 'var(--warn)';
+      ctx.fillRect(sx - 3, sy - 3, 6, 6);
+    });
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 function drawLane(a,b,pa,pb){
@@ -1782,7 +786,7 @@ function drawPlanet(p){
   ctx.moveTo(sx,sy-r*0.55);ctx.lineTo(sx,sy+r*0.55);
   ctx.stroke();
 
-  if(p.name==='Coruscant'){
+  if(p.name=='Coruscant'){
     ctx.beginPath();ctx.arc(sx,sy,r*2.8,0,Math.PI*2);
     ctx.strokeStyle='rgba(0,200,255,0.12)';ctx.lineWidth=1;ctx.stroke();
     ctx.beginPath();ctx.arc(sx,sy,r*3.5,0,Math.PI*2);
@@ -1804,7 +808,9 @@ function drawPlanet(p){
   }
 }
 
-// ── DETAIL PANEL ──
+// ════════════════════════════════════════════
+// DETAIL PANEL
+// ════════════════════════════════════════════
 function showDetail(id){
   const p=DB.planets.find(pl=>pl.id===id);if(!p)return;
   document.getElementById('detail-empty').style.display='none';
@@ -1869,7 +875,9 @@ function showDetail(id){
   }
 }
 
-// ── ACTIONS ──
+// ════════════════════════════════════════════
+// DISPATCH ENGINE CORE CORE ENGINE ACTIONS
+// ════════════════════════════════════════════
 async function buyAsset(name,base,cat){
   if(!isAdmin){toast("Admin credentials required",true);return;}
   const rep=DB.factions.find(f=>f.name==="Galactic Republic");if(!rep)return;
@@ -1935,7 +943,9 @@ async function move53rd(pid){
   toast('53rd FLEET VECTORS UPDATED');loadAll();
 }
 
-// ── TERMINAL OVERRIDE MODAL ──
+// ════════════════════════════════════════════
+// ADMINISTRATIVE SYSTEMS MANAGEMENT MODAL
+// ════════════════════════════════════════════
 function openAdmin(){
   if(!isAdmin){document.getElementById('login-screen').classList.add('open');setTimeout(()=>document.getElementById('lg-pass').focus(),100);}
   else{document.getElementById('admin-modal').classList.add('open');renderAdminBody();}
@@ -1950,11 +960,11 @@ async function doLogin(){
   try{
     const{error}=await sb.auth.signInWithPassword({email,password:pass});
     if(error)throw error;
-    closeLogin();openAdmin();
+    isAdmin=true;closeLogin();openAdmin();renderAll();
   }catch(e){document.getElementById('lg-err').textContent='AUTHORIZATION REFUSED';}
 }
 
-async function doLogout(){await sb.auth.signOut();closeAdmin();loadAll();}
+async function doLogout(){await sb.auth.signOut();isAdmin=false;closeAdmin();loadAll();}
 
 function switchMTab(t){
   mTab=t;
@@ -1979,13 +989,12 @@ function renderAdminBody(){
         <div class="sec-label">Campaign Phase</div>
         <div style="display:flex;align-items:center;gap:12px">
           <span style="font-family:var(--fd);color:var(--warn);font-size:22px;font-weight:700">${DB.settings.campaign_turn||1}</span>
-          <button class="btn ok" style="flex:1" onclick="advanceTurn()">⏩ ADVANCE PHASE</button>
+          <button class="btn ok" style="width:100%" onclick="advanceTurn()">⏩ ADVANCE PHASE</button>
         </div>
       </div>
       <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Enabling editor coordinates permits real-time drag repositioning on the galaxy matrix. Changes save instantly upon releasing nodes.</div>`;
   } 
   else if(mTab==='universe') {
-    // Generate planet selection options dynamically for the connection builder
     const planetOptions = DB.planets.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
     
     el.innerHTML=`
@@ -2051,6 +1060,25 @@ function renderAdminBody(){
         <button class="btn" style="width:100%" onclick="adminConnectPlanets()">FORGE ROUTE LINK</button>
       </div>
 
+      <div style="background:rgba(255,255,255,0.01);border:1px solid var(--border);padding:14px;border-radius:3px;margin-bottom:12px">
+        <div class="sec-label" style="color:var(--accent2)">📐 Helldivers Border Vector Matrix</div>
+        <div style="margin-bottom:10px;">
+          <label class="form-label">Target Strategic Sector</label>
+          <select id="adm-s-target" class="form-input" style="background:#000;">
+            <option value="Core Worlds">Core Worlds</option>
+            <option value="Deep Core">Deep Core</option>
+            <option value="Expansion Region">Expansion Region</option>
+            <option value="Mid Rim">Mid Rim</option>
+            <option value="Outer Rim">Outer Rim</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+          <button class="btn" id="btn-draw-sector" onclick="startSectorDraw()">🎨 DRAW BOUNDS</button>
+          <button class="btn ok" onclick="saveSectorBounds()" id="btn-save-sector" ${activeSectorEdit?'':'disabled'}>💾 SAVE PATH</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim)">Click 'Draw Bounds', then click anywhere on the background grid to map boundary lines. Click 'Save Path' when finished.</div>
+      </div>
+
       <div style="background:rgba(255,170,0,0.02);border:1px solid rgba(255,51,51,0.2);padding:12px;border-radius:3px;">
         <div class="sec-label" style="color:var(--danger)">⚠ Dangerous Utilities</div>
         <button class="btn red" style="width:100%;font-size:9px;" onclick="adminWipeUniverse()">WIPE ALL PLANET DATA ARCHIVES</button>
@@ -2063,7 +1091,47 @@ function renderAdminBody(){
   }
 }
 
-// ── NEW DATABASE ADMIN CONTEXT INTERACTION LAUNCHERS ──
+function toggleEditorMode() {
+  isEditorMode = !isEditorMode;
+  activeSectorEdit = null;
+  sectorPointsDraft = [];
+  toast(isEditorMode ? "GRID EDITOR: ENGAGED" : "GRID EDITOR: DISENGAGED");
+  renderAdminBody();
+}
+
+function startSectorDraw() {
+  const target = document.getElementById('adm-s-target').value;
+  activeSectorEdit = target;
+  sectorPointsDraft = [];
+  isEditorMode = true;
+  closeAdmin();
+  renderAll();
+  toast(`SECTOR DESIGNER OPEN: Click on grid coordinates to outline ${target.toUpperCase()}`);
+}
+
+async function saveSectorBounds() {
+  if (!activeSectorEdit || sectorPointsDraft.length < 3) {
+    toast("Polygons require at least 3 spatial points!", true);
+    return;
+  }
+  try {
+    const { error } = await sb.from('sector_bounds').upsert([{
+      sector_name: activeSectorEdit,
+      boundary_points: sectorPointsDraft
+    }], { onConflict: 'sector_name' });
+
+    if (error) throw error;
+    toast(`STABILIZED BORDERS: ${activeSectorEdit.toUpperCase()}`);
+    await writeLog("Sector Reconfigured", `Redrew tactical sector boundaries for ${activeSectorEdit}.`);
+    
+    activeSectorEdit = null;
+    sectorPointsDraft = [];
+    isEditorMode = false;
+    await loadAll();
+  } catch(e) {
+    toast("Database rejected border vectors", true);
+  }
+}
 
 async function adminCreatePlanet() {
   const name = document.getElementById('adm-p-name').value.trim();
@@ -2074,10 +1142,8 @@ async function adminCreatePlanet() {
   const desc = document.getElementById('adm-p-desc').value.trim();
 
   if(!name) { toast("System registry requires a designated title", true); return; }
-  
-  // Prevent duplicate names crashing layout aesthetics
   if(DB.planets.some(p => p.name.toUpperCase() === name.toUpperCase())) {
-    toast("System designation already exists in arrays", true); return;
+    toast("System designation already exists", true); return;
   }
 
   const payload = {
@@ -2089,7 +1155,7 @@ async function adminCreatePlanet() {
     description: desc ? desc : "No telemetry recorded inside database archives.",
     liberation_pct: faction.includes('Republic') ? 100 : (faction === 'Neutral' ? 50 : 0),
     under_invasion: false,
-    grid_zone: 'K-9', // Start at map center
+    grid_zone: 'K-9',
     offset_x: 0.0,
     offset_y: 0.0
   };
@@ -2097,18 +1163,13 @@ async function adminCreatePlanet() {
   try {
     const { error } = await sb.from('planets').insert([payload]);
     if(error) throw error;
-    
-    await writeLog("Galaxy Expanded", `New celestial node integrated into archives: ${name} (${sector}).`);
+    await writeLog("Galaxy Expanded", `New celestial node integrated: ${name} (${sector}).`);
     toast(`MANIFESTED: ${name.toUpperCase()}`);
-    
-    // Clear out input for fast sequential entries
     document.getElementById('adm-p-name').value = '';
     document.getElementById('adm-p-desc').value = '';
-    
     await loadAll();
   } catch(e) {
     toast("Database rejected creation payload", true);
-    console.error(e);
   }
 }
 
@@ -2119,16 +1180,14 @@ async function adminConnectPlanets() {
   if(!pA || !pB) { toast("Hyperlanes require two terminal endpoints", true); return; }
   if(pA === pB) { toast("Cannot link a planetary trajectory loop back into itself", true); return; }
 
-  // Detect preexisting hyperlane directions to dodge unique schema constraint flags
   const linkExists = DB.connections.some(c => 
     (c.planet_a === pA && c.planet_b === pB) || (c.planet_a === pB && c.planet_b === pA)
   );
-  if(linkExists) { toast("Hyperlane link already stable across coordinates", true); return; }
+  if(linkExists) { toast("Hyperlane link already exists", true); return; }
 
   try {
     const { error } = await sb.from('planet_connections').insert([{ planet_a: pA, planet_b: pB }]);
     if(error) throw error;
-
     await writeLog("Hyperlane Established", `Trade route vector stabilized between ${pA} and ${pB}.`);
     toast(`CONNECTED: ${pA} ◄═► ${pB}`);
     await loadAll();
@@ -2138,57 +1197,38 @@ async function adminConnectPlanets() {
 }
 
 async function adminWipeUniverse() {
-  const securityCheck = confirm("CRITICAL COMMAND ALERT: This will execute a full delete cascade, wiping out every single planet and hyperlane vector in the database. Are you absolutely certain?");
+  const securityCheck = confirm("CRITICAL ALERT: This will drop all planets and hyperlanes from the database. Proceed?");
   if(!securityCheck) return;
-
-  const doubleCheck = prompt("Type 'PURGE' to verify master systems clearance initialization:");
-  if(doubleCheck !== 'PURGE') { toast("Clearance verification mismatch. Aborted.", true); return; }
+  const doubleCheck = prompt("Type 'PURGE' to execute system wipe:");
+  if(doubleCheck !== 'PURGE') { toast("Clearance verification mismatch.", true); return; }
 
   try {
-    // Delete connections first to prevent tracking foreign key errors
     await sb.from('planet_connections').delete().neq('id', 0);
     await sb.from('planets').delete().neq('id', 0);
-
-    await writeLog("Universe Purged", "All celestial systems and transit pathways wiped clean via master terminal override.");
-    toast("DEVASTATION SYSTEM ENFORCED");
+    await sb.from('sector_bounds').delete().neq('id', 0);
+    await writeLog("Universe Purged", "All matrix coordinates wiped via terminal command.");
+    toast("DEVASTATION ENFORCED");
     selPlanet = null;
     await loadAll();
   } catch(e) {
-    toast("Purge sequence faulted structural access permissions", true);
+    toast("Purge sequence faulted structural permissions", true);
   }
 }
 
-// Notice 3 Addressed: Expanded turn advancement engine with an injection point for autonomous CIS scaling logic
 async function advanceTurn(){
   const turn=parseInt(DB.settings.campaign_turn||1)+1;
   const rep=DB.factions.find(f=>f.name==="Galactic Republic");
   const cis=DB.factions.find(f=>f.name==="Confederacy of Independent Systems");
   if(!rep||!cis)return;
-  
   let rg=0,cg=0;
   DB.planets.forEach(p=>{
     if(p.controlling_faction.includes('Republic'))rg+=p.credit_yield||0;
     else if(p.controlling_faction.includes('Confederacy'))cg+=p.credit_yield||0;
   });
-
-  let finalCisCredits = cis.credits + cg;
-  let cisLogText = "";
-
-  // ── AUTONOMOUS CIS AI PURCHASE ENGINE ──
-  // The system automatically processes sector expenditures based on total yield pool
-  if(finalCisCredits >= 600) {
-    finalCisCredits -= 600;
-    cisLogText = " Autonomous CIS Commander purchased Subjugator Fleet Elements (-600c).";
-  } else if(finalCisCredits >= 200) {
-    finalCisCredits -= 200;
-    cisLogText = " Autonomous CIS Commander deployed Droid Garrison Battalions (-200c).";
-  }
-
   await sb.from('factions').update({credits:rep.credits+rg}).eq('name','Galactic Republic');
-  await sb.from('factions').update({credits:finalCisCredits}).eq('name','Confederacy of Independent Systems');
+  await sb.from('factions').update({credits:cis.credits+cg}).eq('name','Confederacy of Independent Systems');
   await sb.from('settings').upsert({key:'campaign_turn',value:String(turn)});
-  
-  await writeLog("Phase Advanced", `Phase ${turn} begins. Republic +${rg}c, CIS +${cg}c.${cisLogText}`);
+  await writeLog("Phase Advanced",`Phase ${turn} begins. Republic +${rg}c, CIS +${cg}c.`);
   loadAll();
 }
 
