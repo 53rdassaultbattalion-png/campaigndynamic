@@ -116,7 +116,6 @@
         .garrison-intel-title { font-family: var(--font-display); font-size: 11px; letter-spacing: 1px; color: var(--danger); text-transform: uppercase; margin-bottom: 4px; }
         .garrison-intel-val { font-size: 16px; font-weight: bold; color: var(--text-bright); }
 
-        /* Secure Modular Popups Setup */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-overlay.open { display: flex; }
         .modal { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; width: 500px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,170,255,0.2); }
@@ -165,10 +164,17 @@
     <div class="login-box">
         <div class="login-icon">🔐</div>
         <div class="login-title">Secure Decryption</div>
-        <div class="login-sub">Enter tactical override authorization code</div>
-        <div class="form-group">
-            <input class="form-input" id="admin-password" type="password" placeholder="PASSWORD" style="text-align:center" onkeydown="if(event.key==='Enter')doLogin()">
+        <div class="login-sub">Enter commander email and override authorization key</div>
+        
+        <div class="form-group" style="text-align: left;">
+            <label class="form-label">Authorized Email</label>
+            <input class="form-input" id="admin-email" type="email" placeholder="name@domain.com" value="admin@53rdassaultbattalion.com">
         </div>
+        <div class="form-group" style="text-align: left;">
+            <label class="form-label">Security Password</label>
+            <input class="form-input" id="admin-password" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+
         <button class="btn" style="width:100%" onclick="doLogin()">AUTHORIZE INTERFACE</button>
         <div class="login-error" id="login-error"></div>
         <button class="btn" style="width:100%;margin-top:8px;border-color:transparent" onclick="closeLogin()">ABORT OVERRIDE</button>
@@ -186,6 +192,9 @@
             <div class="modal-tab" id="tab-log" onclick="switchTab('log')">Simulation Feed</div>
         </div>
         <div class="modal-body" id="admin-body"></div>
+        <div style="padding: 12px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
+            <button class="btn danger" onclick="doLogout()">DISCONNECT TERMINAL</button>
+        </div>
     </div>
 </div>
 
@@ -338,6 +347,13 @@
     async function initApp(url, key) {
         supabaseClient = window.supabase.createClient(url, key);
         document.getElementById('app').style.display = 'grid';
+        
+        // Verify token session with backend Auth infrastructure on startup
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            isAdmin = true;
+        }
+
         await loadAll(); 
         setupMapInteraction(); 
         setupRealtime();
@@ -439,7 +455,7 @@
     }
 
     async function purchaseAsset(assetName, cost) {
-        if(!isAdmin) { showToast("ACCESS ERROR: Tactical override code required.", true); return; }
+        if(!isAdmin) { showToast("ACCESS ERROR: Tactical override credentials required.", true); return; }
         const republicFaction = DB.factions.find(f => f.name === "Galactic Republic");
         if(!republicFaction) { showToast("Republic profile missing.", true); return; }
         if(republicFaction.credits < cost) { showToast(`REQUISITION INSUFFICIENT: Pool missing ${cost - republicFaction.credits}c.`, true); return; }
@@ -481,10 +497,6 @@
     function setupRealtime() {
         supabaseClient.channel('matrix-changes').on('postgres_changes', { event: '*', schema: 'public' }, () => { loadAll(); }).subscribe();
     }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        updateHeader();
-    });
 
     function updateHeader() {
         document.getElementById('header-campaign-name').textContent = DB.settings.campaign_name || 'Grand GAR Command Deck';
@@ -708,17 +720,55 @@
     }
 
     function openAdmin() {
-        if(!isAdmin) { document.getElementById('login-screen').style.display = 'flex'; document.getElementById('admin-password').focus(); }
-        else { document.getElementById('admin-modal').classList.add('open'); switchTab('campaign'); }
+        if(!isAdmin) { 
+            document.getElementById('login-screen').classList.add('open'); 
+            document.getElementById('admin-password').focus(); 
+        } else { 
+            document.getElementById('admin-modal').classList.add('open'); 
+            switchTab('campaign'); 
+        }
     }
-    function closeLogin() { document.getElementById('login-screen').style.display = 'none'; }
+    function closeLogin() { document.getElementById('login-screen').classList.remove('open'); document.getElementById('login-error').textContent = ''; }
     function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
 
-    function doLogin() {
+    // Secure authentication handler using backend validation
+    async function doLogin() {
+        const email = document.getElementById('admin-email').value;
         const pass = document.getElementById('admin-password').value;
-        if(pass === (DB.settings.admin_password || 'changeme')) {
-            isAdmin = true; document.getElementById('login-error').textContent = ''; document.getElementById('admin-password').value = ''; closeLogin(); openAdmin();
-        } else { document.getElementById('login-error').textContent = 'DECRYPTION KEY INCORRECT'; }
+        const errorEl = document.getElementById('login-error');
+
+        try {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: pass
+            });
+
+            if (error) throw error;
+
+            isAdmin = true;
+            errorEl.textContent = '';
+            document.getElementById('admin-password').value = '';
+            closeLogin();
+            openAdmin();
+            showToast("TAC-OVERRIDE ENCRYPTED VIA SERVER AUTH");
+        } catch (e) {
+            errorEl.textContent = 'AUTHORIZATION REFUSED: KEY FAULT';
+            console.error(e.message);
+        }
+    }
+
+    async function doLogout() {
+        await supabaseClient.auth.signOut();
+        isAdmin = false;
+        closeAdmin();
+        renderAll();
+        showToast("TERMINAL COMMAND CONSOLE TERMINATED");
+    }
+
+    async function writeLog(eventType, description) {
+        try {
+            await supabaseClient.from('campaign_log').insert([{ event_type: eventType, description: description }]);
+        } catch(e) { console.error("Logging sync fail"); }
     }
 
     function switchTab(tab) { activeTab = tab; document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); renderAdminBody(); }
@@ -753,7 +803,7 @@
         let rep = DB.factions.find(f => f.name === "Galactic Republic"); let cis = DB.factions.find(f => f.name === "Confederacy of Independent Systems");
         if (!rep || !cis) return;
 
-        showToast("COMPUTING EXPANDED SECTOR FRONT ENCOUNTERSFront...");
+        showToast("COMPUTING EXPANDED SECTOR FRONT ENCOUNTERS...");
         let simulationLogs = [];
 
         let repGain = 0; let cisGain = 0;
