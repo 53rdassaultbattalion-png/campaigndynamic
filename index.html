@@ -845,20 +845,84 @@ function switchMTab(t){
 function renderAdminBody(){
   const el=document.getElementById('admin-body');
   if(mTab==='controls'){
+    // Find the currently selected planet to build contextual planet controls
+    const p = DB.planets.find(pl => pl.id === selPlanet);
+    
     el.innerHTML=`
       <div style="background:rgba(255,255,255,0.01);border:1px solid var(--border);padding:14px;border-radius:3px;margin-bottom:12px">
-        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Campaign Phase</div>
+        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Campaign Cycle</div>
         <div style="display:flex;align-items:center;gap:12px">
           <span style="font-family:var(--fd);color:var(--warn);font-size:22px;font-weight:700">${DB.settings.campaign_turn||1}</span>
           <button class="btn ok" style="flex:1" onclick="advanceTurn()">⏩ ADVANCE PHASE</button>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions based on current territory holdings.</div>`;
+
+      <div style="background:rgba(255,255,255,0.01);border:1px solid var(--border);padding:14px;border-radius:3px;margin-bottom:12px">
+        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Universe Editor & Sandbox Tools</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+          <button class="btn" onclick="adjustTreasury('Galactic Republic', 1000)">+1k Republic Credits</button>
+          <button class="btn red" onclick="adjustTreasury('Confederacy of Independent Systems', 1000)">+1k CIS Credits</button>
+        </div>
+        
+        ${p ? `
+          <div style="border-top:1px solid rgba(0,160,255,0.1);padding-top:10px;margin-top:10px">
+            <div style="font-size:11px;color:var(--accent2);margin-bottom:6px;font-family:var(--fd)">Target Node: ${p.name}</div>
+            <div style="display:flex;gap:4px;margin-bottom:6px">
+              <button class="btn" style="font-size:9px;padding:4px 8px;flex:1" onclick="setPlanetFaction('${p.id}', 'Galactic Republic')">Force Republic</button>
+              <button class="btn red" style="font-size:9px;padding:4px 8px;flex:1" onclick="setPlanetFaction('${p.id}', 'Confederacy of Independent Systems')">Force CIS</button>
+              <button class="btn" style="font-size:9px;padding:4px 8px;border-color:var(--text-dim);color:var(--text-dim)" onclick="setPlanetFaction('${p.id}', 'Neutral')">Neutral</button>
+            </div>
+            <div style="display:flex;gap:4px">
+              <button class="btn ${p.under_invasion?'red':'ok'}" style="font-size:9px;padding:4px 8px;width:100%" onclick="toggleInvasion('${p.id}', ${!p.under_invasion})">
+                ${p.under_invasion ? '🛑 CANCEL CIS INVASION' : '⚠️ TRIGGER CIS INVASION'}
+              </button>
+            </div>
+          </div>
+        ` : `<div style="font-size:11px;color:var(--text-dim);text-align:center;padding:5px 0;">Select a planet on the map to modify its universe parameters.</div>`}
+      </div>
+
+      <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions based on current territory holdings. Sandbox edits push raw database overrides instantly.</div>`;
   }else{
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:5px">${
       DB.logs.map(l=>`<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:2px;padding:8px 10px"><span style="color:var(--warn);font-family:var(--fd);font-size:9px">[${l.event_type}]</span> <span style="font-size:12px">${l.description}</span></div>`).join('')
     }</div>`;
   }
+}
+
+// ── NEW UNIVERSE EDITOR DB MUTATION FUNCTIONS ──
+async function adjustTreasury(factionName, amount) {
+  if(!isAdmin) return;
+  const f = DB.factions.find(fac => fac.name === factionName);
+  if(!f) return;
+  const newCredits = (f.credits || 0) + amount;
+  await sb.from('factions').update({ credits: newCredits }).eq('name', factionName);
+  await writeLog("Editor Action", `Modified ${factionName} treasury by ${amount}c.`);
+  toast(`Treasury modified for ${f.shortname || factionName}`);
+  loadAll();
+}
+
+async function setPlanetFaction(pid, factionName) {
+  if(!isAdmin) return;
+  const p = DB.planets.find(pl => pl.id == pid);
+  if(!p) return;
+  const upd = { controlling_faction: factionName };
+  if(factionName === "Galactic Republic") upd.liberation_pct = 100;
+  if(factionName === "Confederacy of Independent Systems") upd.liberation_pct = 0;
+  
+  await sb.from('planets').update(upd).eq('id', pid);
+  await writeLog("Editor Override", `Force assigned ${p.name} control to ${factionName}.`);
+  toast(`${p.name} alignment updated.`);
+  loadAll();
+}
+
+async function toggleInvasion(pid, status) {
+  if(!isAdmin) return;
+  const p = DB.planets.find(pl => pl.id == pid);
+  if(!p) return;
+  await sb.from('planets').update({ under_invasion: status }).eq('id', pid);
+  await writeLog("Editor Override", status ? `Initiated autonomous invasion script on ${p.name}.` : `Revoked invasion state on ${p.name}.`);
+  toast(`Invasion status modified on ${p.name}`);
+  loadAll();
 }
 
 async function advanceTurn(){
