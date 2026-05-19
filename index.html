@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grand Republic Command Deck</title>
+    <title> 53rd Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -43,6 +43,7 @@
         
         .btn { font-family: var(--font-display); font-size: 11px; letter-spacing: 1.5px; padding: 7px 16px; border-radius: 2px; border: 1px solid var(--border-bright); background: transparent; color: var(--accent); cursor: pointer; transition: all 0.2s ease-in-out; text-transform: uppercase; }
         .btn:hover { background: rgba(0, 170, 255, 0.15); box-shadow: var(--glow); color: var(--text-bright); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: var(--border); color: var(--text-dim); }
         .btn.danger { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
         .btn.danger:hover { background: rgba(255, 68, 68, 0.15); }
         .btn.success { border-color: rgba(0, 255, 136, 0.5); color: var(--success); }
@@ -66,6 +67,7 @@
         .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 10px; border: 1px solid rgba(0,170,255,0.1); margin-bottom: 6px; border-radius: 2px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
         .shop-item:hover { background: rgba(0,170,255,0.08); border-color: var(--accent); }
         .shop-cost { color: var(--warn); font-family: var(--font-display); font-weight: bold; font-size: 11px; }
+        .cost-strikethrough { text-decoration: line-through; color: var(--text-dim); font-size: 10px; margin-right: 4px; }
 
         #map-container { position: relative; overflow: hidden; background: radial-gradient(ellipse at center, #051429 0%, #010408 80%); cursor: grab; }
         #map-container:active { cursor: grabbing; }
@@ -94,6 +96,7 @@
         
         .hq-container-badges { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
         .hq-marker-badge { display: inline-flex; align-items: center; background: rgba(0, 170, 255, 0.12); border: 1px solid var(--accent); color: var(--accent2); padding: 4px 10px; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; border-radius: 2px; text-shadow: 0 0 5px var(--accent); width: fit-content; }
+        .hq-marker-badge.invasion { background: rgba(255, 68, 68, 0.15); border-color: var(--danger); color: #ff6b6b; text-shadow: 0 0 5px var(--danger); animation: danger-blink 1.5s infinite alternate; }
 
         .liberation-container { margin-top: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,170,255,0.1); padding: 10px; border-radius: 2px; }
         .liberation-meta { display: flex; justify-content: space-between; font-family: var(--font-display); font-size: 9px; letter-spacing: 1px; margin-bottom: 4px; }
@@ -118,7 +121,7 @@
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-overlay.open { display: flex; }
-        .modal { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; width: 500px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,170,255,0.2); }
+        .modal { background: #040c17; border: 1px solid var(--border-bright); border-radius: 4px; width: 550px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,170,255,0.2); }
         .modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .modal-title { font-family: var(--font-display); font-size: 13px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; }
         .modal-close { background: none; border: none; color: var(--text-dim); font-size: 22px; cursor: pointer; line-height: 1; }
@@ -128,6 +131,15 @@
         .modal-tab { font-family: var(--font-display); font-size: 10px; letter-spacing: 2px; padding: 14px 18px; cursor: pointer; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; }
         .modal-tab:hover { color: var(--text); }
         .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .tech-card { background: rgba(255,255,255,0.01); border: 1px solid var(--border); padding: 14px; border-radius: 3px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+        .tech-card.unlocked { border-color: rgba(0, 255, 136, 0.3); background: rgba(0, 255, 136, 0.01); }
+        .tech-meta { display: flex; justify-content: space-between; align-items: flex-start; }
+        .tech-name { font-family: var(--font-display); font-size: 12px; letter-spacing: 1px; color: var(--text-bright); text-transform: uppercase; }
+        .tech-desc { font-size: 13px; color: var(--text-dim); line-height: 1.4; }
+        .tech-badge { position: absolute; top: 14px; right: 14px; font-family: var(--font-display); font-size: 9px; padding: 3px 8px; border-radius: 2px; letter-spacing: 1px; }
+        .tech-badge.active { background: rgba(0, 255, 136, 0.15); color: var(--success); border: 1px solid var(--success); }
+        .tech-badge.locked { background: rgba(255, 170, 0, 0.1); color: var(--warn); border: 1px solid rgba(255, 170, 0, 0.3); }
 
         #login-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         #login-screen.open { display: flex; }
@@ -146,11 +158,13 @@
         #toast.error { border-color: rgba(255, 68, 68, 0.5); color: var(--danger); }
 
         @keyframes hq-pulse { 0% { r: 12; opacity: 1; } 100% { r: 35; opacity: 0; } }
+        @keyframes danger-blink { 0% { opacity: 0.3; } 100% { opacity: 1; } }
         .hq-ring-53rd { animation: hq-pulse 2.0s ease-out infinite; stroke: #00aaff; stroke-width: 2.5; }
         .hq-ring-501st { animation: hq-pulse 2.2s ease-out infinite; stroke: #2a6eff; stroke-width: 2; }
         .hq-ring-212th { animation: hq-pulse 1.8s ease-out infinite; stroke: #ff9f1a; stroke-width: 2; }
         .hq-ring-104th { animation: hq-pulse 2.4s ease-out infinite; stroke: #a4b0be; stroke-width: 2; }
         .conflict-pulse { animation: hq-pulse 1.6s ease-out infinite; stroke: var(--danger); stroke-width: 2; }
+        .invasion-strobe { animation: hq-pulse 1.2s ease-out infinite; stroke: #ff3333; stroke-width: 3.5; }
     </style>
 </head>
 <body>
@@ -189,6 +203,7 @@
         </div>
         <div class="modal-tabs">
             <div class="modal-tab active" id="tab-campaign" onclick="switchTab('campaign')">Tactical Controls</div>
+            <div class="modal-tab" id="tab-upgrades" onclick="switchTab('upgrades')">Upgrades Matrix</div>
             <div class="modal-tab" id="tab-log" onclick="switchTab('log')">Simulation Feed</div>
         </div>
         <div class="modal-body" id="admin-body"></div>
@@ -218,18 +233,24 @@
             <div class="logistics-title" style="position: sticky; top: 0; background: #040b16; padding-bottom: 6px; z-index: 2;">⚙️ Requisition Manifest</div>
             
             <div style="font-size: 10px; color: var(--accent); font-family: var(--font-display); margin: 4px 0; letter-spacing: 1px;">// LAND ARMOR DIVISION</div>
-            <div class="shop-item" onclick="purchaseAsset('BARC Speeder', 50)"><span>🏍️ BARC Speeder</span><span class="shop-cost">50c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('ITT Transport', 150)"><span>🛻 ITT Transport</span><span class="shop-cost">150c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('TX-130 Fighter Tank', 250)"><span>🛡️ TX-130 Fighter Tank</span><span class="shop-cost">250c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('AT-TE Walker', 750)"><span>🦀 AT-TE Walker</span><span class="shop-cost">750c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('BARC Speeder', 50, 'ground')"><span>🏍️ BARC Speeder</span><span class="shop-cost" id="cost-barc">50c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('ITT Transport', 150, 'ground')"><span>🛻 ITT Transport</span><span class="shop-cost" id="cost-itt">150c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('TX-130 Fighter Tank', 250, 'ground')"><span>🛡️ TX-130 Fighter Tank</span><span class="shop-cost" id="cost-tx130">250c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('AT-TE Walker', 750, 'ground')"><span>🦀 AT-TE Walker</span><span class="shop-cost" id="cost-atte">750c</span></div>
             
             <div style="font-size: 10px; color: var(--accent); font-family: var(--font-display); margin: 10px 0 4px 0; letter-spacing: 1px;">// AIR & NAVAL SQUADRONS</div>
-            <div class="shop-item" onclick="purchaseAsset('LAAT/i Gunship', 350)"><span>🛸 LAAT/i Gunship</span><span class="shop-cost">350c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('LAAT/c Carrier', 500)"><span>⚓ LAAT/c Carrier</span><span class="shop-cost">500c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('ARC-170 Fighter', 250)"><span>⚡ ARC-170 Fighter</span><span class="shop-cost">250c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('BTL-B Y-Wing', 500)"><span>💣 BTL-B Y-Wing</span><span class="shop-cost">500c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('Nimbus V-Wing', 300)"><span>🔺 Nimbus V-Wing</span><span class="shop-cost">300c</span></div>
-            <div class="shop-item" onclick="purchaseAsset('Z-95 Headhunter', 200)"><span>🚀 Z-95 Headhunter</span><span class="shop-cost">200c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('LAAT/i Gunship', 350, 'air')"><span>🛸 LAAT/i Gunship</span><span class="shop-cost" id="cost-laati">350c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('LAAT/c Carrier', 500, 'air')"><span>⚓ LAAT/c Carrier</span><span class="shop-cost" id="cost-laatc">500c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('ARC-170 Fighter', 250, 'air')"><span>⚡ ARC-170 Fighter</span><span class="shop-cost" id="cost-arc170">250c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('BTL-B Y-Wing', 500, 'air')"><span>💣 BTL-B Y-Wing</span><span class="shop-cost" id="cost-ywing">500c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('Nimbus V-Wing', 300, 'air')"><span>🔺 Nimbus V-Wing</span><span class="shop-cost" id="cost-vwing">300c</span></div>
+            <div class="shop-item" onclick="purchaseAsset('Z-95 Headhunter', 200, 'air')"><span>🚀 Z-95 Headhunter</span><span class="shop-cost" id="cost-z95">200c</span></div>
+
+            <div id="unlocked-shop-tier" style="display:none;">
+                <div style="font-size: 10px; color: var(--success); font-family: var(--font-display); margin: 10px 0 4px 0; letter-spacing: 1px;">// SPECIAL FLEET PROJECTS</div>
+                <div id="shop-item-av7" style="display:none;" class="shop-item" onclick="purchaseAsset('AV-7 Anti-Vehicle Cannon', 900, 'special')"><span>📡 AV-7 Artillery Cannon</span><span class="shop-cost">900c</span></div>
+                <div id="shop-item-orbital" style="display:none;" class="shop-item" onclick="purchaseAsset('Orbital Bombardment Strike', 2500, 'special')"><span>⚡ Orbital Strike Token</span><span class="shop-cost">2500c</span></div>
+            </div>
         </div>
     </div>
 
@@ -251,6 +272,7 @@
             <div class="legend-item"><div class="legend-dot" style="background:#344152"></div> Neutral Systems</div>
             <div class="legend-item"><div class="legend-dot" style="background:#00aaff"></div> Galactic Republic</div>
             <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div> Confederacy (CIS)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ff3333; box-shadow: 0 0 8px #ff3333"></div> CIS Invasion Host</div>
         </div>
     </div>
 
@@ -270,7 +292,7 @@
                 
                 <div class="liberation-container">
                     <div class="liberation-meta">
-                        <span style="color:#0af">REPUBLIC LIBERATION INDEX</span>
+                        <span id="d-liberation-label" style="color:#0af">REPUBLIC LIBERATION INDEX</span>
                         <span id="d-liberation-txt" style="color:#0ff;font-weight:bold">0%</span>
                     </div>
                     <div class="liberation-bar-outer">
@@ -301,7 +323,7 @@
                 <div id="d-53rd-cached-assets" class="units-list"></div>
             </div>
 
-            <div style="padding:16px; margin-top: auto;" id="d-admin-actions"></div>
+            <div style="padding:16px; margin-top: auto; display: flex; flex-direction: column; gap: 8px;" id="d-admin-actions"></div>
         </div>
     </div>
 </div>
@@ -310,7 +332,7 @@
 
 <script>
     let supabaseClient = null;
-    let DB = { factions: [], planets: [], connections: [], units: [], settings: {}, logs: [] };
+    let DB = { factions: [], planets: [], connections: [], units: [], settings: {}, logs: [], upgrades: [] };
     let selectedPlanetId = null;
     let isAdmin = false;
     let activeTab = 'campaign';
@@ -348,11 +370,8 @@
         supabaseClient = window.supabase.createClient(url, key);
         document.getElementById('app').style.display = 'grid';
         
-        // Verify token session with backend Auth infrastructure on startup
         const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            isAdmin = true;
-        }
+        if (session) { isAdmin = true; }
 
         await loadAll(); 
         setupMapInteraction(); 
@@ -361,107 +380,71 @@
 
     async function loadAll() {
         try {
-            const [f, p, c, u, s, l] = await Promise.all([
+            const [f, p, c, u, s, l, upg] = await Promise.all([
                 supabaseClient.from('factions').select('*').order('name'),
                 supabaseClient.from('planets').select('*').order('name'),
                 supabaseClient.from('planet_connections').select('*'),
                 supabaseClient.from('units').select('*').order('name'),
                 supabaseClient.from('settings').select('*'),
-                supabaseClient.from('campaign_log').select('*').order('created_at', {ascending: false}).limit(25)
+                supabaseClient.from('campaign_log').select('*').order('created_at', {ascending: false}).limit(25),
+                supabaseClient.from('upgrades').select('*')
             ]);
             DB.factions = f.data || []; DB.planets = p.data || []; DB.connections = c.data || []; DB.units = u.data || [];
             DB.settings = {}; if(s.data) s.data.forEach(r => DB.settings[r.key] = r.value);
             DB.logs = l.data || [];
+            DB.upgrades = upg.data || [];
             
             if (DB.factions.length === 0 && DB.planets.length === 0) {
-                await seedLoreDatabase();
+                showToast("Empty database detected. Run migrations first.", true);
             } else {
                 renderAll();
             }
         } catch (e) { showToast("Data acquisition stream fault", true); }
     }
 
-    async function seedLoreDatabase() {
-        showToast("PRE-POPULATING AUTHENTIC MACRO SECTOR ATLASED ARRAY...");
-        
-        const initialFactions = [
-            { name: "Galactic Republic", shortname: "Republic", color: "#00aaff", emoji: "🦅", credits: 6000 },
-            { name: "Confederacy of Independent Systems", shortname: "CIS", color: "#ff4444", emoji: "🐙", credits: 6000 }
-        ];
-        await supabaseClient.from('factions').insert(initialFactions);
-
-        const initialPlanets = [
-            { name: "Coruscant", sector: "Corusca (L-9)", emoji: "🏙️", x: 1250, y: 1250, controlling_faction: "Galactic Republic", credit_yield: 500, strategic_value: "Critical", liberation_pct: 100, description: "The ecumenopolis capital center of coordinates grid. Heart of the Republic defense arrays." },
-            { name: "Anaxes", sector: "Azure (L-9)", emoji: "⚓", x: 1280, y: 1160, controlling_faction: "Galactic Republic", credit_yield: 300, strategic_value: "High", liberation_pct: 100, description: "The Defender of the Core. Heavily protected fortress sector hosting major fleet shipyards." },
-            { name: "Corellia", sector: "Corellian (M-11)", emoji: "🏭", x: 1190, y: 1320, controlling_faction: "Galactic Republic", credit_yield: 400, strategic_value: "Critical", liberation_pct: 100, description: "Industrial powerhouse world famous for producing the finest capital ships and fast freighters." },
-            { name: "Cato Neimoidia", sector: "Quellor (N-11)", emoji: "🛕", x: 1380, y: 1380, controlling_faction: "Confederacy of Independent Systems", credit_yield: 350, strategic_value: "High", liberation_pct: 0, description: "Wealthy purse world of the Trade Federation. Suspended bridge cities over foggy canyons." },
-            { name: "Kuat", sector: "Kuat (M-10)", emoji: "⭕", x: 1320, y: 1220, controlling_faction: "Galactic Republic", credit_yield: 450, strategic_value: "Critical", liberation_pct: 100, description: "Kuat Drive Yards location zone. Vital industrial anchor producing the Republic fleet's Star Destroyers." },
-            { name: "Christophsis", sector: "Savareen (M-16)", emoji: "💎", x: 920, y: 1550, controlling_faction: "Neutral", credit_yield: 220, strategic_value: "High", liberation_pct: 0, description: "Crystalline planet rich in raw minerals. A highly contested strategic bridgehead into the Outer Rim." },
-            { name: "Teth", sector: "Brak (U-12)", emoji: "🌿", x: 1020, y: 1850, controlling_faction: "Neutral", credit_yield: 110, strategic_value: "Medium", liberation_pct: 0, description: "Jungle world surrounded by massive cliffs. Holds an ancient monastery used as a pirate smuggling den." },
-            { name: "Malastare", sector: "Dustig (K-16)", emoji: "🏁", x: 740, y: 1620, controlling_faction: "Galactic Republic", credit_yield: 280, strategic_value: "High", liberation_pct: 100, description: "Methane-rich world governed by the Gran. Home of fast podracing circuits and critical fuel reserves." },
-            { name: "Bothawui", sector: "Bothan (R-14)", emoji: "🐾", x: 1820, y: 1580, controlling_faction: "Galactic Republic", credit_yield: 200, strategic_value: "Medium", liberation_pct: 100, description: "Homeworld of the Bothans. Holds the primary hub architecture for the Republic's shadow spy networks." },
-            { name: "Naboo", sector: "Chommell (O-17)", emoji: "🏰", x: 1650, y: 1920, controlling_faction: "Galactic Republic", credit_yield: 240, strategic_value: "Medium", liberation_pct: 100, description: "Picturesque planet of lakes and plains. Home to a sophisticated human society and the subterranean Gungans." },
-            { name: "Kashyyyk", sector: "Mytaranor (P-9)", emoji: "🌲", x: 1780, y: 1050, controlling_faction: "Galactic Republic", credit_yield: 210, strategic_value: "High", liberation_pct: 100, description: "Wookiee homeworld wrapped in towering Wroshyr forests. Anchors navigation along the eastern trade routes." },
-            { name: "Ryloth", sector: "Gaulus (R-16)", emoji: "🌵", x: 1950, y: 1820, controlling_faction: "Neutral", credit_yield: 130, strategic_value: "Medium", liberation_pct: 0, description: "Twi'lek homeworld locked in harsh tidal rotations. Under constant pressure by Separatist droid blockades." },
-            { name: "Geonosis", sector: "Arkanis (R-16)", emoji: "🏜️", x: 1920, y: 1720, controlling_faction: "Confederacy of Independent Systems", credit_yield: 380, strategic_value: "Critical", liberation_pct: 0, description: "Site of the first battle of the Clone Wars. Massive underground foundries mass-producing battle droids." },
-            { name: "Tatooine", sector: "Arkanis (R-16)", emoji: "☀️", x: 1980, y: 1680, controlling_faction: "Neutral", credit_yield: 70, strategic_value: "Low", liberation_pct: 0, description: "Harsh desert planet under the iron grip of the Hutt Cartel. A haven for smugglers and outer-rim scumbags." },
-            { name: "Kamino", sector: "Wild Space (S-15)", emoji: "🌊", x: 2150, y: 1950, controlling_faction: "Galactic Republic", credit_yield: 320, strategic_value: "Critical", liberation_pct: 100, description: "Storm-drenched ocean world outside the main map lines. Birthplace and training hub of the clone army." },
-            { name: "Umbara", sector: "Ghost Nebula (P-15)", emoji: "🏮", x: 1520, y: 1640, controlling_faction: "Confederacy of Independent Systems", credit_yield: 250, strategic_value: "High", liberation_pct: 0, description: "The Shadow World. Gloomy perpetual nebula darkness shielding highly advanced, lethal local military technology." },
-            { name: "Muunilinst", sector: "Algara (K-3)", emoji: "🏦", x: 1450, y: 450, controlling_faction: "Confederacy of Independent Systems", credit_yield: 600, strategic_value: "Critical", liberation_pct: 0, description: "The Banking World. Financial capital of the Banking Clan, directly funding the Separatist military complex." },
-            { name: "Felucia", sector: "Tharin (U-6)", emoji: "🍄", x: 2240, y: 920, controlling_faction: "Neutral", credit_yield: 90, strategic_value: "Medium", liberation_pct: 0, description: "Fungal jungle world full of giant plants and dangerous wildlife. The setting of brutal attrition warfare." },
-            { name: "Saleucami", sector: "Su Mar (O-12)", emoji: "🌋", x: 1680, y: 1480, controlling_faction: "Neutral", credit_yield: 140, strategic_value: "Medium", liberation_pct: 0, description: "Geothermal caldera worlds serving as a vital staging post along outer hyperspace lanes." },
-            { name: "Raxus Prime", sector: "Tion (S-6)", emoji: "🏭", x: 2350, y: 720, controlling_faction: "Confederacy of Independent Systems", credit_yield: 300, strategic_value: "High", liberation_pct: 0, description: "A planet covered entirely in toxic trash and industrial waste, serving as the official political capital of the CIS." }
-        ];
-        const { data: planetsData } = await supabaseClient.from('planets').insert(initialPlanets).select();
-
-        const initialConnections = [
-            { planet_a: "Coruscant", planet_b: "Anaxes" },
-            { planet_a: "Anaxes", planet_b: "Muunilinst" },
-            { planet_a: "Coruscant", planet_b: "Kuat" },
-            { planet_a: "Kuat", planet_b: "Corellia" },
-            { planet_a: "Corellia", planet_b: "Cato Neimoidia" },
-            { planet_a: "Cato Neimoidia", planet_b: "Saleucami" },
-            { planet_a: "Saleucami", planet_b: "Bothawui" },
-            { planet_a: "Bothawui", planet_b: "Kashyyyk" },
-            { planet_a: "Kashyyyk", planet_b: "Felucia" },
-            { planet_a: "Felucia", planet_b: "Raxus Prime" },
-            { planet_a: "Corellia", planet_b: "Christophsis" },
-            { planet_a: "Christophsis", planet_b: "Malastare" },
-            { planet_a: "Malastare", planet_b: "Teth" },
-            { planet_a: "Teth", planet_b: "Naboo" },
-            { planet_a: "Naboo", planet_b: "Ryloth" },
-            { planet_a: "Ryloth", planet_b: "Tatooine" },
-            { planet_a: "Tatooine", planet_b: "Geonosis" },
-            { planet_a: "Geonosis", planet_b: "Kamino" },
-            { planet_a: "Coruscant", planet_b: "Umbara" },
-            { planet_a: "Umbara", planet_b: "Naboo" }
-        ];
-        await supabaseClient.from('planet_connections').insert(initialConnections);
-
-        if (planetsData && planetsData.length) {
-            const coruscantNode = planetsData.find(p => p.name === "Coruscant");
-            if (coruscantNode) {
-                await Promise.all([
-                    supabaseClient.from('settings').upsert({ key: 'loc_53rd', value: String(coruscantNode.id) }),
-                    supabaseClient.from('settings').upsert({ key: 'loc_501st', value: String(coruscantNode.id) }),
-                    supabaseClient.from('settings').upsert({ key: 'loc_212th', value: String(coruscantNode.id) }),
-                    supabaseClient.from('settings').upsert({ key: 'loc_104th', value: String(coruscantNode.id) })
-                ]);
-            }
-        }
-
-        await writeLog("Galaxy Configured", "Autonomous data array injector populated the system with 20 authentic sector star maps.");
-        setTimeout(() => { window.location.reload(); }, 1500);
+    function isUpgradeUnlocked(key) {
+        const u = DB.upgrades.find(item => item.upgrade_key === key);
+        return u ? u.unlocked : false;
     }
 
-    async function purchaseAsset(assetName, cost) {
+    function getRequisitionCost(baseCost, category) {
+        if (category === 'ground' && isUpgradeUnlocked('repulsor_foundry')) {
+            return Math.round(baseCost * 0.75);
+        }
+        if (category === 'air' && isUpgradeUnlocked('staging_berths')) {
+            return Math.round(baseCost * 0.75);
+        }
+        return baseCost;
+    }
+
+    async function buyGlobalUpgrade(key, cost) {
+        if(!isAdmin) return;
+        const rep = DB.factions.find(f => f.name === "Galactic Republic");
+        if (!rep || rep.credits < cost) { showToast("INSUFFICIENT TREASURY FUNDS", true); return; }
+
+        const nextCredits = rep.credits - cost;
+        const { error: fErr } = await supabaseClient.from('factions').update({ credits: nextCredits }).eq('id', rep.id);
+        if (fErr) { showToast(fErr.message, true); return; }
+
+        const { error: uErr } = await supabaseClient.from('upgrades').update({ unlocked: true }).eq('upgrade_key', key);
+        if (uErr) { showToast(uErr.message, true); return; }
+
+        const upgObj = DB.upgrades.find(u => u.upgrade_key === key);
+        await writeLog("Tech Unlocked", `Successfully purchased global technology array: ${upgObj ? upgObj.name : key} (-${cost}c).`);
+        showToast("GLOBAL ADVANCEMENT PROTOCOL ACTIVE");
+        loadAll();
+    }
+
+    async function purchaseAsset(assetName, baseCost, category) {
         if(!isAdmin) { showToast("ACCESS ERROR: Tactical override credentials required.", true); return; }
         const republicFaction = DB.factions.find(f => f.name === "Galactic Republic");
         if(!republicFaction) { showToast("Republic profile missing.", true); return; }
-        if(republicFaction.credits < cost) { showToast(`REQUISITION INSUFFICIENT: Pool missing ${cost - republicFaction.credits}c.`, true); return; }
+        
+        const finalCost = getRequisitionCost(baseCost, category);
+        if(republicFaction.credits < finalCost) { showToast(`REQUISITION INSUFFICIENT: Pool missing ${finalCost - republicFaction.credits}c.`, true); return; }
         if(!selectedPlanetId) { showToast("TARGET ERROR: Select destination system hub node first.", true); return; }
 
-        const nextCredits = republicFaction.credits - cost;
+        const nextCredits = republicFaction.credits - finalCost;
         const { error: factionErr } = await supabaseClient.from('factions').update({ credits: nextCredits }).eq('id', republicFaction.id);
         if(factionErr) { showToast(factionErr.message, true); return; }
 
@@ -470,8 +453,29 @@
             name: `53rd ${assetName}`, faction: "Galactic Republic", unit_type: "Purchased Logistics Asset", size: "Standard Item Cache", status: "Active", planet_id: selectedPlanetId
         }]);
 
-        await writeLog("Asset Requisitioned", `Acquired ${assetName} (-${cost}c). Routed down to ${p ? p.name : 'Target world'}.`);
+        await writeLog("Asset Requisitioned", `Acquired ${assetName} (-${finalCost}c). Routed down to ${p ? p.name : 'Target world'}.`);
         showToast(`ACQUIRED: ${assetName} processed successfully!`);
+        loadAll();
+    }
+
+    async function executeOrbitalStrike(planetId) {
+        if(!isAdmin) return;
+        const rep = DB.factions.find(f => f.name === "Galactic Republic");
+        if (!rep || rep.credits < 2500) { showToast("INSUFFICIENT CREDITS FOR ORBITAL BOMBARDMENT", true); return; }
+        
+        const p = DB.planets.find(pl => pl.id === planetId);
+        if (!p || p.controlling_faction === 'Galactic Republic') { showToast("INVALID STRIKE TARGET", true); return; }
+
+        const nextCredits = rep.credits - 2500;
+        await supabaseClient.from('factions').update({ credits: nextCredits }).eq('id', rep.id);
+
+        let nextLib = Math.min(100, (p.liberation_pct || 0) + 30);
+        let updateData = { liberation_pct: nextLib };
+        if (nextLib >= 100) { updateData.controlling_faction = "Galactic Republic"; updateData.under_invasion = false; }
+
+        await supabaseClient.from('planets').update(updateData).eq('id', planetId);
+        await writeLog("Orbital Strike", `Dreadnought Supremacy asset authorized a tactical bombardment on ${p.name}. Planet liberation shifted +30% instantly.`);
+        showToast("ORBITAL BOMBARDMENT CONCLUDED");
         loadAll();
     }
 
@@ -485,8 +489,46 @@
         document.getElementById('detail-tab-assets-view').style.display = tabKey === 'assets' ? 'block' : 'none';
     }
 
+    function updateDynamicShopCosts() {
+        const shopConfig = [
+            { id: 'cost-barc', base: 50, cat: 'ground' },
+            { id: 'cost-itt', base: 150, cat: 'ground' },
+            { id: 'cost-tx130', base: 250, cat: 'ground' },
+            { id: 'cost-atte', base: 750, cat: 'ground' },
+            { id: 'cost-laati', base: 350, cat: 'air' },
+            { id: 'cost-laatc', base: 500, cat: 'air' },
+            { id: 'cost-arc170', base: 250, cat: 'air' },
+            { id: 'cost-ywing', base: 500, cat: 'air' },
+            { id: 'cost-vwing', base: 300, cat: 'air' },
+            { id: 'cost-z95', base: 200, cat: 'air' }
+        ];
+
+        shopConfig.forEach(cfg => {
+            const el = document.getElementById(cfg.id);
+            if (!el) return;
+            const final = getRequisitionCost(cfg.base, cfg.cat);
+            if (final !== cfg.base) {
+                el.innerHTML = `<span class="cost-strikethrough">${cfg.base}c</span>${final}c`;
+            } else {
+                el.textContent = `${cfg.base}c`;
+            }
+        });
+
+        const specialSection = document.getElementById('unlocked-shop-tier');
+        const hasHeavy = isUpgradeUnlocked('heavy_ordnance');
+        const hasOrbital = isUpgradeUnlocked('dreadnought_supremacy');
+
+        if (hasHeavy || hasOrbital) {
+            specialSection.style.display = 'block';
+            document.getElementById('shop-item-av7').style.display = hasHeavy ? 'flex' : 'none';
+            document.getElementById('shop-item-orbital').style.display = hasOrbital ? 'flex' : 'none';
+        } else {
+            specialSection.style.display = 'none';
+        }
+    }
+
     function renderAll() {
-        updateHeader(); renderFactionPanel(); renderMap();
+        updateHeader(); renderFactionPanel(); renderMap(); updateDynamicShopCosts();
         if (selectedPlanetId) showPlanetDetail(selectedPlanetId);
         if (document.getElementById('admin-modal').classList.contains('open')) renderAdminBody();
         const adminBtn = document.getElementById('admin-toggle-btn');
@@ -551,14 +593,15 @@
         }).join('');
 
         planetsLayer.innerHTML = DB.planets.map(p => {
-            const color = getFactionColor(p.controlling_faction); const r = getSVSize(p.strategic_value);
+            const color = p.under_invasion ? '#ff3333' : getFactionColor(p.controlling_faction); 
+            const r = getSVSize(p.strategic_value);
             const isSelected = selectedPlanetId === p.id;
             
             let trackerRingsHtml = '';
-            if(DB.settings.loc_53rd === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="22" fill="none" class="hq-ring-53rd" filter="url(#glow-filter)"/>`;
-            if(DB.settings.loc_501st === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="25" fill="none" class="hq-ring-501st" filter="url(#glow-filter)"/>`;
-            if(DB.settings.loc_212th === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="28" fill="none" class="hq-ring-212th" filter="url(#glow-filter)"/>`;
-            if(DB.settings.loc_104th === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="31" fill="none" class="hq-ring-104th" filter="url(#glow-filter)"/>`;
+            if(DB.settings.loc_53rd === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="22" fill="none" class="hq-ring-53rd"/>`;
+            if(DB.settings.loc_501st === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="25" fill="none" class="hq-ring-501st"/>`;
+            if(DB.settings.loc_212th === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="28" fill="none" class="hq-ring-212th"/>`;
+            if(DB.settings.loc_104th === p.id) trackerRingsHtml += `<circle cx="${p.x}" cy="${p.y}" r="31" fill="none" class="hq-ring-104th"/>`;
 
             const standingUnits = DB.units.filter(u=>u.planet_id===p.id && u.status !== 'Destroyed');
             const uniqueFactions = [...new Set(standingUnits.map(u => u.faction))].filter(f => f !== p.controlling_faction);
@@ -567,11 +610,12 @@
             return `
             <g class="planet-node" style="cursor:pointer" onclick="onPlanetClick('${p.id}')">
                 ${trackerRingsHtml}
-                ${isUnderConflict ? `<circle cx="${p.x}" cy="${p.y}" r="18" fill="none" class="conflict-pulse" filter="url(#glow-filter)"/>` : ''}
+                ${p.under_invasion ? `<circle cx="${p.x}" cy="${p.y}" r="20" fill="none" class="invasion-strobe"/>` : ''}
+                ${isUnderConflict && !p.under_invasion ? `<circle cx="${p.x}" cy="${p.y}" r="18" fill="none" class="conflict-pulse"/>` : ''}
                 ${isSelected ? `<circle cx="${p.x}" cy="${p.y}" r="${r+7}" fill="none" stroke="var(--accent2)" stroke-width="1.5" opacity="0.9"/>` : ''}
                 <circle cx="${p.x}" cy="${p.y}" r="${r+3}" fill="${color}" opacity="0.2"/>
                 <circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${color}" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-                <text x="${p.x}" y="${p.y + r + 15}" text-anchor="middle" fill="${isSelected ? 'var(--accent2)' : 'var(--text)'}" font-family="var(--font-display)" font-size="10px" style="text-shadow: 0 2px 4px rgba(0,0,0,0.95)">${p.emoji || '🪐'} ${p.name}</text>
+                <text x="${p.x}" y="${p.y + r + 15}" text-anchor="middle" fill="${p.under_invasion ? '#ff6b6b' : (isSelected ? 'var(--accent2)' : 'var(--text)')}" font-family="var(--font-display)" font-size="10px" style="text-shadow: 0 2px 4px rgba(0,0,0,0.95); font-weight:${p.under_invasion ? 'bold' : 'normal'}">${p.emoji || '🪐'} ${p.name}</text>
             </g>`;
         }).join('');
         updateMapTransform();
@@ -606,9 +650,12 @@
         document.getElementById('d-sector').textContent = (p.sector || 'Unscouted Zone') + ' Sector';
         
         const badge = document.getElementById('d-faction-badge');
-        badge.textContent = p.controlling_faction; badge.style.color = getFactionColor(p.controlling_faction);
+        badge.textContent = p.under_invasion ? "CIS INVASION HOST" : p.controlling_faction; 
+        badge.style.color = p.under_invasion ? "var(--danger)" : getFactionColor(p.controlling_faction);
 
         const hqZone = document.getElementById('d-hq-zone'); hqZone.innerHTML = '';
+        if(p.under_invasion) hqZone.innerHTML += `<div class="hq-marker-badge invasion">🚨 CIS SECTOR INVASION TARGET</div>`;
+
         const hqPlanetId = DB.settings.loc_53rd;
         if(hqPlanetId === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#0af;color:#0ff">🛡️ 53rd Battalion Base</div>`;
         if(DB.settings.loc_501st === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#2a6eff;color:#85aeff">⚡ 501st Legion</div>`;
@@ -616,13 +663,16 @@
         if(DB.settings.loc_104th === p.id) hqZone.innerHTML += `<div class="hq-marker-badge" style="border-color:#a4b0be;color:#f1f2f6">🐺 104th Wolfpack</div>`;
 
         const libPct = p.liberation_pct || 0;
+        document.getElementById('d-liberation-label').textContent = p.under_invasion ? "REPUBLIC DEFENSE SECURITY ARRAY" : "REPUBLIC LIBERATION INDEX";
         document.getElementById('d-liberation-txt').textContent = libPct + '%';
         document.getElementById('d-liberation-bar').style.width = libPct + '%';
+        document.getElementById('d-liberation-bar').style.backgroundColor = p.under_invasion ? 'var(--warn)' : '#0af';
 
         const sv = document.getElementById('d-sv'); sv.textContent = p.strategic_value; sv.className = 'detail-val sv-' + p.strategic_value;
         
         let computedYield = p.credit_yield || 0;
         if(p.controlling_faction === 'Neutral') computedYield = Math.round(computedYield * (libPct / 100));
+        if(p.under_invasion) computedYield = Math.round(computedYield * 0.5); // Disrupt trade routes
         document.getElementById('d-credits').textContent = '+' + computedYield + ' c';
         
         document.getElementById('d-desc').textContent = p.description || 'No database logs found for this sector.';
@@ -634,7 +684,7 @@
         const list = document.getElementById('d-units');
         const isPlayerAligned = p.controlling_faction.includes('Republic') || p.controlling_faction.includes('53rd');
 
-        if (!isAdmin && !isPlayerAligned && p.controlling_faction !== 'Neutral') {
+        if (!isAdmin && !isPlayerAligned && p.controlling_faction !== 'Neutral' && !p.under_invasion) {
             let sizeRating = "Minor Presence Detected";
             if (garrisonForces.length >= 5) sizeRating = "Massive Armored Fleet Array";
             else if (garrisonForces.length >= 3) sizeRating = "Medium Combat Garrison";
@@ -674,8 +724,15 @@
 
         const actionArea = document.getElementById('d-admin-actions');
         if(isAdmin) {
+            actionArea.innerHTML = '';
+            
+            // Render orbital strike ability if dreadnought is unlocked
+            if (isUpgradeUnlocked('dreadnought_supremacy') && p.controlling_faction !== 'Galactic Republic') {
+                actionArea.innerHTML += `<button class="btn danger" style="width:100%" onclick="executeOrbitalStrike('${p.id}')">⚡ EXECUTE ORBITAL BOMBARDMENT (2,500c)</button>`;
+            }
+
             if (p.id === hqPlanetId) {
-                actionArea.innerHTML = `
+                actionArea.innerHTML += `
                     <div style="background:rgba(0,10,25,0.6); border:1px solid var(--border); padding:10px; border-radius:3px;">
                         <div style="font-family:var(--font-display); font-size:9px; color:var(--warn); margin-bottom:8px; letter-spacing:1px; text-align:center;">// 53rd LIVE ENGAGEMENT TERMINAL</div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
@@ -684,29 +741,42 @@
                         </div>
                     </div>`;
             } else {
-                actionArea.innerHTML = `<button class="btn success" style="width:100%" onclick="move53rdBattalion('${p.id}')">🔷 DEPLOY 53rd SECTOR FLEET HERE</button>`;
+                actionArea.innerHTML += `<button class="btn success" style="width:100%" onclick="move53rdBattalion('${p.id}')">🔷 DEPLOY 53rd SECTOR FLEET HERE</button>`;
             }
         } else { actionArea.innerHTML = ''; }
     }
 
     async function process53rdBattleResult(planetId, isWin) {
         const p = DB.planets.find(pl => pl.id === planetId); if(!p) return;
-        let currentLib = p.liberation_pct || 0;
-        let libShift = Math.floor(Math.random() * 10) + 20; 
-        let nextLib = isWin ? Math.min(100, currentLib + libShift) : Math.max(0, currentLib - Math.floor(libShift / 1.5));
         
-        let updateData = { liberation_pct: nextLib };
-        if(nextLib >= 100) updateData.controlling_faction = "Galactic Republic";
-        else if(nextLib <= 0) updateData.controlling_faction = "Confederacy of Independent Systems";
-
-        await supabaseClient.from('planets').update(updateData).eq('id', planetId);
-        
-        if(isWin) {
-            await writeLog('53rd Victory', `The 53rd Assault Battalion won a massive operations breakthrough on ${p.name}! Sector security rose +${libShift}%.`);
-            showToast("VICTORY FILED IN CENTRAL COMMAND MATRICES");
+        if (p.under_invasion) {
+            if (isWin) {
+                await supabaseClient.from('planets').update({ under_invasion: false, liberation_pct: 100 }).eq('id', planetId);
+                await writeLog('Invasion Repelled', `The 53rd Battalion scored a heroic security victory on ${p.name}, smashing through the CIS vanguard and repelling the host layout completely!`);
+                showToast("INVASION REPULSED COREROCK SECURE");
+            } else {
+                await supabaseClient.from('planets').update({ under_invasion: false, controlling_faction: "Confederacy of Independent Systems", liberation_pct: 0 }).eq('id', planetId);
+                await writeLog('Planet Fallen', `Defensive grid failure on ${p.name}. The 53rd Battalion was forced to withdraw under heavy droid bombardment; planet control forfeited to CIS.`);
+                showToast("TACTICAL FALLBACK: PLANET SACRIFICED", true);
+            }
         } else {
-            await writeLog('53rd Fallback', `The 53rd Battalion met overwhelming droid resistance on ${p.name} and established defensive positions.`);
-            showToast("TACTICAL FALLBACK FILED", true);
+            let currentLib = p.liberation_pct || 0;
+            let libShift = Math.floor(Math.random() * 10) + 20; 
+            let nextLib = isWin ? Math.min(100, currentLib + libShift) : Math.max(0, currentLib - Math.floor(libShift / 1.5));
+            
+            let updateData = { liberation_pct: nextLib };
+            if(nextLib >= 100) updateData.controlling_faction = "Galactic Republic";
+            else if(nextLib <= 0) updateData.controlling_faction = "Confederacy of Independent Systems";
+
+            await supabaseClient.from('planets').update(updateData).eq('id', planetId);
+            
+            if(isWin) {
+                await writeLog('53rd Victory', `The 53rd Assault Battalion won a massive operations breakthrough on ${p.name}! Sector security rose +${libShift}%.`);
+                showToast("VICTORY FILED IN CENTRAL COMMAND MATRICES");
+            } else {
+                await writeLog('53rd Fallback', `The 53rd Battalion met overwhelming droid resistance on ${p.name} and established defensive positions.`);
+                showToast("TACTICAL FALLBACK FILED", true);
+            }
         }
         loadAll();
     }
@@ -728,32 +798,26 @@
             switchTab('campaign'); 
         }
     }
-    function closeLogin() { document.getElementById('login-screen').classList.remove('open'); document.getElementById('login-error').textContent = ''; }
+    function closeLogin() { document.getElementById('login-screen').classList.remove('remove'); closeLoginOverride(); }
+    function closeLoginOverride() { document.getElementById('login-screen').classList.remove('open'); document.getElementById('login-error').textContent = ''; }
     function closeAdmin() { document.getElementById('admin-modal').classList.remove('open'); }
 
-    // Secure authentication handler using backend validation
     async function doLogin() {
         const email = document.getElementById('admin-email').value;
         const pass = document.getElementById('admin-password').value;
         const errorEl = document.getElementById('login-error');
 
         try {
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: pass
-            });
-
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email: email, password: pass });
             if (error) throw error;
-
             isAdmin = true;
             errorEl.textContent = '';
             document.getElementById('admin-password').value = '';
-            closeLogin();
+            closeLoginOverride();
             openAdmin();
             showToast("TAC-OVERRIDE ENCRYPTED VIA SERVER AUTH");
         } catch (e) {
             errorEl.textContent = 'AUTHORIZATION REFUSED: KEY FAULT';
-            console.error(e.message);
         }
     }
 
@@ -788,6 +852,35 @@
                 </div>
             </div>`;
         }
+        if(activeTab === 'upgrades') {
+            const rep = DB.factions.find(f => f.name === "Galactic Republic");
+            const balance = rep ? rep.credits : 0;
+
+            body.innerHTML = `
+                <div style="margin-bottom: 14px; padding: 10px; background: rgba(0,170,255,0.05); border: 1px solid var(--border); border-radius:3px;">
+                    <span style="font-size:11px; color:var(--text-dim); font-family:var(--font-display);">CURRENT FINANCING CAPABILITIES:</span>
+                    <strong style="color:var(--accent2); font-family:var(--font-display); font-size:14px; float:right;">${balance.toLocaleString()} c</strong>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    ${DB.upgrades.map(u => {
+                        return `
+                        <div class="tech-card ${u.unlocked ? 'unlocked' : ''}">
+                            <div class="tech-meta">
+                                <span class="tech-name">${u.name}</span>
+                                <span class="tech-badge ${u.unlocked ? 'active' : 'locked'}">${u.unlocked ? 'ACTIVE' : u.cost.toLocaleString() + 'c'}</span>
+                            </div>
+                            <div class="tech-desc">
+                                ${u.upgrade_key === 'repulsor_foundry' ? 'Establishes high-capacity production conveyors. Grants a permanent 25% discount across all standard Ground Vehicles in the manual manifest layout.' : ''}
+                                ${u.upgrade_key === 'staging_berths' ? 'Assembles orbital dry-dock infrastructure. Grants a permanent 25% discount across all standard Air Support and Fleet craft in your roster manifest.' : ''}
+                                ${u.upgrade_key === 'heavy_ordnance' ? 'Authorizes munitions routing for specialized tactical batteries. Unlocks the stationary AV-7 Artillery platform within your deployment systems. Active AV-7 emplacements reduce local system invasion probabilities by 50% during phase skips.' : ''}
+                                ${u.upgrade_key === 'dreadnought_supremacy' ? 'Grants system access keys to the unit fleet flagship array. Unlocks the Orbital Bombardment Strike function on enemy systems, letting commanders buy a token to instantly shift sector liberation +30% via pure orbital fire.' : ''}
+                            </div>
+                            ${!u.unlocked ? `<button class="btn success" style="margin-top:4px;" ${balance < u.cost ? 'disabled' : ''} onclick="buyGlobalUpgrade('${u.upgrade_key}', ${u.cost})">PURCHASE TECHNOLOGY ACCESS</button>` : ''}
+                        </div>`;
+                    }).join('')}
+                </div>
+            `;
+        }
         if(activeTab === 'log') {
             body.innerHTML = `
             <div class="panel-label">Logistics Simulation Feed</div>
@@ -806,9 +899,19 @@
         showToast("COMPUTING EXPANDED SECTOR FRONT ENCOUNTERS...");
         let simulationLogs = [];
 
+        // Check if any active invasion was ignored during this skip phase
+        for (let p of DB.planets) {
+            if (p.under_invasion) {
+                await supabaseClient.from('planets').update({ under_invasion: false, controlling_faction: "Confederacy of Independent Systems", liberation_pct: 0 }).eq('id', p.id);
+                simulationLogs.push(`Invasion Campaign Unresolved: Defensive networks collapsed on ${p.name}. Planet captured by CIS.`);
+            }
+        }
+
         let repGain = 0; let cisGain = 0;
         DB.planets.forEach(p => {
             let yieldVal = p.credit_yield || 0;
+            if (p.under_invasion) yieldVal = Math.round(yieldVal * 0.5); // Trade lines broke down
+
             if (p.controlling_faction === "Galactic Republic") repGain += yieldVal;
             else if (p.controlling_faction === "Confederacy of Independent Systems") cisGain += yieldVal;
             else {
@@ -819,13 +922,41 @@
 
         let nextRepCredits = (rep.credits || 0) + repGain; let nextCisCredits = (cis.credits || 0) + cisGain;
 
+        // CIS Reinforcement Deployment Check
         if (nextCisCredits >= 600) {
-            let eligiblePlanets = DB.planets.filter(p => p.controlling_faction.includes("Confederacy") && p.id !== DB.settings.loc_53rd);
+            let eligiblePlanets = DB.planets.filter(p => p.controlling_faction.includes("Confederacy") && p.id !== DB.settings.loc_53rd && !p.under_invasion);
             if (eligiblePlanets.length) {
                 let targetP = eligiblePlanets[Math.floor(Math.random() * eligiblePlanets.length)];
                 nextCisCredits -= 400;
                 await supabaseClient.from('units').insert([{ name: "CIS Droid Garrison Fleet", faction: "Confederacy of Independent Systems", planet_id: targetP.id, unit_type: "Combat Garrison", size: "Heavy Flotilla" }]);
                 simulationLogs.push("CIS reinforced production shield parameters at the " + targetP.name + " front.");
+            }
+        }
+
+        // --- NEW MECHANIC: REACTIVE INVASION ENGINE SYSTEM ---
+        // There is a 30% baseline chance of a CIS Counter-Invasion happening on a secure Republic planet every turn transition
+        if (Math.random() < 0.30) {
+            let secureRepublicPlanets = DB.planets.filter(p => p.controlling_faction === "Galactic Republic" && p.id !== DB.settings.loc_53rd && !p.under_invasion);
+            if (secureRepublicPlanets.length) {
+                let invasionTarget = secureRepublicPlanets[Math.floor(Math.random() * secureRepublicPlanets.length)];
+                
+                // Check if an AV-7 emplaced defense asset is active anywhere in this specific system cache
+                const planetUnits = DB.units.filter(u => u.planet_id === invasionTarget.id && u.status !== 'Destroyed');
+                const hasArtillery = planetUnits.some(u => u.name.includes("AV-7"));
+                
+                let triggerInvasion = true;
+                if (hasArtillery) {
+                    // 50% evasion mitigation check provided by Project 1 Heavy Ordnance
+                    if (Math.random() < 0.50) {
+                        triggerInvasion = false;
+                        simulationLogs.push(`Defensive Victory: AV-7 Artillery networks anchored on ${invasionTarget.name} intercepted a CIS fleet jump, preventing an invasion.`);
+                    }
+                }
+
+                if (triggerInvasion) {
+                    await supabaseClient.from('planets').update({ under_invasion: true, liberation_pct: 50 }).eq('id', invasionTarget.id);
+                    simulationLogs.push(`⚠️ CRITICAL EMERGENCY: CIS fleets launched a retaliatory counter-offensive targeting the ${invasionTarget.name} node!`);
+                }
             }
         }
 
@@ -836,7 +967,7 @@
 
         for (let leg of legions) {
             let currentPlanetId = DB.settings['loc_' + leg]; let p = updatedPlanetMap.get(currentPlanetId);
-            if (!p || currentPlanetId === DB.settings.loc_53rd) continue;
+            if (!p || currentPlanetId === DB.settings.loc_53rd || p.under_invasion) continue;
 
             if (p.liberation_pct < 100) {
                 let winChance = 0.50;
@@ -860,7 +991,7 @@
         }
 
         DB.planets.forEach(p => {
-            if (p.id === DB.settings.loc_53rd || p.id === DB.settings.loc_501st || p.id === DB.settings.loc_212th || p.id === DB.settings.loc_104th) return;
+            if (p.id === DB.settings.loc_53rd || p.id === DB.settings.loc_501st || p.id === DB.settings.loc_212th || p.id === DB.settings.loc_104th || p.under_invasion) return;
             let currentPlan = updatedPlanetMap.get(p.id);
             if (currentPlan && currentPlan.liberation_pct > 0 && currentPlan.liberation_pct < 100) {
                 currentPlan.liberation_pct = Math.max(0, currentPlan.liberation_pct - (Math.floor(Math.random() * 5) + 2));
@@ -869,6 +1000,9 @@
         });
 
         for (let [pid, pData] of updatedPlanetMap.entries()) {
+            // Bypass overwrite if an invasion script modified it directly
+            const currentFreshPlan = DB.planets.find(pl=>pl.id === pid);
+            if (currentFreshPlan && currentFreshPlan.under_invasion) continue;
             await supabaseClient.from('planets').update({ liberation_pct: pData.liberation_pct, controlling_faction: pData.controlling_faction }).eq('id', pid);
         }
 
