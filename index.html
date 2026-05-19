@@ -432,11 +432,12 @@
         setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    async function checkConfig() {
-        const url = "https://yjvgwniprmgnwvgavqpj.supabase.co";
-        const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
-        initApp(url, key);
-    }
+   async function checkConfig() {
+    const url = "https://yjvgwniprmgnwvgavqpj.supabase.co"; 
+    // USE THE PUBLISHABLE KEY HERE:
+    const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H"; 
+    initApp(url, key);
+}
 
     async function initApp(url, key) {
         supabaseClient = window.supabase.createClient(url, key);
