@@ -432,32 +432,23 @@
         setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-   async function checkConfig() {
-    const url = "https://yjvgwniprmgnwvgavqpj.supabase.co"; 
-    // USE THE PUBLISHABLE KEY HERE:
-    const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H"; 
-    initApp(url, key);
-}
+    async function checkConfig() {
+        const url = "https://yjvgwniprmgnwvgavqpj.supabase.co";
+        const key = "sb_publishable_5JgnYhFko-g82FAwG3H3Nw_VVGZ_F2H";
+        initApp(url, key);
+    }
 
-  function initApp(url, key) {
-    // Force the client to run unauthenticated to bypass the new browser-agent key blocks
-    window.supabaseClient = supabase.createClient(url, key, {
-        auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-            detectSessionInUrl: false
-        },
-        global: {
-            headers: {
-                // This ensures the publishable key is passed purely as an API route pass
-                'apikey': key 
-            }
-        }
-    });
+    async function initApp(url, key) {
+        supabaseClient = window.supabase.createClient(url, key);
+        document.getElementById('app').style.display = 'grid';
+        onWindowResize(); // Force WebGL layout update
+        
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) { isAdmin = true; }
 
-    // Run your data collection pull right after
-    loadAll();
-}
+        await loadAll(); 
+        setupRealtime();
+    }
 
     /* 🌌 Initialize ThreeJS Volumetric Environment */
     function init3DEngine() {
