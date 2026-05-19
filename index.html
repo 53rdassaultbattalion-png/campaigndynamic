@@ -93,6 +93,12 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 
 .d-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .d-sector-tag{font-family:var(--fd);font-size:9px;letter-spacing:3px;color:var(--accent2);background:rgba(0,180,255,0.08);padding:3px 8px;border-left:2px solid var(--accent);margin-bottom:10px;text-transform:uppercase;display:inline-block;}
+.sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:5px;margin-bottom:12px;}
+.sg-node{display:flex;flex-direction:column;align-items:center;padding:5px 3px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.04);border-radius:2px;cursor:pointer;transition:all 0.15s;text-align:center;}
+.sg-node:hover{background:rgba(0,160,255,0.07);border-color:var(--accent);}
+.sg-node.cur{border-color:var(--accent2);background:rgba(0,40,80,0.3);}
+.sg-name{font-size:9px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
+.sg-dot{width:4px;height:4px;border-radius:50%;margin-top:3px;}
 .planet-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
 .d-name{font-family:var(--fd);font-size:15px;letter-spacing:2px;color:var(--text-bright);text-transform:uppercase;}
 .d-faction-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:2px;border:1px solid currentColor;font-family:var(--fd);font-size:9px;letter-spacing:1px;background:rgba(255,255,255,0.02);margin-top:6px;}
@@ -244,6 +250,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
       <div class="leg-row"><div class="leg-dot" style="background:#445566"></div> Neutral</div>
       <div class="leg-row"><div class="leg-dot" style="background:#00aaff"></div> Republic</div>
       <div class="leg-row"><div class="leg-dot" style="background:#ff3333"></div> CIS</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#ff3333;box-shadow:0 0 6px #ff3333"></div> Invasion</div>
     </div>
   </div>
 
@@ -256,6 +263,8 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
     <div id="detail-content">
       <div class="d-header">
         <div class="d-sector-tag" id="d-sector-tag">UNKNOWN SECTOR</div>
+        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sector Nodes</div>
+        <div class="sector-grid" id="d-sector-grid"></div>
         <div class="planet-row">
           <div>
             <div class="d-name" id="d-name">Planet</div>
@@ -300,8 +309,9 @@ let selPlanet=null;
 let isAdmin=false;
 let mTab='controls';
 
-// All planet nodes render at this size now
-const UNIFORM_PLANET_RADIUS = 8;
+// ── LAYOUT EDITOR STATE ──
+let layoutEditorMode = false;
+let draggedPlanet = null;
 
 // ── CANVAS STATE ──
 const canvas=document.getElementById('galactic-canvas');
@@ -318,6 +328,7 @@ const SECTOR_COLORS={
   'Outer Rim':      {rep:'rgba(0,80,180,0.10)',   cis:'rgba(180,20,20,0.10)',  neu:'rgba(30,50,70,0.08)'},
 };
 
+// Planet defaults config fallback
 const PLANET_POSITIONS={
   'Coruscant':    {wx:0,    wy:0},
   'Naboo':        {wx:-180, wy:120},
@@ -429,7 +440,7 @@ function renderUpgrades(){
   const desc={
     repulsor_foundry:'Permanent 25% discount on all land vehicles.',
     staging_berths:'Permanent 25% discount on all air vehicles.',
-    heavy_ordnance:'Unlocks AV-7 Artillery.',
+    heavy_ordnance:'Unlocks AV-7 Artillery. Reduces invasion probability by 50%.',
     dreadnought_supremacy:'Unlocks Orbital Bombardment Strike (+30% liberation instantly).'
   };
   document.getElementById('upgrades-list').innerHTML=DB.upgrades.map(u=>`
@@ -444,10 +455,8 @@ function renderUpgrades(){
 }
 
 // ════════════════════════════════════════════
-// CANVAS MAP
+// CANVAS MAP ENGINE
 // ════════════════════════════════════════════
-let draggingPlanet = null; // Track if we are dragging a planet node instead of the camera map
-
 function initCanvas(){
   resizeCanvas();
   window.addEventListener('resize',resizeCanvas);
@@ -456,8 +465,7 @@ function initCanvas(){
     const rect=canvas.getBoundingClientRect();
     const mx=e.clientX-rect.left,my=e.clientY-rect.top;
     
-    // Check if we are trying to drag a planet (Requires Admin and holding down Shift)
-    if(isAdmin && e.shiftKey) {
+    if(isAdmin && layoutEditorMode) {
       let hit=null,best=9999;
       DB.planets.forEach(p=>{
         const{sx,sy}=getPlanetPos(p);
@@ -466,13 +474,12 @@ function initCanvas(){
         if(d<r&&d<best){best=d;hit=p;}
       });
       if(hit) {
-        draggingPlanet = hit;
+        draggedPlanet = hit;
         dragging = false;
         return;
       }
     }
     
-    // Fallback to moving the overall canvas view
     dragging=true;
     dragMoved=false;
     lastMouse={x:e.clientX,y:e.clientY};
@@ -482,16 +489,11 @@ function initCanvas(){
     const rect=canvas.getBoundingClientRect();
     const mx=e.clientX-rect.left,my=e.clientY-rect.top;
 
-    // Handle interactive universe moving tools
-    if(draggingPlanet) {
-      // Calculate world coordinates from the mouse position
+    if(draggedPlanet) {
       const wx = (mx - cam.x) / cam.scale;
       const wy = (my - cam.y) / cam.scale;
-      
-      // Update local cache instantly for buttery smooth alignment feedback
-      if(!PLANET_POSITIONS[draggingPlanet.name]) PLANET_POSITIONS[draggingPlanet.name] = {};
-      PLANET_POSITIONS[draggingPlanet.name].wx = wx;
-      PLANET_POSITIONS[draggingPlanet.name].wy = wy;
+      draggedPlanet.x = Math.round((wx / 0.6) + 650);
+      draggedPlanet.y = Math.round((wy / 0.6) + 650);
       return;
     }
 
@@ -501,22 +503,18 @@ function initCanvas(){
     cam.x+=dx;cam.y+=dy;lastMouse={x:e.clientX,y:e.clientY};
   });
   
-  canvas.addEventListener('mouseup',e=>{
-    // If we just dropped a planet we dragged, sync the vectors directly to Supabase
-    if(draggingPlanet) {
-      const pos = PLANET_POSITIONS[draggingPlanet.name];
-      if(pos) {
-        // Convert back to your DB layout context mapping structure (Coruscant anchor tracking standard)
-        const dbX = Math.round((pos.wx / 0.6) + 650);
-        const dbY = Math.round((pos.wy / 0.6) + 650);
-        
-        sb.from('planets').update({ x: dbX, y: dbY }).eq('id', draggingPlanet.id).then(() => {
-          writeLog("Geometry Sync", `Relocated universe node layout position for ${draggingPlanet.name}.`);
-          toast(`Vector saved for ${draggingPlanet.name}`);
-          loadAll();
-        });
+  canvas.addEventListener('mouseup',async e=>{
+    if(draggedPlanet) {
+      const p = draggedPlanet;
+      draggedPlanet = null;
+      try {
+        await sb.from('planets').update({ x: p.x, y: p.y }).eq('id', p.id);
+        await writeLog("Geometry Shift", `Relocated universe node position for ${p.name} via layout editor.`);
+        toast(`Relocated ${p.name}`);
+        loadAll();
+      } catch(err) {
+        toast("Database write sync failed", true);
       }
-      draggingPlanet = null;
       return;
     }
 
@@ -524,7 +522,7 @@ function initCanvas(){
     dragging=false;lastMouse=null;
   });
   
-  canvas.addEventListener('mouseleave',()=>{dragging=false;lastMouse=null;draggingPlanet=null;});
+  canvas.addEventListener('mouseleave',()=>{dragging=false;lastMouse=null;draggedPlanet=null;});
   
   canvas.addEventListener('wheel',e=>{
     e.preventDefault();
@@ -538,7 +536,7 @@ function initCanvas(){
 
 function resizeCanvas(){
   const w=document.getElementById('map-wrap');
-  canvas.width=w.clientWidth;canvas.height=w.clientHeight;
+  if(w) { canvas.width=w.clientWidth; canvas.height=w.clientHeight; }
 }
 
 function resetCamera(){
@@ -551,9 +549,12 @@ function wx2s(wx){return cam.x+wx*cam.scale;}
 function wy2s(wy){return cam.y+wy*cam.scale;}
 
 function getPlanetPos(p){
+  if (p.x !== undefined && p.x !== null && p.x !== 0) {
+    return { sx: wx2s((p.x - 650) * 0.6), sy: wy2s((p.y - 650) * 0.6) };
+  }
   const pp=PLANET_POSITIONS[p.name];
   if(pp) return{sx:wx2s(pp.wx),sy:wy2s(pp.wy)};
-  return{sx:wx2s((p.x-650)*0.6),sy:wy2s((p.y-650)*0.6)};
+  return{sx:wx2s(0),sy:wy2s(0)};
 }
 
 function onMapClick(e){
@@ -563,17 +564,19 @@ function onMapClick(e){
   DB.planets.forEach(p=>{
     const{sx,sy}=getPlanetPos(p);
     const d=Math.hypot(mx-sx,my-sy);
-    const r=UNIFORM_PLANET_RADIUS*cam.scale+8;
+    const r=getR(p.strategic_value)*cam.scale+8;
     if(d<r&&d<best){best=d;hit=p;}
   });
   if(hit){selPlanet=hit.id;renderAll();}
 }
 
+function getR(sv){return{Low:5,Medium:7,High:10,Critical:14}[sv]||6;}
 function getFactionColor(n){
   if(!n||n==='Neutral')return'#445566';
   const f=DB.factions.find(f=>f.name===n);return f?f.color:'#445566';
 }
 
+// Deterministic background stars
 const STARS=[];
 (function(){let x=99991;function r(){x=((x*1103515245)+12345)&0x7fffffff;return x/0x7fffffff;}
 for(let i=0;i<400;i++)STARS.push({rx:r(),ry:r(),s:r()*1.8+0.3,a:r()*0.6+0.15,twink:r()*Math.PI*2});})();
@@ -585,6 +588,7 @@ function draw(){
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle='#00010a';ctx.fillRect(0,0,W,H);
 
+  // Core glow
   const cx=wx2s(0),cy=wy2s(0);
   const coreG=ctx.createRadialGradient(cx,cy,0,cx,cy,300*cam.scale);
   coreG.addColorStop(0,'rgba(40,80,180,0.18)');
@@ -605,6 +609,14 @@ function draw(){
   });
 
   drawGrid(W,H);
+
+  if(layoutEditorMode) {
+    ctx.fillStyle = 'rgba(255, 51, 51, 0.85)';
+    ctx.font = '10px Orbitron, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('⚠️ UNIVERSE EDITOR MODE ENGAGED — DRAG PLANETS TO ADJUST LAYOUT', 20, 30);
+  }
+
   drawSectorRegions();
 
   DB.connections.forEach(c=>{
@@ -665,15 +677,13 @@ function drawSectorRegions(){
     for(let i=1;i<expanded.length;i++) ctx.lineTo(expanded[i][0],expanded[i][1]);
     ctx.closePath();
     ctx.fillStyle=fillCol;ctx.fill();
-    
-    // Sector border visibility logic
-    ctx.strokeStyle=fillCol.replace(/[\d.]+\)$/,'0.65)');
-    ctx.lineWidth=1.5;ctx.setLineDash([6,6]);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle=fillCol.replace(/[\d.]+\)$/,'0.35)');
+    ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);
 
     if(cam.scale>0.5){
       ctx.font=`${Math.max(9,10*cam.scale)}px Orbitron,monospace`;
       ctx.textAlign='center';
-      ctx.fillStyle='rgba(150,200,255,0.4)';
+      ctx.fillStyle='rgba(150,200,255,0.25)';
       ctx.fillText(sector.toUpperCase()+' SECTOR',centX,centY-8);
     }
   });
@@ -697,7 +707,8 @@ function convexHull(pts){
 
 function drawLane(a,b,pa,pb){
   let col='rgba(0,120,200,0.2)';
-  if(pa.controlling_faction===pb.controlling_faction&&pa.controlling_faction!=='Neutral')
+  if(pa.under_invasion||pb.under_invasion)col='rgba(255,51,51,0.35)';
+  else if(pa.controlling_faction===pb.controlling_faction&&pa.controlling_faction!=='Neutral')
     col=pa.controlling_faction.includes('Republic')?'rgba(0,140,255,0.28)':'rgba(220,40,40,0.28)';
   else if(pa.controlling_faction!=='Neutral'&&pb.controlling_faction!=='Neutral')
     col='rgba(255,150,0,0.22)';
@@ -709,10 +720,16 @@ function drawLane(a,b,pa,pb){
 
 function drawPlanet(p){
   const{sx,sy}=getPlanetPos(p);
-  const r=UNIFORM_PLANET_RADIUS*cam.scale;
-  const col=getFactionColor(p.controlling_faction);
+  const r=getR(p.strategic_value)*cam.scale;
+  const col=p.under_invasion?'#ff3333':getFactionColor(p.controlling_faction);
   const isSel=selPlanet===p.id;
   const is53rd=DB.settings.loc_53rd==p.id;
+
+  if(p.under_invasion){
+    const pulse=0.12+Math.abs(Math.sin(pulseT*3))*0.12;
+    ctx.beginPath();ctx.arc(sx,sy,r*4,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(255,51,51,${pulse})`;ctx.lineWidth=1;ctx.stroke();
+  }
 
   if(is53rd){
     const pulse=0.10+Math.abs(Math.sin(pulseT*2))*0.08;
@@ -756,14 +773,14 @@ function drawPlanet(p){
   const fs=Math.max(8,Math.min(11,9*cam.scale));
   ctx.font=`${fs}px Orbitron,monospace`;ctx.textAlign='center';
   ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fillText(p.name,sx+1,sy-r*1.5-1);
-  ctx.fillStyle=isSel?'#00eeff':col;
+  ctx.fillStyle=isSel?'#00eeff':(p.under_invasion?'#ff6666':col);
   ctx.fillText(p.name,sx,sy-r*1.5);
 
   if(p.liberation_pct>0&&p.liberation_pct<100){
     const barW=r*3,barH=2;
     const bx=sx-barW/2,by=sy+r*1.6;
     ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(bx,by,barW,barH);
-    ctx.fillStyle='#00aaff';
+    ctx.fillStyle=p.under_invasion?'#ffaa00':'#00aaff';
     ctx.fillRect(bx,by,barW*(p.liberation_pct/100),barH);
   }
 }
@@ -778,27 +795,41 @@ function showDetail(id){
 
   document.getElementById('d-sector-tag').textContent=(p.sector||'Unknown')+' Sector';
 
+  const sp=DB.planets.filter(s=>s.sector===p.sector);
+  document.getElementById('d-sector-grid').innerHTML=sp.map(s=>{
+    let sc='var(--text-dim)';
+    if(s.under_invasion)sc='var(--danger)';
+    else if(s.controlling_faction.includes('Republic'))sc='var(--accent)';
+    else if(s.controlling_faction.includes('Confederacy'))sc='var(--danger)';
+    return`<div class="sg-node ${s.id===p.id?'cur':''}" onclick="selPlanet=${s.id};renderAll()">
+      <div class="sg-name">${s.name}</div>
+      <div class="sg-dot" style="background:${sc};box-shadow:0 0 3px ${sc}"></div>
+    </div>`;
+  }).join('');
+
   document.getElementById('d-name').textContent=p.name;
   const badge=document.getElementById('d-fac-badge');
-  badge.textContent=p.controlling_faction;
-  badge.style.color=getFactionColor(p.controlling_faction);
+  badge.textContent=p.under_invasion?'⚠ CIS INVASION HOST':p.controlling_faction;
+  badge.style.color=p.under_invasion?'var(--danger)':getFactionColor(p.controlling_faction);
 
   const hq=document.getElementById('d-hq-badges');hq.innerHTML='';
+  if(p.under_invasion)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,51,51,0.1);border-color:var(--danger);color:#ff6b6b">🚨 CIS SECTOR INVASION</div>`;
   if(DB.settings.loc_53rd==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(0,170,255,0.08);border-color:var(--accent);color:var(--accent2)">🛡️ 53rd Battalion Base</div>`;
   if(DB.settings.loc_501st==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(42,110,255,0.08);border-color:#2a6eff;color:#85aeff">⚡ 501st Legion</div>`;
   if(DB.settings.loc_212th==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,153,0,0.08);border-color:#ff9900;color:#ffd166">🔶 212th Attack Bn</div>`;
   if(DB.settings.loc_104th==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(164,176,190,0.08);border-color:#a4b0be;color:#dfe6e9">🐺 104th Wolfpack</div>`;
 
   const lib=p.liberation_pct||0;
-  document.getElementById('d-lib-label').textContent='LIBERATION INDEX';
+  document.getElementById('d-lib-label').textContent=p.under_invasion?'DEFENSE INDEX':'LIBERATION INDEX';
   document.getElementById('d-lib-pct').textContent=lib+'%';
   const bar=document.getElementById('d-lib-bar');
   bar.style.width=lib+'%';
-  bar.style.background='var(--accent)';
+  bar.style.background=p.under_invasion?'var(--warn)':'var(--accent)';
 
   document.getElementById('d-sv').textContent=p.strategic_value;
   let yld=p.credit_yield||0;
   if(p.controlling_faction==='Neutral')yld=Math.round(yld*(lib/100));
+  if(p.under_invasion)yld=Math.round(yld*0.5);
   document.getElementById('d-yield').textContent='+'+yld+' c';
   document.getElementById('d-desc').textContent=p.description||'No database records found.';
 
@@ -822,7 +853,7 @@ function showDetail(id){
 }
 
 // ════════════════════════════════════════════
-// ACTIONS
+// DISPATCH ACTIONS
 // ════════════════════════════════════════════
 async function buyAsset(name,base,cat){
   if(!isAdmin){toast("Admin credentials required",true);return;}
@@ -854,7 +885,7 @@ async function doOrbitalStrike(pid){
   const p=DB.planets.find(pl=>pl.id==pid);if(!p)return;
   const nextLib=Math.min(100,(p.liberation_pct||0)+30);
   const upd={liberation_pct:nextLib};
-  if(nextLib>=100){upd.controlling_faction="Galactic Republic";}
+  if(nextLib>=100){upd.controlling_faction="Galactic Republic";upd.under_invasion=false;}
   await sb.from('factions').update({credits:rep.credits-2500}).eq('id',rep.id);
   await sb.from('planets').update(upd).eq('id',pid);
   await writeLog("Orbital Strike",`Bombardment on ${p.name} — liberation +30%.`);
@@ -863,14 +894,24 @@ async function doOrbitalStrike(pid){
 
 async function battleResult(pid,win){
   const p=DB.planets.find(pl=>pl.id==pid);if(!p)return;
-  const shift=Math.floor(Math.random()*10)+20;
-  const cur=p.liberation_pct||0;
-  const next=win?Math.min(100,cur+shift):Math.max(0,cur-Math.floor(shift/1.5));
-  const upd={liberation_pct:next};
-  if(next>=100)upd.controlling_faction="Galactic Republic";
-  else if(next<=0)upd.controlling_faction="Confederacy of Independent Systems";
-  await sb.from('planets').update(upd).eq('id',pid);
-  await writeLog(win?'Victory':'Defeat',`Operations updated on ${p.name}.`);
+  if(p.under_invasion){
+    if(win){
+      await sb.from('planets').update({under_invasion:false,liberation_pct:100}).eq('id',pid);
+      await writeLog('Invasion Repelled',`53rd secured ${p.name}.`);
+    }else{
+      await sb.from('planets').update({under_invasion:false,controlling_faction:"Confederacy of Independent Systems",liberation_pct:0}).eq('id',pid);
+      await writeLog('Planet Fallen',`${p.name} lost to CIS.`);
+    }
+  }else{
+    const shift=Math.floor(Math.random()*10)+20;
+    const cur=p.liberation_pct||0;
+    const next=win?Math.min(100,cur+shift):Math.max(0,cur-Math.floor(shift/1.5));
+    const upd={liberation_pct:next};
+    if(next>=100)upd.controlling_faction="Galactic Republic";
+    else if(next<=0)upd.controlling_faction="Confederacy of Independent Systems";
+    await sb.from('planets').update(upd).eq('id',pid);
+    await writeLog(win?'Victory':'Defeat',`Operations updated on ${p.name}.`);
+  }
   loadAll();
 }
 
@@ -880,7 +921,7 @@ async function move53rd(pid){
 }
 
 // ════════════════════════════════════════════
-// ADMIN MODAL
+// ADMIN INTERFACE (TERMINAL OVERRIDE)
 // ════════════════════════════════════════════
 function openAdmin(){
   if(!isAdmin){document.getElementById('login-screen').classList.add('open');setTimeout(()=>document.getElementById('lg-pass').focus(),100);}
@@ -900,7 +941,7 @@ async function doLogin(){
   }catch(e){document.getElementById('lg-err').textContent='AUTHORIZATION REFUSED';}
 }
 
-async function doLogout(){await sb.auth.signOut();isAdmin=false;closeAdmin();loadAll();}
+async function doLogout(){await sb.auth.signOut();isAdmin=false;layoutEditorMode=false;closeAdmin();loadAll();}
 
 function switchMTab(t){
   mTab=t;
@@ -911,12 +952,9 @@ function switchMTab(t){
 function renderAdminBody(){
   const el=document.getElementById('admin-body');
   if(mTab==='controls'){
-    // Find the currently selected planet to build contextual editing controls
-    const p = DB.planets.find(pl => pl.id === selPlanet);
-    
     el.innerHTML=`
       <div style="background:rgba(255,255,255,0.01);border:1px solid var(--border);padding:14px;border-radius:3px;margin-bottom:12px">
-        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Campaign Cycle</div>
+        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Campaign Phase</div>
         <div style="display:flex;align-items:center;gap:12px">
           <span style="font-family:var(--fd);color:var(--warn);font-size:22px;font-weight:700">${DB.settings.campaign_turn||1}</span>
           <button class="btn ok" style="flex:1" onclick="advanceTurn()">⏩ ADVANCE PHASE</button>
@@ -924,31 +962,13 @@ function renderAdminBody(){
       </div>
 
       <div style="background:rgba(255,255,255,0.01);border:1px solid var(--border);padding:14px;border-radius:3px;margin-bottom:12px">
-        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Universe Geometry Editor</div>
-        
-        ${p ? `
-          <div style="font-size:11px;color:var(--accent2);margin-bottom:8px;font-family:var(--fd)">Node Vector: ${p.name}</div>
-          
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-            <div>
-              <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:2px">Grid X Position</label>
-              <input type="number" class="form-input" id="edit-wx" value="${Math.round(PLANET_POSITIONS[p.name] ? PLANET_POSITIONS[p.name].wx : (p.x - 650) * 0.6)}" style="padding:4px 8px;font-family:var(--fd);font-size:11px">
-            </div>
-            <div>
-              <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:2px">Grid Y Position</label>
-              <input type="number" class="form-input" id="edit-wy" value="${Math.round(PLANET_POSITIONS[p.name] ? PLANET_POSITIONS[p.name].wy : (p.y - 650) * 0.6)}" style="padding:4px 8px;font-family:var(--fd);font-size:11px">
-            </div>
-          </div>
-          
-          <button class="btn ok" style="width:100%;font-size:9px;padding:6px;margin-bottom:12px" onclick="savePlanetVector('${p.name}', '${p.id}')">💾 COMMIT VECTOR CHANGES</button>
-          
-          <div style="border-top:1px solid rgba(0,160,255,0.1);padding-top:10px;margin-top:5px">
-            <div style="font-size:9px;color:var(--warn);margin-bottom:4px;font-family:var(--fd)">⚡ CANVAS INTERACTION SHORTCUT</div>
-            <div style="font-size:11px;color:var(--text);line-height:1.4">
-              While logged in, hold the <span style="color:var(--accent2);font-weight:bold;font-family:var(--fd)">SHIFT</span> key down on your keyboard and drag any planet node across the map with your mouse to visually re-arrange your galaxy layout.
-            </div>
-          </div>
-        ` : `<div style="font-size:11px;color:var(--text-dim);text-align:center;padding:10px 0;">Select a node on the canvas layout to access vector alignment and relocation tools.</div>`}
+        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Universe Layout Editor</div>
+        <button class="btn ${layoutEditorMode ? 'red' : 'ok'}" style="width:100%;font-weight:600;padding:10px;" onclick="toggleLayoutEditor()">
+          ${layoutEditorMode ? '🛑 LOCK GALAXY POSITIONS' : '🗺️ ENABLE DRAG & DROP MODE'}
+        </button>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.4;margin-top:8px">
+          ${layoutEditorMode ? '<span style="color:var(--danger);font-weight:bold;">OVERRIDE ENGAGED:</span> Click and drag any node directly on the map space to visually relocate its grid position.' : 'Activate this module to reposition galaxy nodes directly on the interactive map.'}
+        </div>
       </div>
 
       <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions based on current territory holdings.</div>`;
@@ -959,40 +979,10 @@ function renderAdminBody(){
   }
 }
 
-// ── NEW UNIVERSE EDITOR DB MUTATION FUNCTIONS ──
-async function adjustTreasury(factionName, amount) {
-  if(!isAdmin) return;
-  const f = DB.factions.find(fac => fac.name === factionName);
-  if(!f) return;
-  const newCredits = (f.credits || 0) + amount;
-  await sb.from('factions').update({ credits: newCredits }).eq('name', factionName);
-  await writeLog("Editor Action", `Modified ${factionName} treasury by ${amount}c.`);
-  toast(`Treasury modified for ${f.shortname || factionName}`);
-  loadAll();
-}
-
-async function setPlanetFaction(pid, factionName) {
-  if(!isAdmin) return;
-  const p = DB.planets.find(pl => pl.id == pid);
-  if(!p) return;
-  const upd = { controlling_faction: factionName };
-  if(factionName === "Galactic Republic") upd.liberation_pct = 100;
-  if(factionName === "Confederacy of Independent Systems") upd.liberation_pct = 0;
-  
-  await sb.from('planets').update(upd).eq('id', pid);
-  await writeLog("Editor Override", `Force assigned ${p.name} control to ${factionName}.`);
-  toast(`${p.name} alignment updated.`);
-  loadAll();
-}
-
-async function toggleInvasion(pid, status) {
-  if(!isAdmin) return;
-  const p = DB.planets.find(pl => pl.id == pid);
-  if(!p) return;
-  await sb.from('planets').update({ under_invasion: status }).eq('id', pid);
-  await writeLog("Editor Override", status ? `Initiated autonomous invasion script on ${p.name}.` : `Revoked invasion state on ${p.name}.`);
-  toast(`Invasion status modified on ${p.name}`);
-  loadAll();
+function toggleLayoutEditor() {
+  layoutEditorMode = !layoutEditorMode;
+  renderAdminBody();
+  toast(layoutEditorMode ? "DRAG & DROP MODE ENGAGED" : "MAP GEOMETRY LOCKED");
 }
 
 async function advanceTurn(){
@@ -1025,30 +1015,6 @@ function toast(msg,err=false){
   const t=document.getElementById('toast');
   t.textContent=msg;t.className=err?'show err':'show';
   setTimeout(()=>t.className='',3000);
-}
-  async function savePlanetVector(planetName, planetId) {
-  if(!isAdmin) return;
-  const inputX = parseFloat(document.getElementById('edit-wx').value);
-  const inputY = parseFloat(document.getElementById('edit-wy').value);
-  
-  if(isNaN(inputX) || isNaN(inputY)) {
-    toast("Invalid vector formatting", true);
-    return;
-  }
-  
-  // Keep local positioning array perfectly updated
-  if(!PLANET_POSITIONS[planetName]) PLANET_POSITIONS[planetName] = {};
-  PLANET_POSITIONS[planetName].wx = inputX;
-  PLANET_POSITIONS[planetName].wy = inputY;
-  
-  // Calculate raw relative storage metrics for database
-  const dbX = Math.round((inputX / 0.6) + 650);
-  const dbY = Math.round((inputY / 0.6) + 650);
-  
-  await sb.from('planets').update({ x: dbX, y: dbY }).eq('id', planetId);
-  await writeLog("Vector Shift", `Manually calibrated structural positions for ${planetName}.`);
-  toast(`System vector updated`);
-  loadAll();
 }
 </script>
 </body>
