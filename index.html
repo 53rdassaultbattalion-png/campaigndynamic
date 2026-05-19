@@ -446,26 +446,92 @@ function renderUpgrades(){
 // ════════════════════════════════════════════
 // CANVAS MAP
 // ════════════════════════════════════════════
+let draggingPlanet = null; // Track if we are dragging a planet node instead of the camera map
+
 function initCanvas(){
   resizeCanvas();
   window.addEventListener('resize',resizeCanvas);
-  canvas.addEventListener('mousedown',e=>{dragging=true;dragMoved=false;lastMouse={x:e.clientX,y:e.clientY};});
+  
+  canvas.addEventListener('mousedown',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    
+    // Check if we are trying to drag a planet (Requires Admin and holding down Shift)
+    if(isAdmin && e.shiftKey) {
+      let hit=null,best=9999;
+      DB.planets.forEach(p=>{
+        const{sx,sy}=getPlanetPos(p);
+        const d=Math.hypot(mx-sx,my-sy);
+        const r=getR(p.strategic_value)*cam.scale+12;
+        if(d<r&&d<best){best=d;hit=p;}
+      });
+      if(hit) {
+        draggingPlanet = hit;
+        dragging = false;
+        return;
+      }
+    }
+    
+    // Fallback to moving the overall canvas view
+    dragging=true;
+    dragMoved=false;
+    lastMouse={x:e.clientX,y:e.clientY};
+  });
+  
   canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+
+    // Handle interactive universe moving tools
+    if(draggingPlanet) {
+      // Calculate world coordinates from the mouse position
+      const wx = (mx - cam.x) / cam.scale;
+      const wy = (my - cam.y) / cam.scale;
+      
+      // Update local cache instantly for buttery smooth alignment feedback
+      if(!PLANET_POSITIONS[draggingPlanet.name]) PLANET_POSITIONS[draggingPlanet.name] = {};
+      PLANET_POSITIONS[draggingPlanet.name].wx = wx;
+      PLANET_POSITIONS[draggingPlanet.name].wy = wy;
+      return;
+    }
+
     if(!dragging||!lastMouse)return;
     const dx=e.clientX-lastMouse.x,dy=e.clientY-lastMouse.y;
     if(Math.abs(dx)>2||Math.abs(dy)>2) dragMoved=true;
     cam.x+=dx;cam.y+=dy;lastMouse={x:e.clientX,y:e.clientY};
   });
+  
   canvas.addEventListener('mouseup',e=>{
+    // If we just dropped a planet we dragged, sync the vectors directly to Supabase
+    if(draggingPlanet) {
+      const pos = PLANET_POSITIONS[draggingPlanet.name];
+      if(pos) {
+        // Convert back to your DB layout context mapping structure (Coruscant anchor tracking standard)
+        const dbX = Math.round((pos.wx / 0.6) + 650);
+        const dbY = Math.round((pos.wy / 0.6) + 650);
+        
+        sb.from('planets').update({ x: dbX, y: dbY }).eq('id', draggingPlanet.id).then(() => {
+          writeLog("Geometry Sync", `Relocated universe node layout position for ${draggingPlanet.name}.`);
+          toast(`Vector saved for ${draggingPlanet.name}`);
+          loadAll();
+        });
+      }
+      draggingPlanet = null;
+      return;
+    }
+
     if(!dragMoved) onMapClick(e);
     dragging=false;lastMouse=null;
   });
-  canvas.addEventListener('mouseleave',()=>{dragging=false;lastMouse=null;});
+  
+  canvas.addEventListener('mouseleave',()=>{dragging=false;lastMouse=null;draggingPlanet=null;});
+  
   canvas.addEventListener('wheel',e=>{
     e.preventDefault();
     const f=e.deltaY<0?1.12:0.9;
     cam.scale=Math.max(0.3,Math.min(4,cam.scale*f));
   },{passive:false});
+  
   resetCamera();
   requestAnimationFrame(loop);
 }
@@ -845,7 +911,7 @@ function switchMTab(t){
 function renderAdminBody(){
   const el=document.getElementById('admin-body');
   if(mTab==='controls'){
-    // Find the currently selected planet to build contextual planet controls
+    // Find the currently selected planet to build contextual editing controls
     const p = DB.planets.find(pl => pl.id === selPlanet);
     
     el.innerHTML=`
@@ -858,30 +924,34 @@ function renderAdminBody(){
       </div>
 
       <div style="background:rgba(255,255,255,0.01);border:1px solid var(--border);padding:14px;border-radius:3px;margin-bottom:12px">
-        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Universe Editor & Sandbox Tools</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
-          <button class="btn" onclick="adjustTreasury('Galactic Republic', 1000)">+1k Republic Credits</button>
-          <button class="btn red" onclick="adjustTreasury('Confederacy of Independent Systems', 1000)">+1k CIS Credits</button>
-        </div>
+        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Universe Geometry Editor</div>
         
         ${p ? `
-          <div style="border-top:1px solid rgba(0,160,255,0.1);padding-top:10px;margin-top:10px">
-            <div style="font-size:11px;color:var(--accent2);margin-bottom:6px;font-family:var(--fd)">Target Node: ${p.name}</div>
-            <div style="display:flex;gap:4px;margin-bottom:6px">
-              <button class="btn" style="font-size:9px;padding:4px 8px;flex:1" onclick="setPlanetFaction('${p.id}', 'Galactic Republic')">Force Republic</button>
-              <button class="btn red" style="font-size:9px;padding:4px 8px;flex:1" onclick="setPlanetFaction('${p.id}', 'Confederacy of Independent Systems')">Force CIS</button>
-              <button class="btn" style="font-size:9px;padding:4px 8px;border-color:var(--text-dim);color:var(--text-dim)" onclick="setPlanetFaction('${p.id}', 'Neutral')">Neutral</button>
+          <div style="font-size:11px;color:var(--accent2);margin-bottom:8px;font-family:var(--fd)">Node Vector: ${p.name}</div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <div>
+              <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:2px">Grid X Position</label>
+              <input type="number" class="form-input" id="edit-wx" value="${Math.round(PLANET_POSITIONS[p.name] ? PLANET_POSITIONS[p.name].wx : (p.x - 650) * 0.6)}" style="padding:4px 8px;font-family:var(--fd);font-size:11px">
             </div>
-            <div style="display:flex;gap:4px">
-              <button class="btn ${p.under_invasion?'red':'ok'}" style="font-size:9px;padding:4px 8px;width:100%" onclick="toggleInvasion('${p.id}', ${!p.under_invasion})">
-                ${p.under_invasion ? '🛑 CANCEL CIS INVASION' : '⚠️ TRIGGER CIS INVASION'}
-              </button>
+            <div>
+              <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:2px">Grid Y Position</label>
+              <input type="number" class="form-input" id="edit-wy" value="${Math.round(PLANET_POSITIONS[p.name] ? PLANET_POSITIONS[p.name].wy : (p.y - 650) * 0.6)}" style="padding:4px 8px;font-family:var(--fd);font-size:11px">
             </div>
           </div>
-        ` : `<div style="font-size:11px;color:var(--text-dim);text-align:center;padding:5px 0;">Select a planet on the map to modify its universe parameters.</div>`}
+          
+          <button class="btn ok" style="width:100%;font-size:9px;padding:6px;margin-bottom:12px" onclick="savePlanetVector('${p.name}', '${p.id}')">💾 COMMIT VECTOR CHANGES</button>
+          
+          <div style="border-top:1px solid rgba(0,160,255,0.1);padding-top:10px;margin-top:5px">
+            <div style="font-size:9px;color:var(--warn);margin-bottom:4px;font-family:var(--fd)">⚡ CANVAS INTERACTION SHORTCUT</div>
+            <div style="font-size:11px;color:var(--text);line-height:1.4">
+              While logged in, hold the <span style="color:var(--accent2);font-weight:bold;font-family:var(--fd)">SHIFT</span> key down on your keyboard and drag any planet node across the map with your mouse to visually re-arrange your galaxy layout.
+            </div>
+          </div>
+        ` : `<div style="font-size:11px;color:var(--text-dim);text-align:center;padding:10px 0;">Select a node on the canvas layout to access vector alignment and relocation tools.</div>`}
       </div>
 
-      <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions based on current territory holdings. Sandbox edits push raw database overrides instantly.</div>`;
+      <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions based on current territory holdings.</div>`;
   }else{
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:5px">${
       DB.logs.map(l=>`<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:2px;padding:8px 10px"><span style="color:var(--warn);font-family:var(--fd);font-size:9px">[${l.event_type}]</span> <span style="font-size:12px">${l.description}</span></div>`).join('')
@@ -955,6 +1025,30 @@ function toast(msg,err=false){
   const t=document.getElementById('toast');
   t.textContent=msg;t.className=err?'show err':'show';
   setTimeout(()=>t.className='',3000);
+}
+  async function savePlanetVector(planetName, planetId) {
+  if(!isAdmin) return;
+  const inputX = parseFloat(document.getElementById('edit-wx').value);
+  const inputY = parseFloat(document.getElementById('edit-wy').value);
+  
+  if(isNaN(inputX) || isNaN(inputY)) {
+    toast("Invalid vector formatting", true);
+    return;
+  }
+  
+  // Keep local positioning array perfectly updated
+  if(!PLANET_POSITIONS[planetName]) PLANET_POSITIONS[planetName] = {};
+  PLANET_POSITIONS[planetName].wx = inputX;
+  PLANET_POSITIONS[planetName].wy = inputY;
+  
+  // Calculate raw relative storage metrics for database
+  const dbX = Math.round((inputX / 0.6) + 650);
+  const dbY = Math.round((inputY / 0.6) + 650);
+  
+  await sb.from('planets').update({ x: dbX, y: dbY }).eq('id', planetId);
+  await writeLog("Vector Shift", `Manually calibrated structural positions for ${planetName}.`);
+  toast(`System vector updated`);
+  loadAll();
 }
 </script>
 </body>
