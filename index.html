@@ -189,6 +189,67 @@
         #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: #030914; border: 1px solid var(--border-bright); color: var(--accent); font-family: var(--font-display); font-size: 11px; letter-spacing: 2px; padding: 12px 24px; border-radius: 3px; z-index: 999; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; box-shadow: 0 0 15px rgba(0,180,255,0.3); }
         #toast.show { transform: translateX(-50%) translateY(0); }
         #toast.error { border-color: rgba(255, 51, 51, 0.5); color: var(--danger); }
+
+        /* hd2galaxy Inspired Sector Cluster Overview Layouts */
+        .sector-header-tag {
+            font-family: var(--font-display);
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--accent2);
+            background: rgba(0, 179, 255, 0.1);
+            padding: 4px 10px;
+            border-left: 3px solid var(--accent);
+            width: fit-content;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .sector-grid-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 3px;
+            margin-top: 10px;
+        }
+
+        .sector-grid-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 4px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .sector-grid-node:hover {
+            background: rgba(0, 180, 255, 0.08);
+            border-color: var(--accent);
+        }
+        .sector-grid-node.active {
+            border-color: var(--accent2);
+            background: rgba(0, 40, 80, 0.3);
+        }
+        .sector-grid-node .node-emoji { font-size: 16px; margin-bottom: 2px; }
+        .sector-grid-node .node-name { font-size: 10px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+        .sector-grid-node .node-status-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 4px; }
+
+        .planet-profile-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+            padding: 12px;
+            border: 1px solid rgba(0, 180, 255, 0.08);
+            border-radius: 3px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -337,10 +398,18 @@
         </div>
         <div id="detail-content">
             <div class="detail-header">
-                <div class="detail-planet-emoji" id="d-emoji">🪐</div>
-                <div class="detail-planet-name" id="d-name">Planet</div>
-                <div class="detail-sector" id="d-sector">Sector Array</div>
-                <div class="detail-faction-badge" id="d-faction-badge">Sovereignty</div>
+                <div class="sector-header-tag" id="d-sector-tag">UNKNOWN SECTOR</div>
+                <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Sector Mapping Progress</div>
+                <div id="d-sector-grid" class="sector-grid-overview"></div>
+
+                <div class="planet-profile-container">
+                    <div class="detail-planet-emoji" id="d-emoji" style="margin-bottom: 0; font-size: 42px;">🪐</div>
+                    <div style="flex: 1;">
+                        <div class="detail-planet-name" id="d-name">Planet</div>
+                        <div class="detail-faction-badge" id="d-faction-badge" style="margin-top: 4px;">Sovereignty</div>
+                    </div>
+                </div>
+                
                 <div class="hq-container-badges" id="d-hq-zone"></div>
                 
                 <div class="liberation-container">
@@ -394,7 +463,7 @@
     // ThreeJS Core Variables
     let scene, camera, renderer, controls;
     let planetMeshes = []; 
-    let visualDecorations = []; // Tracks rings and scanning helpers for animation loops
+    let visualDecorations = []; 
     let raycaster = new THREE.Raycaster();
     let mouse = new THREE.Vector2();
 
@@ -457,7 +526,6 @@
         const canvas = document.getElementById('three-canvas-target');
 
         scene = new THREE.Scene();
-        // Rich deep atmospheric space color matching Helldivers war rooms
         scene.background = new THREE.Color(0x01050e);
         scene.fog = new THREE.FogExp2(0x01050e, 0.0012);
 
@@ -467,15 +535,13 @@
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
 
-        // Locked Orbit Configuration mirroring strategic war room tables
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.06;
         
-        // Strict rotation caps to maintain the distinct 2.5D presentation
-        controls.minPolarAngle = Math.PI / 4;  // Lock isometric pitch high
+        controls.minPolarAngle = Math.PI / 4;  
         controls.maxPolarAngle = Math.PI / 3.5;
-        controls.minAzimuthAngle = -Math.PI / 12; // Prevent turning things upside down
+        controls.minAzimuthAngle = -Math.PI / 12; 
         controls.maxAzimuthAngle = Math.PI / 12;
         
         controls.minDistance = 350;
@@ -483,14 +549,12 @@
 
         reset2DCamera();
 
-        // High contrast primary scanning grid layer
         const gridHelper = new THREE.GridHelper(2200, 44, 0x00d2ff, 0x021630);
         gridHelper.position.y = -2;
         gridHelper.material.opacity = 0.15;
         gridHelper.material.transparent = true;
         scene.add(gridHelper);
 
-        // Tech visual star fields matching data arrays
         const starGeo = new THREE.BufferGeometry();
         const starCount = 1200;
         const positions = new Float32Array(starCount * 3);
@@ -498,7 +562,7 @@
 
         for (let i = 0; i < starCount * 3; i += 3) {
             positions[i] = (Math.random() - 0.5) * 2000;
-            positions[i+1] = -50; // Pin stars strictly down below map space
+            positions[i+1] = -50; 
             positions[i+2] = (Math.random() - 0.5) * 2000;
 
             colors[i] = 0.0; colors[i+1] = 0.4 + Math.random()*0.4; colors[i+2] = 0.8;
@@ -548,7 +612,6 @@
         requestAnimationFrame(animate);
         controls.update();
         
-        // Dynamic continuous animations matching the Battlefront 2 map logic
         const time = Date.now() * 0.001;
         visualDecorations.forEach(deco => {
             if (deco.isOrbitRing) {
@@ -588,7 +651,6 @@
             if (isSelected) classList += " selected";
             if (pData.under_invasion) classList += " invasion";
 
-            // Add custom colorful shadow matching faction affiliation boundaries
             let dynamicShadow = "rgba(0,179,255,0.4)";
             if (pData.under_invasion) dynamicShadow = "rgba(255,51,51,0.6)";
             else if (pData.controlling_faction === 'Confederacy of Independent Systems') dynamicShadow = "rgba(255,51,51,0.4)";
@@ -816,7 +878,6 @@
     function getSVRadius(sv) { return { 'Low': 6, 'Medium': 9, 'High': 12, 'Critical': 16 }[sv] || 8; }
 
     function rebuild3DScene() {
-        // Clear past meshes cleanly from canvas cache
         planetMeshes.forEach(m => scene.remove(m));
         planetMeshes = [];
 
@@ -826,7 +887,6 @@
         const targetsForRemoval = scene.children.filter(obj => obj.isLine || obj.isOrbitRing || obj.isPulseRing);
         targetsForRemoval.forEach(obj => scene.remove(obj));
 
-        // Coordinate scaling to map the global galaxy cleanly across the 2D plane
         const scaleX = 0.55;
         const scaleZ = 0.55;
         const centerX = 650;
@@ -836,7 +896,6 @@
             const r = getSVRadius(p.strategic_value);
             const baseColorHex = p.under_invasion ? 0xff3333 : getFactionHexColor(p.controlling_faction);
 
-            // 1. Core Node Sphere representation (Solid Glowing Holotable Aesthetics)
             const geometry = new THREE.SphereGeometry(r, 24, 24);
             const material = new THREE.MeshBasicMaterial({ 
                 color: baseColorHex, 
@@ -848,17 +907,15 @@
 
             const posX = (p.x - centerX) * scaleX;
             const posZ = (p.y - centerZ) * scaleZ;
-            const posY = 0; // Pinned flat vertically to lock into a clean strategic layout
+            const posY = 0; 
 
             mesh.position.set(posX, posY, posZ);
             mesh.userData = p;
             scene.add(mesh);
             planetMeshes.push(mesh);
 
-            // 2. Battlefront II Classic Outer Spinning Track rings
             const ringRadius = r + 6;
             const ringGeo = new THREE.RingGeometry(ringRadius, ringRadius + 0.5, 32);
-            // Rotate ring flat onto XZ plane
             ringGeo.rotateX(-Math.PI / 2);
             const ringMat = new THREE.MeshBasicMaterial({ 
                 color: baseColorHex, 
@@ -873,7 +930,6 @@
             scene.add(trackRing);
             visualDecorations.push(trackRing);
 
-            // 3. Continuous pulse ring logic for combat actions or user base structures
             const hasDeployment = (DB.settings.loc_53rd == p.id || DB.settings.loc_501st == p.id || p.under_invasion);
             if (hasDeployment) {
                 const pulseGeo = new THREE.RingGeometry(ringRadius + 2, ringRadius + 5, 32);
@@ -893,7 +949,6 @@
             }
         });
 
-        // 4. Helldivers Supply Line Style Glowing Connections
         DB.connections.forEach(c => {
             const meshA = planetMeshes.find(m => m.userData.name === c.planet_a);
             const meshB = planetMeshes.find(m => m.userData.name === c.planet_b);
@@ -906,7 +961,7 @@
 
             let laneColor = 0x00b3ff;
             if (meshA.userData.under_invasion || meshB.userData.under_invasion) {
-                laneColor = 0xff3333; // Sector lines drop to threat alerts during combat splits
+                laneColor = 0xff3333; 
             } else if(meshA.userData.controlling_faction === meshB.userData.controlling_faction && meshA.userData.controlling_faction !== 'Neutral') {
                 laneColor = getFactionHexColor(meshA.userData.controlling_faction);
             } else if (meshA.userData.controlling_faction !== 'Neutral' && meshB.userData.controlling_faction !== 'Neutral') {
@@ -917,7 +972,7 @@
                 color: laneColor, 
                 transparent: true, 
                 opacity: 0.4,
-                linewidth: 2 // Boost visibility weight across the flat field
+                linewidth: 2 
             });
             const hyperlane = new THREE.Line(lineGeo, lineMat);
             hyperlane.isLine = true;
@@ -932,9 +987,31 @@
         document.getElementById('detail-empty').style.display = 'none';
         const content = document.getElementById('detail-content'); content.classList.add('visible');
 
+        // Apply visual cluster layout transformations matching hd2galaxy aesthetics
+        const sectorName = p.sector || 'Unscouted';
+        document.getElementById('d-sector-tag').textContent = sectorName + ' Sector';
+        
+        const sectorPlanets = DB.planets.filter(pl => pl.sector === p.sector);
+        const sectorGrid = document.getElementById('d-sector-grid');
+        
+        sectorGrid.innerHTML = sectorPlanets.map(sp => {
+            let statusColor = 'var(--text-dim)';
+            if (sp.under_invasion) statusColor = 'var(--danger)';
+            else if (sp.controlling_faction === 'Galactic Republic') statusColor = 'var(--accent)';
+            else if (sp.controlling_faction === 'Confederacy of Independent Systems') statusColor = 'var(--danger)';
+
+            const isCurrent = sp.id === p.id ? 'active' : '';
+            return `
+                <div class="sector-grid-node ${isCurrent}" onclick="onPlanetClick(${sp.id})">
+                    <span class="node-emoji">${sp.emoji || '🪐'}</span>
+                    <span class="node-name">${sp.name}</span>
+                    <div class="node-status-dot" style="background:${statusColor}; box-shadow: 0 0 4px ${statusColor}"></div>
+                </div>
+            `;
+        }).join('');
+
         document.getElementById('d-emoji').textContent = p.emoji || '🪐';
         document.getElementById('d-name').textContent = p.name;
-        document.getElementById('d-sector').textContent = (p.sector || 'Unscouted') + ' Sector';
         
         const badge = document.getElementById('d-faction-badge');
         badge.textContent = p.under_invasion ? "CIS INVASION HOST" : p.controlling_faction; 
@@ -1082,7 +1159,7 @@
                 </div>
             </div>`;
         } else {
-            body.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;">${DB.logs.map(l => `<div class="unit-item"><span style="color:var(--warn)">[${l.event_type}]</span> ${l.description}</div>`).join('')}</div>`;
+            body.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;">${DB.logs.map(l => `<div class=\"unit-item\"><span style=\"color:var(--warn)\">[${l.event_type}]</span> ${l.description}</div>`).join('')}</div>`;
         }
     }
 
