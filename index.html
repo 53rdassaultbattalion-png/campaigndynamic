@@ -290,7 +290,6 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
       <div class="leg-row"><div class="leg-dot" style="background:#445566"></div> Neutral</div>
       <div class="leg-row"><div class="leg-dot" style="background:#00aaff"></div> Republic</div>
       <div class="leg-row"><div class="leg-dot" style="background:#ff3333"></div> CIS</div>
-      <div class="leg-row"><div class="leg-dot" style="background:#ff3333;box-shadow:0 0 6px #ff3333"></div> Invasion</div>
     </div>
   </div>
 
@@ -1527,6 +1526,7 @@ async function clearGalaxyMap(){
   if(!confirm('Delete ALL planets, hyperlanes, and hand-drawn sectors?\n\nFaction credits and upgrades are kept. This cannot be undone.')) return;
   if(!confirm('Final confirmation: wipe the entire galactic map?')) return;
   try{
+    await sb.from('units').delete().not('id','is',null);
     const{error:ce}=await sb.from('planet_connections').delete().gte('id',0);
     if(ce) throw new Error(supabaseErr(ce));
     const{error:pe}=await sb.from('planets').delete().gte('id',0);
