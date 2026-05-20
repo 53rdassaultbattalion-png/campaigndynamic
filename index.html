@@ -104,13 +104,6 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 #detail-content.vis{display:flex;}
 
 .d-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.d-sector-tag{font-family:var(--fd);font-size:9px;letter-spacing:3px;color:var(--accent2);background:rgba(0,180,255,0.08);padding:3px 8px;border-left:2px solid var(--accent);margin-bottom:10px;text-transform:uppercase;display:inline-block;}
-.sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:5px;margin-bottom:12px;}
-.sg-node{display:flex;flex-direction:column;align-items:center;padding:5px 3px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.04);border-radius:2px;cursor:pointer;transition:all 0.15s;text-align:center;}
-.sg-node:hover{background:rgba(0,160,255,0.07);border-color:var(--accent);}
-.sg-node.cur{border-color:var(--accent2);background:rgba(0,40,80,0.3);}
-.sg-name{font-size:9px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
-.sg-dot{width:4px;height:4px;border-radius:50%;margin-top:3px;}
 .planet-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
 .d-name{font-family:var(--fd);font-size:15px;letter-spacing:2px;color:var(--text-bright);text-transform:uppercase;}
 .d-faction-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:2px;border:1px solid currentColor;font-family:var(--fd);font-size:9px;letter-spacing:1px;background:rgba(255,255,255,0.02);margin-top:6px;}
@@ -270,11 +263,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
       <button class="ed-tool on" data-tool="select" onclick="setEditorTool('select')">Select</button>
       <button class="ed-tool" data-tool="planet" onclick="setEditorTool('planet')">+ Planet</button>
       <button class="ed-tool" data-tool="lane" onclick="setEditorTool('lane')">Hyperlane</button>
-      <button class="ed-tool" data-tool="sector" onclick="setEditorTool('sector')">Draw Sector</button>
       <button class="ed-tool danger" data-tool="erase" onclick="setEditorTool('erase')">Erase</button>
-      <div class="ed-sep"></div>
-      <button class="ed-tool" onclick="closeSectorPolygon()">Close Sector</button>
-      <button class="ed-tool" onclick="cancelSectorDraw()">Cancel</button>
       <div class="ed-sep"></div>
       <button class="ed-tool" onclick="exportGalaxy()">Export</button>
       <button class="ed-tool" onclick="importGalaxy()">Import</button>
@@ -301,9 +290,6 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
     </div>
     <div id="detail-content">
       <div class="d-header">
-        <div class="d-sector-tag" id="d-sector-tag">UNKNOWN SECTOR</div>
-        <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sector Nodes</div>
-        <div class="sector-grid" id="d-sector-grid"></div>
         <div class="planet-row">
           <div>
             <div class="d-name" id="d-name">Planet</div>
@@ -353,30 +339,18 @@ let galaxyEditorMode = false;
 let editorTool = 'select';
 let draggedPlanet = null;
 let laneFromPlanet = null;
-let sectorDrawPoints = [];
-let customSectors = [];
 let editorHoverWorld = null;
 let editorPointerDown = false;
 let pointerDownPos = null;
 let pendingEditorAction = null;
 let editorFormCallback = null;
 const EDITOR_CLICK_THRESH = 8;
-const SECTOR_STORAGE_KEY = 'galaxy_custom_sectors_local';
-
 // ── CANVAS STATE ──
 const canvas=document.getElementById('galactic-canvas');
 const ctx=canvas.getContext('2d');
 let cam={x:0,y:0,scale:1};
 let dragging=false,lastMouse=null,dragMoved=false;
 let pulseT=0;
-
-// ── SECTOR COLOUR PALETTE ──
-const SECTOR_COLORS={
-  'Core':           {rep:'rgba(0,120,255,0.13)',  cis:'rgba(255,40,40,0.13)',  neu:'rgba(60,80,100,0.10)'},
-  'Expansion':      {rep:'rgba(0,160,220,0.12)',  cis:'rgba(220,50,50,0.12)',  neu:'rgba(50,70,90,0.09)'},
-  'Mid Rim':        {rep:'rgba(0,100,200,0.11)',  cis:'rgba(200,30,30,0.11)',  neu:'rgba(40,60,80,0.09)'},
-  'Outer Rim':      {rep:'rgba(0,80,180,0.10)',   cis:'rgba(180,20,20,0.10)',  neu:'rgba(30,50,70,0.08)'},
-};
 
 window.onload=async()=>{
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -403,17 +377,6 @@ async function loadAll(){
     DB.units=u.data||[];DB.settings={};
     (s.data||[]).forEach(r=>DB.settings[r.key]=r.value);
     DB.logs=l.data||[];DB.upgrades=upg.data||[];
-    try{
-      const raw=DB.settings.galaxy_custom_sectors;
-      customSectors=raw?JSON.parse(raw):[];
-      if(!Array.isArray(customSectors)) customSectors=[];
-    }catch{ customSectors=[]; }
-    if(!customSectors.length){
-      try{
-        const local=localStorage.getItem(SECTOR_STORAGE_KEY);
-        if(local) customSectors=JSON.parse(local);
-      }catch{}
-    }
     renderAll();
   }catch(e){toast("Data stream fault",true);console.error(e);}
 }
@@ -444,7 +407,7 @@ function renderAll(){
   if(wrap){
     const on=galaxyEditorMode&&isAdmin;
     wrap.classList.toggle('editor-active',on);
-    ['select','planet','lane','sector','erase'].forEach(t=>wrap.classList.toggle('tool-'+t,on&&editorTool===t));
+    ['select','planet','lane','erase'].forEach(t=>wrap.classList.toggle('tool-'+t,on&&editorTool===t));
   }
   updateEditorToolbar();
 }
@@ -614,14 +577,6 @@ function initCanvas(){
     cam.scale=Math.max(0.3,Math.min(4,cam.scale*f));
   },{passive:false});
 
-  canvas.addEventListener('contextmenu',e=>{
-    if(isAdmin&&galaxyEditorMode&&editorTool==='sector'){
-      e.preventDefault();
-      if(sectorDrawPoints.length>=3) closeSectorPolygon();
-      else toast('Need 3+ points before closing',true);
-    }
-  });
-
   resetCamera();
   requestAnimationFrame(loop);
 }
@@ -705,14 +660,6 @@ async function dbUpdatePlanetPos(p){
   }catch(e){ return e.message||'Network error'; }
 }
 
-async function saveCustomSectors(){
-  const json=JSON.stringify(customSectors);
-  localStorage.setItem(SECTOR_STORAGE_KEY,json);
-  const{error}=await sb.from('settings').upsert({key:'galaxy_custom_sectors',value:json},{onConflict:'key'});
-  if(error) throw new Error(supabaseErr(error));
-  DB.settings.galaxy_custom_sectors=json;
-}
-
 function setEditorStatus(msg){ const el=document.getElementById('editor-status'); if(el) el.textContent=msg; }
 
 function updateEditorToolbar(){
@@ -723,8 +670,7 @@ function updateEditorToolbar(){
     select:'Drag planets to move. Click to inspect.',
     planet:'Click empty space to place a new world.',
     lane:'Click two worlds to link a hyperlane.',
-    sector:'Click to add boundary points. Close Sector or right-click to finish.',
-    erase:'Click a world, hyperlane, or sector boundary to delete.'
+    erase:'Click a world or hyperlane to delete.'
   };
   if(galaxyEditorMode) setEditorStatus(hints[editorTool]||'');
 }
@@ -732,7 +678,6 @@ function updateEditorToolbar(){
 function setEditorTool(tool){
   editorTool=tool;
   laneFromPlanet=null;
-  if(tool!=='sector') sectorDrawPoints=[];
   updateEditorToolbar();
 }
 
@@ -741,7 +686,6 @@ function toggleGalaxyEditor(){
   galaxyEditorMode=!galaxyEditorMode;
   if(!galaxyEditorMode){
     laneFromPlanet=null;
-    sectorDrawPoints=[];
     draggedPlanet=null;
   }
   renderAll();
@@ -783,45 +727,12 @@ async function handleEditorMouseUp(mx,my){
     updateEditorToolbar();
     return;
   }
-  if(editorTool==='sector'){
-    if(sectorDrawPoints.length>=3){
-      const first=worldToScreen(sectorDrawPoints[0][0],sectorDrawPoints[0][1]);
-      if(Math.hypot(mx-first.sx,my-first.sy)<14*cam.scale){
-        await closeSectorPolygon();
-        return;
-      }
-    }
-    sectorDrawPoints.push([w.x,w.y]);
-    setEditorStatus(`Sector: ${sectorDrawPoints.length} points — Close Sector when done`);
-    return;
-  }
   if(editorTool==='erase'){
     if(hit){ await deletePlanet(hit); return; }
     const conn=hitTestConnection(mx,my);
     if(conn){ await deleteConnection(conn); return; }
-    const sec=hitTestCustomSector(mx,my);
-    if(sec){ await deleteCustomSector(sec); return; }
     toast('Nothing to erase here',true);
   }
-}
-
-function hitTestCustomSector(mx,my){
-  const w=screenToWorld(mx,my);
-  for(let i=customSectors.length-1;i>=0;i--){
-    const s=customSectors[i];
-    if(s.points&&s.points.length>=3&&pointInPolygon(w.x,w.y,s.points))
-      return s;
-  }
-  return null;
-}
-
-function pointInPolygon(x,y,pts){
-  let inside=false;
-  for(let i=0,j=pts.length-1;i<pts.length;j=i++){
-    const xi=pts[i][0],yi=pts[i][1],xj=pts[j][0],yj=pts[j][1];
-    if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi)) inside=!inside;
-  }
-  return inside;
 }
 
 function openEditorForm(title,fields,onSubmit){
@@ -855,7 +766,6 @@ function openAddPlanetForm(x,y){
   const factions=['Neutral',...DB.factions.map(f=>f.name)];
   openEditorForm('Add Planet',[
     {id:'name',label:'Planet Name',value:''},
-    {id:'sector',label:'Sector',value:'Uncharted'},
     {id:'faction',label:'Controlling Faction',type:'select',options:factions,value:'Neutral'},
     {id:'sv',label:'Strategic Value',type:'select',options:['Low','Medium','High','Critical'],value:'Medium'},
     {id:'yield',label:'Credit Yield',type:'number',value:'50'},
@@ -864,7 +774,7 @@ function openAddPlanetForm(x,y){
     if(!vals.name||!vals.name.trim()){ toast('Name required',true); return; }
     closeEditorForm();
     const err=await dbCreatePlanet({
-      name:vals.name.trim(),sector:vals.sector||'Uncharted',
+      name:vals.name.trim(),
       controlling_faction:vals.faction||'Neutral',strategic_value:vals.sv||'Medium',
       credit_yield:parseInt(vals.yield,10)||50,description:vals.desc||'',x,y
     });
@@ -927,50 +837,10 @@ async function deleteConnection(c){
   }catch(e){ toast('Delete failed',true); console.error(e); }
 }
 
-async function closeSectorPolygon(){
-  if(sectorDrawPoints.length<3){ toast('Need at least 3 points',true); return; }
-  const pts=[...sectorDrawPoints];
-  openEditorForm('Name Sector',[
-    {id:'name',label:'Sector Name',value:'',placeholder:'e.g. Core Worlds'}
-  ],async vals=>{
-    if(!vals.name||!vals.name.trim()){ toast('Name required',true); return; }
-    closeEditorForm();
-    customSectors.push({name:vals.name.trim(),points:pts});
-    sectorDrawPoints=[];
-    try{
-      await saveCustomSectors();
-      await writeLog('Sector Defined',`Hand-drawn boundary: ${vals.name.trim()}`);
-      toast(`Sector "${vals.name.trim()}" saved`);
-      updateEditorToolbar();
-      loadAll();
-    }catch(e){
-      customSectors.pop();
-      toast('Failed to save sector: '+(e.message||e),true);
-    }
-  });
-}
-
-function cancelSectorDraw(){
-  sectorDrawPoints=[];
-  updateEditorToolbar();
-  toast('Sector drawing cancelled');
-}
-
-async function deleteCustomSector(sec){
-  if(!confirm(`Delete sector boundary "${sec.name}"?`)) return;
-  customSectors=customSectors.filter(s=>s!==sec);
-  try{
-    await saveCustomSectors();
-    toast(`Removed ${sec.name} boundary`);
-    loadAll();
-  }catch(e){ toast('Delete failed',true); }
-}
-
 function exportGalaxy(){
   const payload={
-    planets:DB.planets.map(p=>({name:p.name,sector:p.sector,x:p.x,y:p.y,controlling_faction:p.controlling_faction,strategic_value:p.strategic_value,credit_yield:p.credit_yield,description:p.description})),
-    connections:DB.connections.map(c=>({planet_a:c.planet_a,planet_b:c.planet_b})),
-    customSectors
+    planets:DB.planets.map(p=>({name:p.name,x:p.x,y:p.y,controlling_faction:p.controlling_faction,strategic_value:p.strategic_value,credit_yield:p.credit_yield,description:p.description})),
+    connections:DB.connections.map(c=>({planet_a:c.planet_a,planet_b:c.planet_b}))
   };
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');
@@ -989,11 +859,7 @@ async function importGalaxy(){
     if(!file) return;
     try{
       const data=JSON.parse(await file.text());
-      if(!confirm('Import will ADD planets/connections/sectors from file. Continue?')) return;
-      if(data.customSectors){
-        customSectors=[...customSectors,...data.customSectors];
-        await saveCustomSectors();
-      }
+      if(!confirm('Import will ADD planets and connections from file. Continue?')) return;
       if(data.planets){
         for(const p of data.planets){
           const exists=DB.planets.some(x=>x.name===p.name);
@@ -1078,9 +944,6 @@ function draw(){
     ctx.fillText('⚠ GALAXY EDITOR — use toolbar tools to edit the map',20,30);
   }
 
-  drawSectorRegions();
-  drawSectorDrawPreview();
-
   DB.connections.forEach(c=>{
     const pa=DB.planets.find(p=>p.name===c.planet_a);
     const pb=DB.planets.find(p=>p.name===c.planet_b);
@@ -1126,127 +989,12 @@ function drawGrid(W,H){
   for(let y=oy;y<H;y+=sp){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
 }
 
-function drawSectorRegions(){
-  customSectors.forEach(sec=>{
-    if(!sec.points||sec.points.length<3)return;
-    const pts=sec.points.map(([x,y])=>{const p=worldToScreen(x,y);return[p.sx,p.sy];});
-    const centX=pts.reduce((a,b)=>a+b[0],0)/pts.length;
-    const centY=pts.reduce((a,b)=>a+b[1],0)/pts.length;
-    const sc=SECTOR_COLORS[sec.name]||SECTOR_COLORS['Outer Rim'];
-    const fillCol=sc.neu.replace('0.09)','0.14)').replace('0.08)','0.13)');
-
-    ctx.beginPath();
-    ctx.moveTo(pts[0][0],pts[0][1]);
-    for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
-    ctx.closePath();
-    ctx.fillStyle=fillCol;ctx.fill();
-    ctx.strokeStyle='rgba(0,200,255,0.45)';ctx.lineWidth=1.5;
-    ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
-
-    pts.forEach(([x,y],i)=>{
-      ctx.beginPath();ctx.arc(x,y,4*cam.scale,0,Math.PI*2);
-      ctx.fillStyle='rgba(0,238,255,0.7)';ctx.fill();
-    });
-
-    if(cam.scale>0.45){
-      ctx.font=`${Math.max(9,10*cam.scale)}px Orbitron,monospace`;
-      ctx.textAlign='center';
-      ctx.fillStyle='rgba(150,200,255,0.35)';
-      ctx.fillText((sec.name||'SECTOR').toUpperCase(),centX,centY);
-    }
-  });
-
-  const customNames=new Set(customSectors.map(s=>s.name));
-  const sectors={};
-  DB.planets.forEach(p=>{
-    const s=p.sector||'Unknown';
-    if(customNames.has(s))return;
-    if(!sectors[s])sectors[s]=[];
-    sectors[s].push(p);
-  });
-
-  Object.entries(sectors).forEach(([sector,planets])=>{
-    if(planets.length<2)return;
-    const pts=planets.map(p=>getPlanetPos(p)).filter(Boolean).map(pos=>[pos.sx,pos.sy]);
-    const hull=convexHull(pts);
-    if(hull.length<2)return;
-
-    const repC=planets.filter(p=>p.controlling_faction.includes('Republic')).length;
-    const cisC=planets.filter(p=>p.controlling_faction.includes('Confederacy')).length;
-    const sc=SECTOR_COLORS[sector]||SECTOR_COLORS['Outer Rim'];
-    const fillCol=repC>cisC?sc.rep:cisC>repC?sc.cis:sc.neu;
-
-    const centX=hull.reduce((a,b)=>a+b[0],0)/hull.length;
-    const centY=hull.reduce((a,b)=>a+b[1],0)/hull.length;
-    const pad=40*cam.scale;
-    const expanded=hull.map(([x,y])=>{
-      const dx=x-centX,dy=y-centY;
-      const d=Math.hypot(dx,dy)||1;
-      return[x+dx/d*pad,y+dy/d*pad];
-    });
-
-    ctx.beginPath();
-    ctx.moveTo(expanded[0][0],expanded[0][1]);
-    for(let i=1;i<expanded.length;i++) ctx.lineTo(expanded[i][0],expanded[i][1]);
-    ctx.closePath();
-    ctx.fillStyle=fillCol;ctx.fill();
-    ctx.strokeStyle=fillCol.replace(/[\d.]+\)$/,'0.35)');
-    ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);
-
-    if(cam.scale>0.5){
-      ctx.font=`${Math.max(9,10*cam.scale)}px Orbitron,monospace`;
-      ctx.textAlign='center';
-      ctx.fillStyle='rgba(150,200,255,0.25)';
-      ctx.fillText(sector.toUpperCase()+' SECTOR',centX,centY-8);
-    }
-  });
-}
-
-function drawSectorDrawPreview(){
-  if(!galaxyEditorMode||editorTool!=='sector'||!sectorDrawPoints.length)return;
-  const pts=sectorDrawPoints.map(([x,y])=>worldToScreen(x,y));
-
-  ctx.strokeStyle='rgba(0,238,255,0.8)';ctx.lineWidth=2;
-  ctx.setLineDash([4,4]);
-  ctx.beginPath();
-  ctx.moveTo(pts[0].sx,pts[0].sy);
-  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].sx,pts[i].sy);
-  if(editorHoverWorld&&pts.length){
-    const h=worldToScreen(editorHoverWorld.x,editorHoverWorld.y);
-    ctx.lineTo(h.sx,h.sy);
-  }
-  ctx.stroke();ctx.setLineDash([]);
-
-  pts.forEach((p,i)=>{
-    ctx.beginPath();ctx.arc(p.sx,p.sy,i===0?7*cam.scale:5*cam.scale,0,Math.PI*2);
-    ctx.fillStyle=i===0?'rgba(0,255,136,0.9)':'rgba(0,238,255,0.8)';
-    ctx.fill();
-  });
-
-}
-
 function drawEditorLaneHighlight(){
   if(!galaxyEditorMode||editorTool!=='lane'||!laneFromPlanet)return;
   const lp=getPlanetPos(laneFromPlanet);
   if(!lp) return;
   ctx.strokeStyle='rgba(255,200,0,0.7)';ctx.lineWidth=2;
   ctx.beginPath();ctx.arc(lp.sx,lp.sy,20*cam.scale,0,Math.PI*2);ctx.stroke();
-}
-
-function convexHull(pts){
-  if(pts.length<3)return pts;
-  let start=pts.reduce((a,b)=>b[0]<a[0]?b:a);
-  const hull=[];let cur=start;
-  do{
-    hull.push(cur);
-    let next=pts[0];
-    for(let i=1;i<pts.length;i++){
-      const cross=(next[0]-cur[0])*(pts[i][1]-cur[1])-(next[1]-cur[1])*(pts[i][0]-cur[0]);
-      if(next===cur||cross>0) next=pts[i];
-    }
-    cur=next;
-  }while(cur!==start&&hull.length<pts.length+1);
-  return hull;
 }
 
 function drawLane(a,b,pa,pb){
@@ -1332,27 +1080,13 @@ function showDetail(id){
   document.getElementById('detail-empty').style.display='none';
   document.getElementById('detail-content').classList.add('vis');
 
-  document.getElementById('d-sector-tag').textContent=(p.sector||'Unknown')+' Sector';
-
-  const sp=DB.planets.filter(s=>s.sector===p.sector);
-  document.getElementById('d-sector-grid').innerHTML=sp.map(s=>{
-    let sc='var(--text-dim)';
-    if(s.under_invasion)sc='var(--danger)';
-    else if(s.controlling_faction.includes('Republic'))sc='var(--accent)';
-    else if(s.controlling_faction.includes('Confederacy'))sc='var(--danger)';
-    return`<div class="sg-node ${s.id===p.id?'cur':''}" onclick="selPlanet=${s.id};renderAll()">
-      <div class="sg-name">${s.name}</div>
-      <div class="sg-dot" style="background:${sc};box-shadow:0 0 3px ${sc}"></div>
-    </div>`;
-  }).join('');
-
   document.getElementById('d-name').textContent=p.name;
   const badge=document.getElementById('d-fac-badge');
   badge.textContent=p.under_invasion?'⚠ CIS INVASION HOST':p.controlling_faction;
   badge.style.color=p.under_invasion?'var(--danger)':getFactionColor(p.controlling_faction);
 
   const hq=document.getElementById('d-hq-badges');hq.innerHTML='';
-  if(p.under_invasion)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,51,51,0.1);border-color:var(--danger);color:#ff6b6b">🚨 CIS SECTOR INVASION</div>`;
+  if(p.under_invasion)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,51,51,0.1);border-color:var(--danger);color:#ff6b6b">🚨 CIS INVASION</div>`;
   if(DB.settings.loc_53rd==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(0,170,255,0.08);border-color:var(--accent);color:var(--accent2)">🛡️ 53rd Battalion Base</div>`;
   if(DB.settings.loc_501st==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(42,110,255,0.08);border-color:#2a6eff;color:#85aeff">⚡ 501st Legion</div>`;
   if(DB.settings.loc_212th==p.id)hq.innerHTML+=`<div class="hq-badge" style="background:rgba(255,153,0,0.08);border-color:#ff9900;color:#ffd166">🔶 212th Attack Bn</div>`;
@@ -1506,11 +1240,10 @@ function renderAdminBody(){
           ${galaxyEditorMode?'🛑 EXIT GALAXY EDITOR':'🌌 OPEN GALAXY EDITOR'}
         </button>
         <div style="font-size:11px;color:var(--text-dim);line-height:1.4;margin-top:8px">
-          ${galaxyEditorMode?'<b style="color:var(--warn)">Editor active.</b> Use the map toolbar to add worlds, hyperlanes, sector borders, drag nodes, erase, export/import.':'Build custom galaxies: place planets, draw sectors, connect hyperlanes, export layouts.'}
+          ${galaxyEditorMode?'<b style="color:var(--warn)">Editor active.</b> Use the map toolbar to add worlds, hyperlanes, drag nodes, erase, export/import.':'Build custom galaxies: place planets, connect hyperlanes, export layouts.'}
         </div>
-        ${customSectors.length?`<div style="margin-top:8px;font-size:10px;color:var(--accent)">${customSectors.length} hand-drawn sector(s)</div>`:''}
         <button class="btn red" style="width:100%;margin-top:10px;font-size:9px" onclick="clearGalaxyMap()">🗑 CLEAR ENTIRE GALAXY MAP</button>
-        <div style="font-size:10px;color:var(--text-dim);margin-top:6px;line-height:1.4">Removes all worlds, hyperlanes, and sector borders. Use once to wipe existing data and hand-craft from scratch.</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:6px;line-height:1.4">Removes all worlds and hyperlanes. Use once to wipe existing data and hand-craft from scratch.</div>
       </div>
 
       <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions based on current territory holdings.</div>`;
@@ -1523,7 +1256,7 @@ function renderAdminBody(){
 
 async function clearGalaxyMap(){
   if(!isAdmin){ toast('Admin login required',true); return; }
-  if(!confirm('Delete ALL planets, hyperlanes, and hand-drawn sectors?\n\nFaction credits and upgrades are kept. This cannot be undone.')) return;
+  if(!confirm('Delete ALL planets and hyperlanes?\n\nFaction credits and upgrades are kept. This cannot be undone.')) return;
   if(!confirm('Final confirmation: wipe the entire galactic map?')) return;
   try{
     await sb.from('units').delete().not('id','is',null);
@@ -1531,15 +1264,12 @@ async function clearGalaxyMap(){
     if(ce) throw new Error(supabaseErr(ce));
     const{error:pe}=await sb.from('planets').delete().gte('id',0);
     if(pe) throw new Error(supabaseErr(pe));
-    customSectors=[];
-    localStorage.removeItem(SECTOR_STORAGE_KEY);
-    await saveCustomSectors();
     for(const key of['loc_53rd','loc_501st','loc_212th','loc_104th']){
       await sb.from('settings').upsert({key,value:''},{onConflict:'key'});
       DB.settings[key]='';
     }
     selPlanet=null;
-    await writeLog('Galaxy Reset','All worlds, routes, and sector borders cleared.');
+    await writeLog('Galaxy Reset','All worlds and hyperlanes cleared.');
     toast('Galaxy map cleared — chart your own');
     loadAll();
   }catch(e){
@@ -1582,7 +1312,7 @@ function toast(msg,err=false){
 
 // Expose editor handlers for inline toolbar onclick
 Object.assign(window,{
-  setEditorTool,toggleGalaxyEditor,closeSectorPolygon,cancelSectorDraw,
+  setEditorTool,toggleGalaxyEditor,
   exportGalaxy,importGalaxy,clearGalaxyMap,closeEditorForm,submitEditorForm,
   resetCamera,zoomIn,zoomOut,openAdmin,closeAdmin,doLogin,closeLogin
 });
