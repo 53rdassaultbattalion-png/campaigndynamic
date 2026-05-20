@@ -79,6 +79,18 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 .map-btn{width:30px;height:30px;background:var(--panel);border:1px solid var(--border);color:var(--accent);font-size:14px;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
 .map-btn:hover{border-color:var(--border-bright);color:var(--text-bright);}
 #map-legend{position:absolute;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:3px;font-size:11px;}
+#galaxy-editor-bar{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:none;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;max-width:calc(100% - 32px);background:var(--panel);border:1px solid var(--border-bright);padding:8px 12px;border-radius:4px;z-index:50;box-shadow:0 4px 24px rgba(0,0,0,0.6);pointer-events:auto;}
+#galaxy-editor-bar.open{display:flex;}
+#galaxy-editor-bar *{pointer-events:auto;}
+#map-wrap.editor-active #galactic-canvas{cursor:crosshair;}
+#map-wrap.editor-active.tool-select #galactic-canvas{cursor:default;}
+#map-wrap.editor-active.tool-erase #galactic-canvas{cursor:not-allowed;}
+.ed-tool{font-family:var(--fd);font-size:8px;letter-spacing:1px;padding:7px 11px;border-radius:2px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text-dim);cursor:pointer;text-transform:uppercase;white-space:nowrap;transition:all 0.15s;}
+.ed-tool:hover{border-color:var(--border-bright);color:var(--text);}
+.ed-tool.on{border-color:var(--accent);color:var(--accent2);background:rgba(0,160,255,0.12);box-shadow:0 0 10px rgba(0,160,255,0.2);}
+.ed-tool.danger.on{border-color:var(--danger);color:#ff8888;background:rgba(255,51,51,0.1);}
+.ed-sep{width:1px;height:22px;background:var(--border);margin:0 2px;}
+#editor-status{font-family:var(--fd);font-size:8px;letter-spacing:1px;color:var(--warn);padding:4px 8px;max-width:280px;text-align:center;line-height:1.3;}
 .leg-title{font-family:var(--fd);font-size:8px;letter-spacing:2px;color:var(--text-dim);margin-bottom:7px;text-transform:uppercase;}
 .leg-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;color:var(--text);}
 .leg-dot{width:7px;height:7px;border-radius:50%;}
@@ -157,6 +169,20 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
     <button class="btn" style="width:100%" onclick="doLogin()">AUTHORIZE</button>
     <div class="login-err" id="lg-err"></div>
     <button class="btn" style="width:100%;margin-top:6px;border-color:transparent;color:var(--text-dim)" onclick="closeLogin()">ABORT</button>
+  </div>
+</div>
+
+<div class="overlay" id="editor-form-modal" style="z-index:550" onclick="if(event.target===this)closeEditorForm()">
+  <div class="modal" style="width:420px" onclick="event.stopPropagation()">
+    <div class="modal-hd">
+      <span class="modal-title" id="editor-form-title">Editor</span>
+      <button class="modal-x" onclick="closeEditorForm()">✕</button>
+    </div>
+    <div class="modal-body" id="editor-form-body"></div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeEditorForm()">CANCEL</button>
+      <button class="btn ok" id="editor-form-submit" onclick="submitEditorForm()">CONFIRM</button>
+    </div>
   </div>
 </div>
 
@@ -240,6 +266,20 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 
   <div id="map-wrap">
     <canvas id="galactic-canvas"></canvas>
+    <div id="galaxy-editor-bar">
+      <button class="ed-tool on" data-tool="select" onclick="setEditorTool('select')">Select</button>
+      <button class="ed-tool" data-tool="planet" onclick="setEditorTool('planet')">+ Planet</button>
+      <button class="ed-tool" data-tool="lane" onclick="setEditorTool('lane')">Hyperlane</button>
+      <button class="ed-tool" data-tool="sector" onclick="setEditorTool('sector')">Draw Sector</button>
+      <button class="ed-tool danger" data-tool="erase" onclick="setEditorTool('erase')">Erase</button>
+      <div class="ed-sep"></div>
+      <button class="ed-tool" onclick="closeSectorPolygon()">Close Sector</button>
+      <button class="ed-tool" onclick="cancelSectorDraw()">Cancel</button>
+      <div class="ed-sep"></div>
+      <button class="ed-tool" onclick="exportGalaxy()">Export</button>
+      <button class="ed-tool" onclick="importGalaxy()">Import</button>
+      <div id="editor-status">Galaxy editor active</div>
+    </div>
     <div id="map-controls">
       <button class="map-btn" onclick="resetCamera()">⊙</button>
       <button class="map-btn" onclick="zoomIn()">+</button>
@@ -258,7 +298,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
     <div id="detail-empty">
       <div class="d-icon">📡</div>
       <div class="d-hint">Awaiting Target Lock</div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">Select a sector node on the galactic map</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">Select a world on the map, or use Galaxy Editor to chart new systems</div>
     </div>
     <div id="detail-content">
       <div class="d-header">
@@ -309,9 +349,20 @@ let selPlanet=null;
 let isAdmin=false;
 let mTab='controls';
 
-// ── LAYOUT EDITOR STATE ──
-let layoutEditorMode = false;
+// ── GALAXY EDITOR STATE ──
+let galaxyEditorMode = false;
+let editorTool = 'select';
 let draggedPlanet = null;
+let laneFromPlanet = null;
+let sectorDrawPoints = [];
+let customSectors = [];
+let editorHoverWorld = null;
+let editorPointerDown = false;
+let pointerDownPos = null;
+let pendingEditorAction = null;
+let editorFormCallback = null;
+const EDITOR_CLICK_THRESH = 8;
+const SECTOR_STORAGE_KEY = 'galaxy_custom_sectors_local';
 
 // ── CANVAS STATE ──
 const canvas=document.getElementById('galactic-canvas');
@@ -326,20 +377,6 @@ const SECTOR_COLORS={
   'Expansion':      {rep:'rgba(0,160,220,0.12)',  cis:'rgba(220,50,50,0.12)',  neu:'rgba(50,70,90,0.09)'},
   'Mid Rim':        {rep:'rgba(0,100,200,0.11)',  cis:'rgba(200,30,30,0.11)',  neu:'rgba(40,60,80,0.09)'},
   'Outer Rim':      {rep:'rgba(0,80,180,0.10)',   cis:'rgba(180,20,20,0.10)',  neu:'rgba(30,50,70,0.08)'},
-};
-
-// Planet defaults config fallback
-const PLANET_POSITIONS={
-  'Coruscant':    {wx:0,    wy:0},
-  'Naboo':        {wx:-180, wy:120},
-  'Mandalore':    {wx:-220, wy:-180},
-  'Christophsis': {wx:200,  wy:-150},
-  'Rodia':        {wx:100,  wy:200},
-  'Ryloth':       {wx:-100, wy:320},
-  'Kamino':       {wx:320,  wy:280},
-  'Felucia':      {wx:380,  wy:-80},
-  'Geonosis':     {wx:440,  wy:160},
-  'Mustafar':     {wx:500,  wy:-220},
 };
 
 window.onload=async()=>{
@@ -367,6 +404,17 @@ async function loadAll(){
     DB.units=u.data||[];DB.settings={};
     (s.data||[]).forEach(r=>DB.settings[r.key]=r.value);
     DB.logs=l.data||[];DB.upgrades=upg.data||[];
+    try{
+      const raw=DB.settings.galaxy_custom_sectors;
+      customSectors=raw?JSON.parse(raw):[];
+      if(!Array.isArray(customSectors)) customSectors=[];
+    }catch{ customSectors=[]; }
+    if(!customSectors.length){
+      try{
+        const local=localStorage.getItem(SECTOR_STORAGE_KEY);
+        if(local) customSectors=JSON.parse(local);
+      }catch{}
+    }
     renderAll();
   }catch(e){toast("Data stream fault",true);console.error(e);}
 }
@@ -391,6 +439,15 @@ function renderAll(){
   btn.textContent=isAdmin?'✓ HQ CONNECTED':'⚙ TERMINAL';
   btn.style.borderColor=isAdmin?'rgba(0,255,136,0.4)':'';
   btn.style.color=isAdmin?'var(--success)':'';
+  const bar=document.getElementById('galaxy-editor-bar');
+  if(bar) bar.classList.toggle('open', galaxyEditorMode && isAdmin);
+  const wrap=document.getElementById('map-wrap');
+  if(wrap){
+    const on=galaxyEditorMode&&isAdmin;
+    wrap.classList.toggle('editor-active',on);
+    ['select','planet','lane','sector','erase'].forEach(t=>wrap.classList.toggle('tool-'+t,on&&editorTool===t));
+  }
+  updateEditorToolbar();
 }
 
 function renderHeader(){
@@ -457,79 +514,115 @@ function renderUpgrades(){
 // ════════════════════════════════════════════
 // CANVAS MAP ENGINE
 // ════════════════════════════════════════════
+function pointerMoved(e){
+  if(!pointerDownPos) return false;
+  return Math.hypot(e.clientX-pointerDownPos.cx,e.clientY-pointerDownPos.cy)>EDITOR_CLICK_THRESH;
+}
+
+function endPointer(){
+  dragging=false;
+  lastMouse=null;
+  editorPointerDown=false;
+  pointerDownPos=null;
+}
+
 function initCanvas(){
   resizeCanvas();
   window.addEventListener('resize',resizeCanvas);
-  
+
+  const bar=document.getElementById('galaxy-editor-bar');
+  if(bar){
+    bar.addEventListener('mousedown',e=>e.stopPropagation());
+    bar.addEventListener('click',e=>e.stopPropagation());
+  }
+
   canvas.addEventListener('mousedown',e=>{
+    if(e.button!==0) return;
     const rect=canvas.getBoundingClientRect();
     const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-    
-    if(isAdmin && layoutEditorMode) {
-      let hit=null,best=9999;
-      DB.planets.forEach(p=>{
-        const{sx,sy}=getPlanetPos(p);
-        const d=Math.hypot(mx-sx,my-sy);
-        const r=getR(p.strategic_value)*cam.scale+12;
-        if(d<r&&d<best){best=d;hit=p;}
-      });
-      if(hit) {
-        draggedPlanet = hit;
-        dragging = false;
+    pointerDownPos={mx,my,cx:e.clientX,cy:e.clientY};
+    editorPointerDown=false;
+    dragMoved=false;
+
+    if(isAdmin&&galaxyEditorMode){
+      if(handleEditorMouseDown(mx,my)){
+        editorPointerDown=true;
         return;
       }
     }
-    
     dragging=true;
-    dragMoved=false;
     lastMouse={x:e.clientX,y:e.clientY};
   });
-  
+
   canvas.addEventListener('mousemove',e=>{
     const rect=canvas.getBoundingClientRect();
     const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    editorHoverWorld=screenToWorld(mx,my);
 
-    if(draggedPlanet) {
-      const wx = (mx - cam.x) / cam.scale;
-      const wy = (my - cam.y) / cam.scale;
-      draggedPlanet.x = Math.round((wx / 0.6) + 650);
-      draggedPlanet.y = Math.round((wy / 0.6) + 650);
+    if(draggedPlanet){
+      draggedPlanet.x=editorHoverWorld.x;
+      draggedPlanet.y=editorHoverWorld.y;
       return;
     }
-
-    if(!dragging||!lastMouse)return;
+    if(!dragging||!lastMouse) return;
     const dx=e.clientX-lastMouse.x,dy=e.clientY-lastMouse.y;
     if(Math.abs(dx)>2||Math.abs(dy)>2) dragMoved=true;
-    cam.x+=dx;cam.y+=dy;lastMouse={x:e.clientX,y:e.clientY};
+    cam.x+=dx;cam.y+=dy;
+    lastMouse={x:e.clientX,y:e.clientY};
   });
-  
+
   canvas.addEventListener('mouseup',async e=>{
-    if(draggedPlanet) {
-      const p = draggedPlanet;
-      draggedPlanet = null;
-      try {
-        await sb.from('planets').update({ x: p.x, y: p.y }).eq('id', p.id);
-        await writeLog("Geometry Shift", `Relocated universe node position for ${p.name} via layout editor.`);
-        toast(`Relocated ${p.name}`);
-        loadAll();
-      } catch(err) {
-        toast("Database write sync failed", true);
+    if(e.button!==0) return;
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    const moved=pointerMoved(e);
+
+    if(draggedPlanet){
+      const p=draggedPlanet;
+      draggedPlanet=null;
+      const posChanged=p._dragStartX!==p.x||p._dragStartY!==p.y;
+      endPointer();
+      if(posChanged){
+        const err=await dbUpdatePlanetPos(p);
+        if(err) toast('Save failed: '+err,true);
+        else{ toast(`Relocated ${p.name}`); loadAll(); }
+      }else if(editorTool==='select'){
+        selPlanet=p.id;
+        renderAll();
       }
       return;
     }
 
-    if(!dragMoved) onMapClick(e);
-    dragging=false;lastMouse=null;
+    if(isAdmin&&galaxyEditorMode&&editorPointerDown&&!moved){
+      endPointer();
+      await handleEditorMouseUp(mx,my);
+      return;
+    }
+
+    if(!moved&&!galaxyEditorMode) onMapClick(e);
+    endPointer();
   });
-  
-  canvas.addEventListener('mouseleave',()=>{dragging=false;lastMouse=null;draggedPlanet=null;});
-  
+
+  canvas.addEventListener('mouseleave',()=>{
+    if(draggedPlanet&&!editorPointerDown) draggedPlanet=null;
+    endPointer();
+    editorHoverWorld=null;
+  });
+
   canvas.addEventListener('wheel',e=>{
     e.preventDefault();
     const f=e.deltaY<0?1.12:0.9;
     cam.scale=Math.max(0.3,Math.min(4,cam.scale*f));
   },{passive:false});
-  
+
+  canvas.addEventListener('contextmenu',e=>{
+    if(isAdmin&&galaxyEditorMode&&editorTool==='sector'){
+      e.preventDefault();
+      if(sectorDrawPoints.length>=3) closeSectorPolygon();
+      else toast('Need 3+ points before closing',true);
+    }
+  });
+
   resetCamera();
   requestAnimationFrame(loop);
 }
@@ -549,12 +642,379 @@ function wx2s(wx){return cam.x+wx*cam.scale;}
 function wy2s(wy){return cam.y+wy*cam.scale;}
 
 function getPlanetPos(p){
-  if (p.x !== undefined && p.x !== null && p.x !== 0) {
-    return { sx: wx2s((p.x - 650) * 0.6), sy: wy2s((p.y - 650) * 0.6) };
+  if(p.x==null||p.y==null||isNaN(+p.x)||isNaN(+p.y)) return null;
+  return{sx:wx2s((+p.x-650)*0.6),sy:wy2s((+p.y-650)*0.6)};
+}
+
+function screenToWorld(mx,my){
+  const wx=(mx-cam.x)/cam.scale;
+  const wy=(my-cam.y)/cam.scale;
+  return{x:Math.round(wx/0.6+650),y:Math.round(wy/0.6+650)};
+}
+
+function worldToScreen(x,y){
+  return{sx:wx2s((x-650)*0.6),sy:wy2s((y-650)*0.6)};
+}
+
+function hitTestPlanet(mx,my,pad=8){
+  let hit=null,best=9999;
+  DB.planets.forEach(p=>{
+    const pos=getPlanetPos(p);
+    if(!pos) return;
+    const{sx,sy}=pos;
+    const d=Math.hypot(mx-sx,my-sy);
+    const r=getR(p.strategic_value)*cam.scale+pad;
+    if(d<r&&d<best){best=d;hit=p;}
+  });
+  return hit;
+}
+
+function hitTestConnection(mx,my){
+  const thresh=10*cam.scale;
+  let best=null,bestD=thresh;
+  DB.connections.forEach(c=>{
+    const pa=DB.planets.find(p=>p.name===c.planet_a);
+    const pb=DB.planets.find(p=>p.name===c.planet_b);
+    if(!pa||!pb)return;
+    const a=getPlanetPos(pa),b=getPlanetPos(pb);
+    if(!a||!b) return;
+    const d=distToSegment(mx,my,a.sx,a.sy,b.sx,b.sy);
+    if(d<bestD){bestD=d;best=c;}
+  });
+  return best;
+}
+
+function distToSegment(px,py,x1,y1,x2,y2){
+  const dx=x2-x1,dy=y2-y1,len2=dx*dx+dy*dy;
+  if(len2<1)return Math.hypot(px-x1,py-y1);
+  let t=((px-x1)*dx+(py-y1)*dy)/len2;
+  t=Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(x1+t*dx),py-(y1+t*dy));
+}
+
+function supabaseErr(err){
+  if(!err) return 'Unknown error';
+  return err.message||err.details||err.hint||String(err);
+}
+
+async function dbUpdatePlanetPos(p){
+  try{
+    const{error}=await sb.from('planets').update({x:p.x,y:p.y}).eq('id',p.id);
+    if(error) return supabaseErr(error);
+    await writeLog('Geometry Shift',`Relocated ${p.name} via galaxy editor.`);
+    return null;
+  }catch(e){ return e.message||'Network error'; }
+}
+
+async function saveCustomSectors(){
+  const json=JSON.stringify(customSectors);
+  localStorage.setItem(SECTOR_STORAGE_KEY,json);
+  const{error}=await sb.from('settings').upsert({key:'galaxy_custom_sectors',value:json},{onConflict:'key'});
+  if(error) throw new Error(supabaseErr(error));
+  DB.settings.galaxy_custom_sectors=json;
+}
+
+function setEditorStatus(msg){ const el=document.getElementById('editor-status'); if(el) el.textContent=msg; }
+
+function updateEditorToolbar(){
+  document.querySelectorAll('.ed-tool[data-tool]').forEach(btn=>{
+    btn.classList.toggle('on',btn.dataset.tool===editorTool);
+  });
+  const hints={
+    select:'Drag planets to move. Click to inspect.',
+    planet:'Click empty space to place a new world.',
+    lane:'Click two worlds to link a hyperlane.',
+    sector:'Click to add boundary points. Close Sector or right-click to finish.',
+    erase:'Click a world, hyperlane, or sector boundary to delete.'
+  };
+  if(galaxyEditorMode) setEditorStatus(hints[editorTool]||'');
+}
+
+function setEditorTool(tool){
+  editorTool=tool;
+  laneFromPlanet=null;
+  if(tool!=='sector') sectorDrawPoints=[];
+  updateEditorToolbar();
+}
+
+function toggleGalaxyEditor(){
+  if(!isAdmin){ toast('Log in via TERMINAL first',true); return; }
+  galaxyEditorMode=!galaxyEditorMode;
+  if(!galaxyEditorMode){
+    laneFromPlanet=null;
+    sectorDrawPoints=[];
+    draggedPlanet=null;
   }
-  const pp=PLANET_POSITIONS[p.name];
-  if(pp) return{sx:wx2s(pp.wx),sy:wy2s(pp.wy)};
-  return{sx:wx2s(0),sy:wy2s(0)};
+  renderAll();
+  renderAdminBody();
+  toast(galaxyEditorMode?'GALAXY EDITOR ENGAGED':'GALAXY EDITOR LOCKED');
+}
+
+function handleEditorMouseDown(mx,my){
+  const hit=hitTestPlanet(mx,my,14);
+  if(editorTool==='select'&&hit){
+    draggedPlanet=hit;
+    hit._dragStartX=hit.x;
+    hit._dragStartY=hit.y;
+    return true;
+  }
+  if(editorTool!=='select') return true;
+  return false;
+}
+
+async function handleEditorMouseUp(mx,my){
+  const hit=hitTestPlanet(mx,my);
+  const w=screenToWorld(mx,my);
+
+  if(editorTool==='select'){
+    if(hit){ selPlanet=hit.id; renderAll(); }
+    return;
+  }
+  if(editorTool==='planet'){
+    if(hit){ toast('Click empty space for a new planet',true); return; }
+    openAddPlanetForm(w.x,w.y);
+    return;
+  }
+  if(editorTool==='lane'){
+    if(!hit){ toast('Select a planet endpoint',true); return; }
+    if(!laneFromPlanet){ laneFromPlanet=hit; setEditorStatus(`Lane from ${hit.name} — pick destination`); return; }
+    if(laneFromPlanet.id===hit.id){ laneFromPlanet=null; setEditorStatus('Hyperlane cancelled'); return; }
+    await createHyperlane(laneFromPlanet,hit);
+    laneFromPlanet=null;
+    updateEditorToolbar();
+    return;
+  }
+  if(editorTool==='sector'){
+    if(sectorDrawPoints.length>=3){
+      const first=worldToScreen(sectorDrawPoints[0][0],sectorDrawPoints[0][1]);
+      if(Math.hypot(mx-first.sx,my-first.sy)<14*cam.scale){
+        await closeSectorPolygon();
+        return;
+      }
+    }
+    sectorDrawPoints.push([w.x,w.y]);
+    setEditorStatus(`Sector: ${sectorDrawPoints.length} points — Close Sector when done`);
+    return;
+  }
+  if(editorTool==='erase'){
+    if(hit){ await deletePlanet(hit); return; }
+    const conn=hitTestConnection(mx,my);
+    if(conn){ await deleteConnection(conn); return; }
+    const sec=hitTestCustomSector(mx,my);
+    if(sec){ await deleteCustomSector(sec); return; }
+    toast('Nothing to erase here',true);
+  }
+}
+
+function hitTestCustomSector(mx,my){
+  const w=screenToWorld(mx,my);
+  for(let i=customSectors.length-1;i>=0;i--){
+    const s=customSectors[i];
+    if(s.points&&s.points.length>=3&&pointInPolygon(w.x,w.y,s.points))
+      return s;
+  }
+  return null;
+}
+
+function pointInPolygon(x,y,pts){
+  let inside=false;
+  for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+    const xi=pts[i][0],yi=pts[i][1],xj=pts[j][0],yj=pts[j][1];
+    if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi)) inside=!inside;
+  }
+  return inside;
+}
+
+function openEditorForm(title,fields,onSubmit){
+  document.getElementById('editor-form-title').textContent=title;
+  document.getElementById('editor-form-body').innerHTML=fields.map(f=>`
+    <div class="form-group">
+      <label class="form-label">${f.label}</label>
+      ${f.type==='select'
+        ?`<select class="form-input" id="ef-${f.id}">${f.options.map(o=>`<option value="${o}" ${o===f.value?'selected':''}>${o}</option>`).join('')}</select>`
+        :`<input class="form-input" id="ef-${f.id}" type="${f.type||'text'}" value="${f.value??''}" ${f.placeholder?`placeholder="${f.placeholder}"`:''}>`}
+    </div>`).join('');
+  editorFormCallback=onSubmit;
+  document.getElementById('editor-form-modal').classList.add('open');
+}
+
+function closeEditorForm(){
+  document.getElementById('editor-form-modal').classList.remove('open');
+  editorFormCallback=null;
+}
+
+function submitEditorForm(){
+  if(!editorFormCallback) return;
+  const vals={};
+  document.querySelectorAll('#editor-form-body [id^="ef-"]').forEach(el=>{
+    vals[el.id.slice(3)]=el.value;
+  });
+  editorFormCallback(vals);
+}
+
+function openAddPlanetForm(x,y){
+  const factions=['Neutral',...DB.factions.map(f=>f.name)];
+  openEditorForm('Add Planet',[
+    {id:'name',label:'Planet Name',value:''},
+    {id:'sector',label:'Sector',value:'Uncharted'},
+    {id:'faction',label:'Controlling Faction',type:'select',options:factions,value:'Neutral'},
+    {id:'sv',label:'Strategic Value',type:'select',options:['Low','Medium','High','Critical'],value:'Medium'},
+    {id:'yield',label:'Credit Yield',type:'number',value:'50'},
+    {id:'desc',label:'Description',value:''}
+  ],async vals=>{
+    if(!vals.name||!vals.name.trim()){ toast('Name required',true); return; }
+    closeEditorForm();
+    const err=await dbCreatePlanet({
+      name:vals.name.trim(),sector:vals.sector||'Uncharted',
+      controlling_faction:vals.faction||'Neutral',strategic_value:vals.sv||'Medium',
+      credit_yield:parseInt(vals.yield,10)||50,description:vals.desc||'',x,y
+    });
+    if(err) toast('Create failed: '+err,true);
+    else{ toast('Created '+vals.name.trim()); loadAll(); }
+  });
+}
+
+async function dbCreatePlanet(row){
+  try{
+    const{data,error}=await sb.from('planets').insert([{
+      ...row,liberation_pct:0,under_invasion:false
+    }]).select('id');
+    if(error) return supabaseErr(error);
+    if(data&&data[0]) selPlanet=data[0].id;
+    await writeLog('World Created',`Added ${row.name} to the galactic chart.`);
+    return null;
+  }catch(e){ return e.message||'Network error'; }
+}
+
+async function createHyperlane(a,b){
+  const exists=DB.connections.some(c=>
+    (c.planet_a===a.name&&c.planet_b===b.name)||(c.planet_a===b.name&&c.planet_b===a.name)
+  );
+  if(exists){ toast('Hyperlane already exists',true); return; }
+  try{
+    const{error}=await sb.from('planet_connections').insert([{planet_a:a.name,planet_b:b.name}]);
+    if(error){ toast('Hyperlane failed: '+supabaseErr(error),true); return; }
+    await writeLog('Hyperlane Linked',`Route: ${a.name} ↔ ${b.name}`);
+    toast(`Linked ${a.name} — ${b.name}`);
+    loadAll();
+  }catch(e){ toast('Failed to create hyperlane',true); console.error(e); }
+}
+
+async function deletePlanet(p){
+  if(!confirm(`Delete planet "${p.name}" and its hyperlanes?`)) return;
+  try{
+    await sb.from('planet_connections').delete().eq('planet_a',p.name);
+    await sb.from('planet_connections').delete().eq('planet_b',p.name);
+    const{error}=await sb.from('planets').delete().eq('id',p.id);
+    if(error){ toast('Delete failed: '+supabaseErr(error),true); return; }
+    if(selPlanet===p.id) selPlanet=null;
+    await writeLog('World Removed',`Deleted ${p.name} from the chart.`);
+    toast(`Deleted ${p.name}`);
+    loadAll();
+  }catch(e){ toast('Delete failed',true); console.error(e); }
+}
+
+async function deleteConnection(c){
+  if(!confirm(`Remove hyperlane ${c.planet_a} ↔ ${c.planet_b}?`)) return;
+  try{
+    let q=sb.from('planet_connections').delete();
+    if(c.id) q=q.eq('id',c.id);
+    else q=q.eq('planet_a',c.planet_a).eq('planet_b',c.planet_b);
+    const{error}=await q;
+    if(error){ toast('Delete failed: '+supabaseErr(error),true); return; }
+    await writeLog('Hyperlane Severed',`Removed route ${c.planet_a} ↔ ${c.planet_b}`);
+    toast('Hyperlane removed');
+    loadAll();
+  }catch(e){ toast('Delete failed',true); console.error(e); }
+}
+
+async function closeSectorPolygon(){
+  if(sectorDrawPoints.length<3){ toast('Need at least 3 points',true); return; }
+  const pts=[...sectorDrawPoints];
+  openEditorForm('Name Sector',[
+    {id:'name',label:'Sector Name',value:'',placeholder:'e.g. Core Worlds'}
+  ],async vals=>{
+    if(!vals.name||!vals.name.trim()){ toast('Name required',true); return; }
+    closeEditorForm();
+    customSectors.push({name:vals.name.trim(),points:pts});
+    sectorDrawPoints=[];
+    try{
+      await saveCustomSectors();
+      await writeLog('Sector Defined',`Hand-drawn boundary: ${vals.name.trim()}`);
+      toast(`Sector "${vals.name.trim()}" saved`);
+      updateEditorToolbar();
+      loadAll();
+    }catch(e){
+      customSectors.pop();
+      toast('Failed to save sector: '+(e.message||e),true);
+    }
+  });
+}
+
+function cancelSectorDraw(){
+  sectorDrawPoints=[];
+  updateEditorToolbar();
+  toast('Sector drawing cancelled');
+}
+
+async function deleteCustomSector(sec){
+  if(!confirm(`Delete sector boundary "${sec.name}"?`)) return;
+  customSectors=customSectors.filter(s=>s!==sec);
+  try{
+    await saveCustomSectors();
+    toast(`Removed ${sec.name} boundary`);
+    loadAll();
+  }catch(e){ toast('Delete failed',true); }
+}
+
+function exportGalaxy(){
+  const payload={
+    planets:DB.planets.map(p=>({name:p.name,sector:p.sector,x:p.x,y:p.y,controlling_faction:p.controlling_faction,strategic_value:p.strategic_value,credit_yield:p.credit_yield,description:p.description})),
+    connections:DB.connections.map(c=>({planet_a:c.planet_a,planet_b:c.planet_b})),
+    customSectors
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='galaxy-map.json';
+  a.click();
+  toast('Galaxy exported');
+}
+
+async function importGalaxy(){
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='application/json,.json';
+  input.onchange=async()=>{
+    const file=input.files[0];
+    if(!file) return;
+    try{
+      const data=JSON.parse(await file.text());
+      if(!confirm('Import will ADD planets/connections/sectors from file. Continue?')) return;
+      if(data.customSectors){
+        customSectors=[...customSectors,...data.customSectors];
+        await saveCustomSectors();
+      }
+      if(data.planets){
+        for(const p of data.planets){
+          const exists=DB.planets.some(x=>x.name===p.name);
+          if(!exists) await sb.from('planets').insert([{...p,liberation_pct:0,under_invasion:false}]);
+        }
+      }
+      if(data.connections){
+        for(const c of data.connections){
+          const exists=DB.connections.some(x=>
+            (x.planet_a===c.planet_a&&x.planet_b===c.planet_b)||(x.planet_a===c.planet_b&&x.planet_b===c.planet_a)
+          );
+          if(!exists) await sb.from('planet_connections').insert([c]);
+        }
+      }
+      await writeLog('Galaxy Import','Map data imported from file.');
+      toast('Import complete');
+      loadAll();
+    }catch(e){ toast('Invalid import file',true); }
+  };
+  input.click();
 }
 
 function onMapClick(e){
@@ -562,7 +1022,9 @@ function onMapClick(e){
   const mx=e.clientX-rect.left,my=e.clientY-rect.top;
   let hit=null,best=9999;
   DB.planets.forEach(p=>{
-    const{sx,sy}=getPlanetPos(p);
+    const pos=getPlanetPos(p);
+    if(!pos) return;
+    const{sx,sy}=pos;
     const d=Math.hypot(mx-sx,my-sy);
     const r=getR(p.strategic_value)*cam.scale+8;
     if(d<r&&d<best){best=d;hit=p;}
@@ -610,24 +1072,45 @@ function draw(){
 
   drawGrid(W,H);
 
-  if(layoutEditorMode) {
-    ctx.fillStyle = 'rgba(255, 51, 51, 0.85)';
-    ctx.font = '10px Orbitron, monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('⚠️ UNIVERSE EDITOR MODE ENGAGED — DRAG PLANETS TO ADJUST LAYOUT', 20, 30);
+  if(galaxyEditorMode){
+    ctx.fillStyle='rgba(255,51,51,0.85)';
+    ctx.font='10px Orbitron,monospace';
+    ctx.textAlign='left';
+    ctx.fillText('⚠ GALAXY EDITOR — use toolbar tools to edit the map',20,30);
   }
 
   drawSectorRegions();
+  drawSectorDrawPreview();
 
   DB.connections.forEach(c=>{
     const pa=DB.planets.find(p=>p.name===c.planet_a);
     const pb=DB.planets.find(p=>p.name===c.planet_b);
     if(!pa||!pb)return;
     const a=getPlanetPos(pa),b=getPlanetPos(pb);
+    if(!a||!b)return;
     drawLane(a,b,pa,pb);
   });
 
+  drawEditorLaneHighlight();
   DB.planets.forEach(p=>drawPlanet(p));
+  drawEmptyGalaxyHint();
+}
+
+function drawEmptyGalaxyHint(){
+  if(DB.planets.some(p=>getPlanetPos(p))) return;
+  const W=canvas.width,H=canvas.height;
+  ctx.save();
+  ctx.textAlign='center';
+  ctx.font='11px Orbitron,monospace';
+  ctx.fillStyle='rgba(150,200,255,0.35)';
+  ctx.fillText('UNCHARTED SPACE',W/2,H/2-14);
+  ctx.font='9px Rajdhani,sans-serif';
+  ctx.fillStyle='rgba(100,140,180,0.5)';
+  const msg=isAdmin
+    ?'Galaxy is empty — open Galaxy Editor and use + Planet to begin'
+    :'No worlds charted in this theater';
+  ctx.fillText(msg,W/2,H/2+8);
+  ctx.restore();
 }
 
 function drawNebula(cx,cy,r,col){
@@ -645,16 +1128,47 @@ function drawGrid(W,H){
 }
 
 function drawSectorRegions(){
+  customSectors.forEach(sec=>{
+    if(!sec.points||sec.points.length<3)return;
+    const pts=sec.points.map(([x,y])=>{const p=worldToScreen(x,y);return[p.sx,p.sy];});
+    const centX=pts.reduce((a,b)=>a+b[0],0)/pts.length;
+    const centY=pts.reduce((a,b)=>a+b[1],0)/pts.length;
+    const sc=SECTOR_COLORS[sec.name]||SECTOR_COLORS['Outer Rim'];
+    const fillCol=sc.neu.replace('0.09)','0.14)').replace('0.08)','0.13)');
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+    ctx.closePath();
+    ctx.fillStyle=fillCol;ctx.fill();
+    ctx.strokeStyle='rgba(0,200,255,0.45)';ctx.lineWidth=1.5;
+    ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
+
+    pts.forEach(([x,y],i)=>{
+      ctx.beginPath();ctx.arc(x,y,4*cam.scale,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,238,255,0.7)';ctx.fill();
+    });
+
+    if(cam.scale>0.45){
+      ctx.font=`${Math.max(9,10*cam.scale)}px Orbitron,monospace`;
+      ctx.textAlign='center';
+      ctx.fillStyle='rgba(150,200,255,0.35)';
+      ctx.fillText((sec.name||'SECTOR').toUpperCase(),centX,centY);
+    }
+  });
+
+  const customNames=new Set(customSectors.map(s=>s.name));
   const sectors={};
   DB.planets.forEach(p=>{
     const s=p.sector||'Unknown';
+    if(customNames.has(s))return;
     if(!sectors[s])sectors[s]=[];
     sectors[s].push(p);
   });
 
   Object.entries(sectors).forEach(([sector,planets])=>{
     if(planets.length<2)return;
-    const pts=planets.map(p=>{const pos=getPlanetPos(p);return[pos.sx,pos.sy];});
+    const pts=planets.map(p=>getPlanetPos(p)).filter(Boolean).map(pos=>[pos.sx,pos.sy]);
     const hull=convexHull(pts);
     if(hull.length<2)return;
 
@@ -689,6 +1203,37 @@ function drawSectorRegions(){
   });
 }
 
+function drawSectorDrawPreview(){
+  if(!galaxyEditorMode||editorTool!=='sector'||!sectorDrawPoints.length)return;
+  const pts=sectorDrawPoints.map(([x,y])=>worldToScreen(x,y));
+
+  ctx.strokeStyle='rgba(0,238,255,0.8)';ctx.lineWidth=2;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(pts[0].sx,pts[0].sy);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].sx,pts[i].sy);
+  if(editorHoverWorld&&pts.length){
+    const h=worldToScreen(editorHoverWorld.x,editorHoverWorld.y);
+    ctx.lineTo(h.sx,h.sy);
+  }
+  ctx.stroke();ctx.setLineDash([]);
+
+  pts.forEach((p,i)=>{
+    ctx.beginPath();ctx.arc(p.sx,p.sy,i===0?7*cam.scale:5*cam.scale,0,Math.PI*2);
+    ctx.fillStyle=i===0?'rgba(0,255,136,0.9)':'rgba(0,238,255,0.8)';
+    ctx.fill();
+  });
+
+}
+
+function drawEditorLaneHighlight(){
+  if(!galaxyEditorMode||editorTool!=='lane'||!laneFromPlanet)return;
+  const lp=getPlanetPos(laneFromPlanet);
+  if(!lp) return;
+  ctx.strokeStyle='rgba(255,200,0,0.7)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(lp.sx,lp.sy,20*cam.scale,0,Math.PI*2);ctx.stroke();
+}
+
 function convexHull(pts){
   if(pts.length<3)return pts;
   let start=pts.reduce((a,b)=>b[0]<a[0]?b:a);
@@ -719,7 +1264,9 @@ function drawLane(a,b,pa,pb){
 }
 
 function drawPlanet(p){
-  const{sx,sy}=getPlanetPos(p);
+  const pos=getPlanetPos(p);
+  if(!pos) return;
+  const{sx,sy}=pos;
   const r=getR(p.strategic_value)*cam.scale;
   const col=p.under_invasion?'#ff3333':getFactionColor(p.controlling_faction);
   const isSel=selPlanet===p.id;
@@ -762,13 +1309,6 @@ function drawPlanet(p){
   ctx.moveTo(sx-r*0.55,sy);ctx.lineTo(sx+r*0.55,sy);
   ctx.moveTo(sx,sy-r*0.55);ctx.lineTo(sx,sy+r*0.55);
   ctx.stroke();
-
-  if(p.name==='Coruscant'){
-    ctx.beginPath();ctx.arc(sx,sy,r*2.8,0,Math.PI*2);
-    ctx.strokeStyle='rgba(0,200,255,0.12)';ctx.lineWidth=1;ctx.stroke();
-    ctx.beginPath();ctx.arc(sx,sy,r*3.5,0,Math.PI*2);
-    ctx.strokeStyle='rgba(0,200,255,0.06)';ctx.lineWidth=1;ctx.stroke();
-  }
 
   const fs=Math.max(8,Math.min(11,9*cam.scale));
   ctx.font=`${fs}px Orbitron,monospace`;ctx.textAlign='center';
@@ -941,7 +1481,7 @@ async function doLogin(){
   }catch(e){document.getElementById('lg-err').textContent='AUTHORIZATION REFUSED';}
 }
 
-async function doLogout(){await sb.auth.signOut();isAdmin=false;layoutEditorMode=false;closeAdmin();loadAll();}
+async function doLogout(){await sb.auth.signOut();isAdmin=false;galaxyEditorMode=false;closeAdmin();loadAll();}
 
 function switchMTab(t){
   mTab=t;
@@ -962,13 +1502,16 @@ function renderAdminBody(){
       </div>
 
       <div style="background:rgba(255,255,255,0.01);border:1px solid var(--border);padding:14px;border-radius:3px;margin-bottom:12px">
-        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Universe Layout Editor</div>
-        <button class="btn ${layoutEditorMode ? 'red' : 'ok'}" style="width:100%;font-weight:600;padding:10px;" onclick="toggleLayoutEditor()">
-          ${layoutEditorMode ? '🛑 LOCK GALAXY POSITIONS' : '🗺️ ENABLE DRAG & DROP MODE'}
+        <div style="font-family:var(--fd);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase">Galaxy Editor</div>
+        <button class="btn ${galaxyEditorMode ? 'red' : 'ok'}" style="width:100%;font-weight:600;padding:10px;" onclick="toggleGalaxyEditor()">
+          ${galaxyEditorMode?'🛑 EXIT GALAXY EDITOR':'🌌 OPEN GALAXY EDITOR'}
         </button>
         <div style="font-size:11px;color:var(--text-dim);line-height:1.4;margin-top:8px">
-          ${layoutEditorMode ? '<span style="color:var(--danger);font-weight:bold;">OVERRIDE ENGAGED:</span> Click and drag any node directly on the map space to visually relocate its grid position.' : 'Activate this module to reposition galaxy nodes directly on the interactive map.'}
+          ${galaxyEditorMode?'<b style="color:var(--warn)">Editor active.</b> Use the map toolbar to add worlds, hyperlanes, sector borders, drag nodes, erase, export/import.':'Build custom galaxies: place planets, draw sectors, connect hyperlanes, export layouts.'}
         </div>
+        ${customSectors.length?`<div style="margin-top:8px;font-size:10px;color:var(--accent)">${customSectors.length} hand-drawn sector(s)</div>`:''}
+        <button class="btn red" style="width:100%;margin-top:10px;font-size:9px" onclick="clearGalaxyMap()">🗑 CLEAR ENTIRE GALAXY MAP</button>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:6px;line-height:1.4">Removes all worlds, hyperlanes, and sector borders. Use once to wipe existing data and hand-craft from scratch.</div>
       </div>
 
       <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Advancing the phase distributes credit yields to all controlling factions based on current territory holdings.</div>`;
@@ -979,10 +1522,30 @@ function renderAdminBody(){
   }
 }
 
-function toggleLayoutEditor() {
-  layoutEditorMode = !layoutEditorMode;
-  renderAdminBody();
-  toast(layoutEditorMode ? "DRAG & DROP MODE ENGAGED" : "MAP GEOMETRY LOCKED");
+async function clearGalaxyMap(){
+  if(!isAdmin){ toast('Admin login required',true); return; }
+  if(!confirm('Delete ALL planets, hyperlanes, and hand-drawn sectors?\n\nFaction credits and upgrades are kept. This cannot be undone.')) return;
+  if(!confirm('Final confirmation: wipe the entire galactic map?')) return;
+  try{
+    const{error:ce}=await sb.from('planet_connections').delete().gte('id',0);
+    if(ce) throw new Error(supabaseErr(ce));
+    const{error:pe}=await sb.from('planets').delete().gte('id',0);
+    if(pe) throw new Error(supabaseErr(pe));
+    customSectors=[];
+    localStorage.removeItem(SECTOR_STORAGE_KEY);
+    await saveCustomSectors();
+    for(const key of['loc_53rd','loc_501st','loc_212th','loc_104th']){
+      await sb.from('settings').upsert({key,value:''},{onConflict:'key'});
+      DB.settings[key]='';
+    }
+    selPlanet=null;
+    await writeLog('Galaxy Reset','All worlds, routes, and sector borders cleared.');
+    toast('Galaxy map cleared — chart your own');
+    loadAll();
+  }catch(e){
+    toast('Clear failed: '+(e.message||e),true);
+    console.error(e);
+  }
 }
 
 async function advanceTurn(){
@@ -1016,6 +1579,13 @@ function toast(msg,err=false){
   t.textContent=msg;t.className=err?'show err':'show';
   setTimeout(()=>t.className='',3000);
 }
+
+// Expose editor handlers for inline toolbar onclick
+Object.assign(window,{
+  setEditorTool,toggleGalaxyEditor,closeSectorPolygon,cancelSectorDraw,
+  exportGalaxy,importGalaxy,clearGalaxyMap,closeEditorForm,submitEditorForm,
+  resetCamera,zoomIn,zoomOut,openAdmin,closeAdmin,doLogin,closeLogin
+});
 </script>
 </body>
 </html>
